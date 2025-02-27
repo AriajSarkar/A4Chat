@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 text-brand-600 dark:text-brand-light
                 ${isOpen ? '' : 'transform -rotate-90'}
             `}>
-                A3Chat
+                A4Chat
             </span>
         </button>
     );
@@ -78,8 +78,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     bg-white/90 dark:bg-gray-900/90 
                     border-r border-brand-100 dark:border-brand-900/50
                     backdrop-blur-md
-                    ${isOpen ? 'w-64 translate-x-0' : 'w-16 translate-x-0'}
-                    z-[1000]
+                    ${isOpen ? 'w-64' : 'w-16'}
+                    z-20
                 `}
                 role="navigation"
             >

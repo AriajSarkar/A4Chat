@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { zIndex } from '../../../styles/zindex';
 
 interface ModelSelectorProps {
     model: string;
@@ -39,8 +40,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                          border border-brand-200/50 dark:border-brand-700/50"
             >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="w-2 h-2 rounded-full bg-brand-400 group-hover:animate-pulse flex-shrink-0"></span>
-                    <span className="truncate">{model}</span>
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 
+                        ${model ? 'bg-green-500' : 'bg-gray-400'} 
+                        group-hover:animate-pulse`}
+                    />
+                    <span className="truncate">
+                        {model || 'No models available'}
+                    </span>
                 </div>
                 <span className={`flex-shrink-0 ml-2 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
                     ▼
@@ -48,10 +54,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 w-full mt-1 
-                             bg-white/95 dark:bg-gray-800/95 
-                             backdrop-blur-sm rounded-lg shadow-lg
-                             border border-brand-100 dark:border-brand-900/50">
+                <div className={`
+                    absolute z-[${zIndex.dropdown}] w-full mt-1 
+                    bg-white/95 dark:bg-gray-800/95 
+                    backdrop-blur-sm rounded-lg shadow-lg
+                    border border-brand-100 dark:border-brand-900/50
+                `}>
                     <div className="py-1">
                         {availableModels.map((modelName) => (
                             <button

@@ -1,4 +1,5 @@
 import React, { ReactElement } from 'react';
+import { zIndex } from '../../../../styles/zindex';
 
 interface NewChatButtonProps {
     onClick: () => void;
@@ -22,11 +23,13 @@ export const NewChatButton: React.FC<NewChatButtonProps> = ({ onClick, isCollaps
                     {icon}
                 </button>
                 <div 
-                    className="absolute left-full ml-2
-                             opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
-                             transform -translate-y-1/2 top-1/2
-                             transition-all duration-200 origin-left
-                             z-[9999]"
+                    className={`
+                        absolute left-full ml-2
+                        opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
+                        transform -translate-y-1/2 top-1/2
+                        transition-all duration-200 origin-left
+                        z-[${zIndex.tooltip}]
+                    `}
                 >
                     {/* Changed Arrow Position */}
                     <div className="absolute right-full top-1/2 -translate-y-1/2 -mr-1">

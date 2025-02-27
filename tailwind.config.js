@@ -59,15 +59,58 @@ module.exports = {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
         },
+        typing: {
+          '0%': { width: '0' },
+          '100%': { width: '100%' },
+        },
+        blink: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0' },
+        },
+        pulseSoft: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.95' }
+        },
+        typewriterCursor: {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0 }
+        },
+        fadeInUp: {
+          '0%': { 
+            opacity: 0,
+            transform: 'translateY(10px)'
+          },
+          '100%': { 
+            opacity: 1,
+            transform: 'translateY(0)'
+          }
+        }
       },
       animation: {
         modelDropdown: 'modelDropdown 0.2s ease-out forwards',
         'fade-in': 'fadeIn 0.2s ease-out',
         'fade-up': 'fadeUp 0.2s ease-out',
         'slide-in': 'slideIn 0.2s ease-out',
-      }
+        typing: 'typing 3.5s steps(40, end)',
+        'cursor-blink': 'blink 1s step-end infinite',
+        'pulse-subtle': 'pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'typewriter-blink': 'typewriterCursor 0.7s step-end infinite',
+        'fade-in-up': 'fadeInUp 0.2s ease-out forwards'
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            'code::before': { content: '""' },
+            'code::after': { content: '""' },
+            'blockquote p:first-of-type::before': { content: '""' },
+            'blockquote p:last-of-type::after': { content: '""' },
+          },
+        },
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }
 

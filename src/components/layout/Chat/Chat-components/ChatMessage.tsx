@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChatMessage as ChatMessageType } from '../../../types/ChatMessage';
 import { User, Bot } from 'lucide-react';
+import { MarkdownResponse } from '../../../features/format/Markdown/MarkdownResponse';
 
 interface ChatMessageProps {
     message: ChatMessageType;
@@ -9,7 +10,8 @@ interface ChatMessageProps {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     return (
         <div className={`
-            rounded-lg p-4 transition-colors min-h-[4rem]
+            rounded-lg p-4 transition-all duration-200 ease-in-out
+            overflow-hidden max-w-full
             ${message.role === 'assistant' 
                 ? 'bg-brand-50/50 dark:bg-brand-900/20' 
                 : 'bg-white dark:bg-gray-800/50'
@@ -33,14 +35,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                     <div className="font-medium text-brand-600 dark:text-brand-light mb-1">
                         {message.role === 'assistant' ? 'Assistant' : 'You'}
                     </div>
-                    <div className="prose max-w-none 
-                                  prose-p:leading-relaxed prose-pre:my-0
-                                  text-gray-800 dark:text-gray-200
-                                  prose-p:text-gray-800 dark:prose-p:text-gray-200
-                                  prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800
-                                  break-words">
-                        {message.content}
-                    </div>
+                    {message.role === 'assistant' ? (
+                        <div className="overflow-hidden">
+                            <MarkdownResponse content={message.content} isStreaming={false} />
+                        </div>
+                    ) : (
+                        <div className="text-gray-800 dark:text-gray-200 leading-relaxed break-words">
+                            {message.content}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

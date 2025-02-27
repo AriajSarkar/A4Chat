@@ -1,6 +1,6 @@
 import React from 'react'
 import * as ReactDOM from 'react-dom/client';
-import Chat from './components/features/Chat/Chat';
+import Chat from './components/layout/Chat/Chat';
 import { ThemeProvider } from './contexts/ThemeContext';
 import './styles/global.css';
 
