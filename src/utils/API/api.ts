@@ -1,3 +1,5 @@
+import { createStreamParser } from '../../components/features/format/utils/StreamParser';
+
 interface GenerateResponse {
     response: string;
     error?: string;
@@ -49,49 +51,39 @@ interface VersionInfo {
 }
 
 export class OllamaAPI {
-    private static baseUrl = window.env.OLLAMA_API_URL;
+    private static baseUrl = window.env?.OLLAMA_API_URL || 'http://localhost:11434/api';
+    private static controller: AbortController | null = null;
 
     // Currently used methods
     static async generateStream(
         prompt: string, 
         model: string,
         onToken: (token: string) => void,
-        onComplete: () => void
+        onComplete: () => void,
+        onError?: (error: Error) => void
     ): Promise<void> {
         try {
+            this.controller = new AbortController();
+
             const response = await fetch(`${this.baseUrl}/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model, prompt, stream: true }),
+                signal: this.controller.signal
             });
 
             const reader = response.body?.getReader();
-            const decoder = new TextDecoder();
+            if (!reader) throw new Error('No readable stream available');
 
-            while (reader) {
-                const { value, done } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n').filter(line => line.trim());
-                
-                for (const line of lines) {
-                    try {
-                        const data: StreamResponse = JSON.parse(line);
-                        if (data.response && !data.response.includes('<think>') && 
-                            !data.response.includes('</think>') && data.response.trim()) {
-                            onToken(data.response);
-                        }
-                        if (data.done) {
-                            onComplete();
-                            break;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing stream response:', e);
-                    }
-                }
-            }
+            const parser = createStreamParser({ onToken, onComplete, onError });
+            await parser.processStream(reader);
         } catch (error) {
+            if (error.name === 'AbortError') {
+                // Handle abort gracefully
+                console.log('Generation stopped by user');
+                return;
+            }
+            onError?.(error);
             if (error instanceof TypeError && 
                 (error.message === 'Failed to fetch' || 
                  error.message.includes('ERR_CONNECTION_REFUSED'))) {
@@ -99,6 +91,15 @@ export class OllamaAPI {
             }
             console.error('Stream error:', error);
             throw error;
+        } finally {
+            this.controller = null;
+        }
+    }
+
+    static stopGeneration(): void {
+        if (this.controller) {
+            this.controller.abort();
+            this.controller = null;
         }
     }
 
