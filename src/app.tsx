@@ -1,12 +1,15 @@
 import React from 'react'
 import * as ReactDOM from 'react-dom/client';
-import Chat from './components/features/Chat';
-import './styles/global.css';  // Add this import
+import Chat from './components/layout/Chat/Chat';
+import { ThemeProvider } from './contexts/ThemeContext';
+import './styles/global.css';
 
 const App = () => (
-  <div className="min-h-screen bg-gray-100">
-    <Chat />
-  </div>
+  <ThemeProvider>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Chat />
+    </div>
+  </ThemeProvider>
 );
 
 function render() {
