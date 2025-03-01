@@ -1,7 +1,7 @@
 {
   "name": "A4Chat",
   "version": "1.0.0",
-  "description": "A app",
+  "description": "A simple chat application built with Electron and React using TailwindCSS",
   "main": ".webpack/main",
   "scripts": {
     "start": "cross-env NODE_ENV=development electron-forge start",

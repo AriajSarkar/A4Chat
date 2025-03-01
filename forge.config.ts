@@ -9,11 +9,16 @@ import { mainConfig } from './webpack.main.config';
 import { rendererConfig } from './webpack.renderer.config';
 
 const config: ForgeConfig = {
-  packagerConfig: {},
+  packagerConfig: {
+    icon: './assets/icons/icon',
+    asar: true
+  },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({
-      authors: 'Electron contributors'
+      authors: 'Ariaj Sarkar',
+      iconUrl: 'https://raw.githubusercontent.com/AriajSarkar/A4Chat/main/assets/icons/icon.ico',
+      setupIcon: './assets/icons/icon.ico'
     }, ['win32']),
     new MakerZIP({}, ['darwin']),
     new MakerDeb({}, ['linux']),
