@@ -66,8 +66,9 @@ jobs:
           }
         
       - name: List build output
+        shell: pwsh
         run: |
-          dir /s /b out\make
+          Get-ChildItem -Path "out\make" -Recurse -File | ForEach-Object { $_.FullName }
         
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
