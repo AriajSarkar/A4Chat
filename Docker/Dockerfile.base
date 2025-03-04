@@ -1,0 +1,15 @@
+FROM ubuntu:22.04 AS base
+
+# Install common dependencies
+RUN apt-get update && apt-get install -y \
+    libgtk-3-0 \
+    libnotify4 \
+    libnss3 \
+    libxss1 \
+    libxtst6 \
+    xdg-utils \
+    libatspi2.0-0 \
+    libdrm2 \
+    libgbm1 \
+    libxcb-dri3-0 \
+    && rm -rf /var/lib/apt/lists/*

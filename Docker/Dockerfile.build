@@ -1,0 +1,39 @@
+FROM node:18-slim AS deps
+
+# Install build dependencies
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git \
+    dpkg \
+    fakeroot \
+    rpm \
+    bash \
+    build-essential \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Cache dependencies
+COPY package*.json ./
+COPY tsconfig*.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
+
+# Build stage
+FROM deps AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Make scripts executable
+RUN chmod +x /app/Docker/scripts/*.sh
+
+# Keep the node environment
+ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV NODE_PATH /usr/local/lib/node_modules
+
+# Export stage
+FROM builder AS final
+ENTRYPOINT ["/bin/bash"]

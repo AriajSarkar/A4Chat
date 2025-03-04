@@ -1,0 +1,22 @@
+FROM base AS runtime
+
+# Install dependencies for running Electron
+RUN apt-get update && apt-get install -y \
+    libgtk-3-0 \
+    libnotify4 \
+    libnss3 \
+    libxss1 \
+    libxtst6 \
+    xdg-utils \
+    libatspi2.0-0 \
+    libdrm2 \
+    libgbm1 \
+    libxcb-dri3-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/
+# Fix COPY command syntax
+COPY --from=build /app/out/make/deb/x64/ ./
+RUN find . -name "*.deb" -exec dpkg -i {} \; || echo "No .deb package found"
+
+CMD ["A4Chat"]

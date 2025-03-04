@@ -1,0 +1,55 @@
+services:
+  base:
+    build:
+      context: .
+      dockerfile: Dockerfile.base
+    image: a4chat-base:latest
+
+  build:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile.build
+      cache_from: 
+        - node:18-slim
+        - a4chat-build:cache
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["./Docker/scripts/build.sh"]
+    image: a4chat-build:latest
+    volumes:
+      - ..:/app
+      - npm-cache:/root/.npm
+      - build-cache:/app/node_modules
+      - ../dist:/dist
+    depends_on:
+      - base
+
+  run-linux:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile.run
+      cache_from:
+        - a4chat-base:latest
+    image: a4chat-run:latest
+    depends_on:
+      - build
+    environment:
+      - DISPLAY=$DISPLAY
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ../dist:/app/dist
+    devices:
+      - /dev/dri:/dev/dri
+
+  verify:
+    image: alpine:latest
+    volumes:
+      - ../dist:/dist
+    command: sh -c "ls -la /dist && echo 'Build artifacts available in ./dist'"
+
+volumes:
+  npm-cache:
+    name: a4chat-npm-cache
+  build-cache:
+    name: a4chat-build-cache
+  apt-cache:
+    name: a4chat-apt-cache

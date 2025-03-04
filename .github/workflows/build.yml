@@ -1,0 +1,141 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get version
+        id: version
+        run: |
+          if [ -f "package.json" ]; then
+            echo "value=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          else
+            echo "Error: package.json not found"
+            exit 1
+          fi
+      - name: Check if release exists
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STATUS=$(curl -H "Authorization: token $GITHUB_TOKEN" \
+                       -s -o /dev/null -w "%{http_code}" \
+                       https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ steps.version.outputs.value }})
+          if [ "$STATUS" = "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-windows:
+    needs: check-release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "npm ci failed"
+            exit 1
+          }
+        
+      - name: Build application
+        run: |
+          npm run make
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Build failed"
+            exit 1
+          }
+        
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4  # Updated from v3
+        with:
+          name: windows-artifacts
+          path: |
+            out/make/squirrel.windows/x64/A4Chat-*.exe
+            out/make/squirrel.windows/x64/RELEASES
+            out/make/squirrel.windows/x64/*.nupkg
+          if-no-files-found: error
+          retention-days: 1
+
+  build-linux:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          if [ $? -ne 0 ]; then
+            echo "npm ci failed"
+            exit 1
+          fi
+        
+      - name: Build application
+        run: |
+          npm run make
+          if [ $? -ne 0 ]; then
+            echo "Build failed"
+            exit 1
+          fi
+        
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4  # Updated from v3
+        with:
+          name: linux-artifacts
+          path: |
+            out/make/deb/x64/a4chat_*_amd64.deb
+            out/make/rpm/x64/A4Chat-*.x86_64.rpm
+          if-no-files-found: error
+          retention-days: 1
+
+  create-release:
+    needs: [check-release, build-linux]
+    runs-on: ubuntu-latest
+    if: needs.check-release.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4  # Updated from v3
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.check-release.outputs.version }}
+          name: Release v${{ needs.check-release.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            windows-artifacts/A4Chat-*Setup.exe
+            windows-artifacts/RELEASES
+            windows-artifacts/*.nupkg
+            linux-artifacts/a4chat_*_amd64.deb
+            linux-artifacts/A4Chat-*.x86_64.rpm
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
