@@ -22,7 +22,18 @@ const config: ForgeConfig = {
     }, ['win32']),
     new MakerZIP({}, ['darwin']),
     new MakerDeb({}, ['linux']),
-    new MakerRpm({}, ['linux'])
+    new MakerRpm({
+      options: {
+        name: 'A4Chat',
+        productName: 'A4Chat',
+        genericName: 'Chat Application',
+        description: 'A simple chat application built with Electron',
+        version: '1.0.0',
+        license: 'MIT',
+        group: 'Applications/Internet',
+        categories: ['Network', 'Utility']
+      }
+    }, ['linux'])
   ],
   plugins: [
     new WebpackPlugin({
