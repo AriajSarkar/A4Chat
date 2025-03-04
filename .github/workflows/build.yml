@@ -65,12 +65,16 @@ jobs:
             exit 1
           }
         
+      - name: List build output
+        run: |
+          dir /s /b out\make
+        
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4  # Updated from v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
           path: |
-            out/make/squirrel.windows/x64/A4Chat-*.exe
+            out/make/squirrel.windows/x64/A4Chat-*-Setup.exe
             out/make/squirrel.windows/x64/RELEASES
             out/make/squirrel.windows/x64/*.nupkg
           if-no-files-found: error
@@ -104,13 +108,17 @@ jobs:
             exit 1
           fi
         
+      - name: List build output
+        run: |
+          find out/make -type f
+        
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4  # Updated from v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
           path: |
-            out/make/deb/x64/a4chat_*_amd64.deb
-            out/make/rpm/x64/A4Chat-*.x86_64.rpm
+            out/make/deb/x64/*.deb
+            out/make/rpm/x64/*.rpm
           if-no-files-found: error
           retention-days: 1
 
@@ -120,8 +128,15 @@ jobs:
     if: needs.check-release.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4  # Updated from v3
-        
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: release-artifacts
+          
+      - name: List downloaded files
+        run: |
+          find release-artifacts -type f
+          
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -130,11 +145,11 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            windows-artifacts/A4Chat-*Setup.exe
-            windows-artifacts/RELEASES
-            windows-artifacts/*.nupkg
-            linux-artifacts/a4chat_*_amd64.deb
-            linux-artifacts/A4Chat-*.x86_64.rpm
+            release-artifacts/A4Chat-*-Setup.exe
+            release-artifacts/RELEASES
+            release-artifacts/*.nupkg
+            release-artifacts/*.deb
+            release-artifacts/*.rpm
           fail_on_unmatched_files: true
           generate_release_notes: true
         env:
