@@ -36,21 +36,27 @@ jobs:
       - name: Update patch version
         id: new_version
         run: |
-          NEW_VERSION=$(node -p "const [major, minor, patch] = '$(cat package.json | jq -r .version)'.split('.'); `${major}.${minor}.${Number(patch) + 1}`")
+          NEW_VERSION=$(npm version patch --no-git-tag-version)
+          NEW_VERSION=${NEW_VERSION#"v"}
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          npm version patch --no-git-tag-version
 
       - name: Update CHANGELOG.md
         run: |
           DATE=$(date +"%Y-%m-%d")
+          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          CURRENT_VERSION="${{ steps.current_version.outputs.current }}"
+          
           if [ ! -s CHANGELOG.md ]; then
             echo "# Changelog" > CHANGELOG.md
           fi
-          echo "
-          ## [${NEW_VERSION}] - ${DATE}
-          - Patch update from ${CURRENT_VERSION} to ${NEW_VERSION}
+          
+          echo "# Changelog
 
-          $(cat CHANGELOG.md | sed '1,1d')" > CHANGELOG.md
+          [$NEW_VERSION] - $DATE
+          - Patch update from $CURRENT_VERSION to $NEW_VERSION
+
+            $(cat CHANGELOG.md | tail -n +2)" > CHANGELOG.md
+
         env:
           CURRENT_VERSION: ${{ steps.current_version.outputs.current }}
           NEW_VERSION: ${{ steps.new_version.outputs.version }}
@@ -94,14 +100,12 @@ jobs:
     needs: update-version
     runs-on: ubuntu-latest
     steps:
+      - name: Wait for branch to be available
+        run: sleep 10
+        
       - name: Trigger build workflow
-        uses: actions/github-script@v7
+        uses: benc-uk/workflow-dispatch@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.name,
-              workflow_id: 'build.yml',
-              ref: 'version-update/${{ needs.update-version.outputs.new_version }}'
-            });
+          workflow: build.yml
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
