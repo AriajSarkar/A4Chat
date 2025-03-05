@@ -7,7 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
+  version-update:
+    uses: ./.github/workflows/version-update.yml
+    secrets: inherit
+
   check-release:
+    needs: version-update
     runs-on: ubuntu-latest
     outputs:
       exists: ${{ steps.check.outputs.exists }}
