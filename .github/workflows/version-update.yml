@@ -103,5 +103,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.name,
               workflow_id: 'build.yml',
-              ref: 'main'
+              ref: 'version-update/${{ needs.update-version.outputs.new_version }}'
             });
