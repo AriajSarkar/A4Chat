@@ -19,14 +19,6 @@ jobs:
         with:
           node-version: '18.x'
 
-      - name: Check CHANGELOG.md exists
-        id: check_changelog
-        run: |
-          if [ ! -f CHANGELOG.md ]; then
-            echo "# Changelog" > CHANGELOG.md
-            echo "Creating new CHANGELOG.md file"
-          fi
-
       - name: Get current version
         id: current_version
         run: |
@@ -40,27 +32,6 @@ jobs:
           NEW_VERSION=${NEW_VERSION#"v"}
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Update CHANGELOG.md
-        run: |
-          DATE=$(date +"%Y-%m-%d")
-          NEW_VERSION="${{ steps.new_version.outputs.version }}"
-          CURRENT_VERSION="${{ steps.current_version.outputs.current }}"
-          
-          if [ ! -s CHANGELOG.md ]; then
-            echo "# Changelog" > CHANGELOG.md
-          fi
-          
-          echo "# Changelog
-
-          [$NEW_VERSION] - $DATE
-          - Patch update from $CURRENT_VERSION to $NEW_VERSION
-
-            $(cat CHANGELOG.md | tail -n +2)" > CHANGELOG.md
-
-        env:
-          CURRENT_VERSION: ${{ steps.current_version.outputs.current }}
-          NEW_VERSION: ${{ steps.new_version.outputs.version }}
-
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -71,19 +42,19 @@ jobs:
           
           if [ "$CURRENT_BRANCH" = "main" ]; then
             # Directly commit to main
-            git add package.json CHANGELOG.md
+            git add package.json
             git commit -m "chore: bump version to ${{ steps.new_version.outputs.version }}"
             git push origin main
           elif [ "${{ github.event_name }}" == "pull_request" ]; then
             # Handle PR updates
             git checkout -b "${{ github.head_ref }}"
-            git add package.json CHANGELOG.md
+            git add package.json
             git commit -m "chore: bump version to ${{ steps.new_version.outputs.version }}"
             git push origin HEAD:${{ github.head_ref }} --force
           else
             # Create new version branch and PR
             git checkout -b "version-update/${{ steps.new_version.outputs.version }}"
-            git add package.json CHANGELOG.md
+            git add package.json
             git commit -m "chore: bump version to ${{ steps.new_version.outputs.version }}"
             git push origin "version-update/${{ steps.new_version.outputs.version }}" --force
             
