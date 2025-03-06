@@ -1,6 +1,6 @@
 {
   "name": "A4Chat",
-  "version": "1.0.3",
+  "version": "1.0.2",
   "description": "A simple chat application built with Electron and React using TailwindCSS",
   "main": ".webpack/main",
   "scripts": {

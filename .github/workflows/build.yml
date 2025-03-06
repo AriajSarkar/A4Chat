@@ -18,7 +18,7 @@ jobs:
 
   version-update:
     needs: check-doc-changes
-    if: github.event_name != 'workflow_dispatch' && needs.check-doc-changes.outputs.only_docs != 'true'
+    if: ${{ github.event_name != 'workflow_dispatch' && needs.check-doc-changes.outputs.only_docs == 'false' }}
     uses: ./.github/workflows/version-update.yml
     secrets: inherit
 

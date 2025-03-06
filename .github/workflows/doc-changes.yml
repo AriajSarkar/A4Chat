@@ -5,6 +5,11 @@ on:
     branches: [ main ]
   push:
     branches: [ main ]
+  workflow_call:
+    outputs:
+      only_docs:
+        description: "Whether changes are documentation only"
+        value: ${{ jobs.check-changes.outputs.only_docs }}
 
 jobs:
   check-changes:
