@@ -21,8 +21,6 @@
 - docs: add GitHub Copilot instructions and conventions
 - fix: revert version to 1.0.2 and clean up CHANGELOG
 
-# Changelog
-
 ## [1.0.2] - 2024-03-08
 - Added dark/light theme support
 - Implemented real-time chat with streaming responses
