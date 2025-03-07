@@ -26,18 +26,18 @@ export const PrevChatItem: React.FC<PrevChatItemProps> = ({
     return (
         <div
             className={`
-                group flex items-start gap-2 py-2 px-3 rounded-lg
-                cursor-pointer mb-1 transition-all duration-200 
+                group flex items-start gap-2.5 py-2.5 px-3 rounded-lg
+                cursor-pointer mb-1.5 transition-all duration-200 
                 relative overflow-hidden
                 ${isActive 
-                  ? 'bg-brand-100 dark:bg-brand-900/40 border-l-2 border-brand-500 dark:border-brand-400' 
-                  : 'hover:bg-brand-50/50 dark:hover:bg-brand-900/20 border-l-2 border-transparent'}
+                  ? 'bg-brand-50/80 dark:bg-brand-900/40 border-l-2 border-brand-500 dark:border-brand-400 shadow-sm' 
+                  : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-l-2 border-transparent'}
             `}
             onClick={onSelect}
         >
             <div className={`
-                flex-shrink-0 
-                ${isActive ? 'text-brand-500 dark:text-brand-400' : 'text-brand-400 dark:text-brand-600'}
+                flex-shrink-0 p-1 rounded
+                ${isActive ? 'text-brand-500 dark:text-brand-400' : 'text-gray-500 dark:text-gray-400 group-hover:text-brand-500 dark:group-hover:text-brand-400'}
             `}>
                 <MessageSquare size={16} />
             </div>
@@ -46,28 +46,28 @@ export const PrevChatItem: React.FC<PrevChatItemProps> = ({
                     text-sm font-medium truncate transition-colors
                     ${isActive 
                       ? 'text-brand-700 dark:text-brand-300' 
-                      : 'text-brand-600 dark:text-brand-400'}
+                      : 'text-gray-700 dark:text-gray-300 group-hover:text-brand-600 dark:group-hover:text-brand-400'}
                 `}>
                     {chat.title}
                 </div>
                 
                 {/* Message preview with fade out effect */}
                 {previewText && (
-                    <div className="text-xs text-brand-500/80 dark:text-brand-400/60 truncate mt-0.5 
+                    <div className="text-xs text-gray-500/80 dark:text-gray-400/60 truncate mt-0.5 
                                     max-w-[180px] overflow-hidden">
                         {previewText}
                     </div>
                 )}
                 
-                <div className="text-xs text-brand-500 dark:text-brand-500/70 mt-1 flex items-center">
+                <div className="text-xs text-gray-500 dark:text-gray-500/70 mt-1 flex items-center">
                     <span className="inline-flex items-center">
                         {formatRelativeTime(chat.updated)}
                     </span>
                     
                     {/* Chat message count badge */}
                     {chat.messageCount > 0 && (
-                        <span className="ml-2 px-1.5 py-0.5 bg-brand-100 dark:bg-brand-800/40 
-                                        text-brand-600 dark:text-brand-400 rounded-full text-[10px]">
+                        <span className="ml-2 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800/40 
+                                        text-gray-600 dark:text-gray-400 rounded-full text-[10px]">
                             {chat.messageCount}
                         </span>
                     )}
@@ -92,7 +92,7 @@ export const PrevChatItem: React.FC<PrevChatItemProps> = ({
             {/* Active indicator dot */}
             {isActive && (
                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-brand-500 dark:bg-brand-400">
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand-500 dark:bg-brand-400 animate-pulse">
                         
                     </div>
                 </div>
