@@ -6,84 +6,51 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to build'
-        required: false
-        default: ''
 
 jobs:
-  check-doc-changes:
+  check-version:
     runs-on: ubuntu-latest
     outputs:
-      docs_only: ${{ steps.check_docs.outputs.docs_only }}
+      version: ${{ steps.get-version.outputs.version }}
+      should_build: ${{ steps.check-release.outputs.should_build }}
     steps:
       - uses: actions/checkout@v3
       
-      - name: Check for doc-only changes
-        id: check_docs
-        run: |
-          if git diff --name-only HEAD^ HEAD | grep -qvE '\.(md|txt)$|^docs/'; then
-            echo "docs_only=false" >> $GITHUB_OUTPUT
-          else
-            echo "docs_only=true" >> $GITHUB_OUTPUT
-          fi
-
-  check-release:
-    needs: check-doc-changes
-    if: ${{ needs.check-doc-changes.outputs.docs_only != 'true' }}
-    runs-on: ubuntu-latest
-    outputs:
-      exists: ${{ steps.check.outputs.exists }}
-      version: ${{ steps.version.outputs.value }}
-      should_build: ${{ steps.compare.outputs.should_build }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Get version
-        id: version
+      - name: Get package.json version
+        id: get-version
         run: |
           if [ -f "package.json" ]; then
-            echo "value=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+            echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
           else
             echo "Error: package.json not found"
             exit 1
           fi
 
-      - name: Compare with latest release
-        id: compare
+      - name: Check if version exists in releases
+        id: check-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          LATEST=$(curl -H "Authorization: token $GITHUB_TOKEN" \
-                       -s https://api.github.com/repos/${{ github.repository }}/releases/latest \
-                       | jq -r .tag_name | sed 's/^v//')
-          CURRENT="${{ steps.version.outputs.value }}"
-          if [ "$LATEST" = "$CURRENT" ]; then
+          VERSION=${{ steps.get-version.outputs.version }}
+          echo "Checking version v$VERSION"
+          
+          if curl -s -f -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/v$VERSION"; then
+            echo "Version v$VERSION already exists, skipping build"
             echo "should_build=false" >> $GITHUB_OUTPUT
-            echo "Version unchanged, skipping build"
           else
+            echo "Version v$VERSION not found, will build"
             echo "should_build=true" >> $GITHUB_OUTPUT
-            echo "New version detected, proceeding with build"
           fi
 
-      - name: Check if release exists
-        id: check
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          STATUS=$(curl -H "Authorization: token $GITHUB_TOKEN" \
-                       -s -o /dev/null -w "%{http_code}" \
-                       https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ steps.version.outputs.value }})
-          if [ "$STATUS" = "200" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-  build-windows:
-    needs: [check-release]
-    if: ${{ needs.check-release.outputs.should_build == 'true' }}
-    runs-on: windows-latest
+  build:
+    needs: check-version
+    if: needs.check-version.outputs.should_build == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        
     steps:
       - uses: actions/checkout@v3
       
@@ -92,7 +59,7 @@ jobs:
         with:
           node-version: '18.x'
           cache: 'npm'
-          
+
       - name: Cache build
         uses: actions/cache@v3
         with:
@@ -112,176 +79,74 @@ jobs:
         run: npm run make
         
       - name: Debug output location
+        if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
           Write-Host "Listing all files in out directory:"
           Get-ChildItem -Path "out" -Recurse -File | Select-Object FullName
-        
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-artifacts
-          path: out/make/squirrel.windows/x64
-          if-no-files-found: error
-          retention-days: 1
 
-  build-linux:
-    needs: [build-windows, check-release]
-    if: ${{ needs.check-release.outputs.should_build == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-          cache: 'npm'
-          
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            .webpack
-            out
-            dist
-            node_modules
-          key: ${{ runner.os }}-build-${{ hashFiles('**/package-lock.json', 'forge.config.ts') }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-            
-      - name: Install dependencies
-        run: |
-          npm ci
-          if [ $? -ne 0 ]; then
-            echo "npm ci failed"
-            exit 1
-          fi
-        
-      - name: Build application
-        run: |
-          npm run make
-          if [ $? -ne 0 ]; then
-            echo "Build failed"
-            exit 1
-          fi
-        
       - name: Debug output location
+        if: matrix.os == 'ubuntu-latest'
         run: |
           echo "Listing all files in out directory:"
           find out -type f
-        
+          
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-artifacts
+          name: ${{ matrix.os }}-artifacts
           path: |
-            out/make/deb/x64
-            out/make/rpm/x64
+            ${{ matrix.os == 'windows-latest' && 'out/make/squirrel.windows/x64' || 'out/make/deb/x64' }}
+            ${{ matrix.os == 'ubuntu-latest' && 'out/make/rpm/x64' || '' }}
           if-no-files-found: error
           retention-days: 1
 
-  update-changelog:
-    needs: [check-release, build-linux]
-    if: ${{ needs.check-release.outputs.exists == 'false' && needs.check-release.outputs.should_build == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+  release:
+    needs: [check-version, build]
+    if: needs.check-version.outputs.should_build == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Get previous tag
-        id: previoustag
+      - name: Update CHANGELOG.md
         run: |
-          echo "tag=$(git describe --tags --abbrev=0 || echo 'v0.0.0')" >> $GITHUB_OUTPUT
-          
-      - name: Generate changelog
-        run: |
-          echo "## [v${{ needs.check-release.outputs.version }}] - $(date +'%Y-%m-%d')" > temp_changelog.md
+          echo "## [v${{ needs.check-version.outputs.version }}] - $(date +'%Y-%m-%d')" > temp_changelog.md
           echo "" >> temp_changelog.md
-          
-          # Get commits since last tag
-          git log --pretty=format:"### %s%n%b" $(git describe --tags --abbrev=0)..HEAD | while read -r line; do
-            if [[ $line == "### "* ]]; then
-              # Format commit headlines
-              echo "- ${line#### }" >> temp_changelog.md
-            elif [[ -n "$line" ]]; then
-              # Format commit body with indent
-              echo "  ${line}" >> temp_changelog.md
-            fi
-          done
-          
+          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 2>/dev/null || echo HEAD)..HEAD >> temp_changelog.md
           echo "" >> temp_changelog.md
-          
+          echo "" >> temp_changelog.md
           if [ -f CHANGELOG.md ]; then
-            tail -n +1 CHANGELOG.md >> temp_changelog.md
+            cat CHANGELOG.md >> temp_changelog.md
           fi
-          
           mv temp_changelog.md CHANGELOG.md
           
-      - name: Commit and push changelog
+      - name: Commit changelog
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add CHANGELOG.md
-          git commit -m "docs: update changelog for v${{ needs.check-release.outputs.version }}" || echo "No changes to commit"
+          git commit -m "docs: update changelog for v${{ needs.check-version.outputs.version }}" || echo "No changes to commit"
           git pull --rebase origin main
           git push || git push --force-with-lease
-
-  create-release:
-    needs: [check-release, build-linux, update-changelog]
-    runs-on: ubuntu-latest
-    if: ${{ needs.check-release.outputs.exists == 'false' && needs.check-release.outputs.should_build == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    steps:
-      - name: Download all artifacts
+          
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: release-artifacts
           
-      - name: Debug artifacts
-        run: |
-          echo "Downloaded artifacts:"
-          find release-artifacts -type f
-          echo "File permissions:"
-          ls -la release-artifacts
-          
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ needs.check-release.outputs.version }}
-          name: Release v${{ needs.check-release.outputs.version }}
-          draft: false
-          prerelease: false
+          tag_name: v${{ needs.check-version.outputs.version }}
+          name: Release v${{ needs.check-version.outputs.version }}
           files: |
             release-artifacts/**/*.exe
             release-artifacts/**/RELEASES
             release-artifacts/**/*.nupkg
             release-artifacts/**/*.deb
             release-artifacts/**/*.rpm
-          fail_on_unmatched_files: true
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  cleanup:
-    needs: [create-release]
-    if: ${{ success() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          
-      - name: Delete version update branch
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          BRANCH="version-update/$VERSION"
-          if git ls-remote --heads origin $BRANCH | grep -q $BRANCH; then
-            git push origin --delete $BRANCH
-            echo "Deleted branch $BRANCH"
-          else
-            echo "Branch $BRANCH not found"
-          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
