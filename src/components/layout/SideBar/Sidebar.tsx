@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { ModelSelector } from '../../../components/features/Services/ModelSelector';
 import { NewChatButton } from './Sidebar-components/NewChatButton';
 import { SettingsPanel } from './Sidebar-components/SettingsPanel';
 import { MessageSquarePlus, Settings } from 'lucide-react';
@@ -14,9 +13,6 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-    model,
-    availableModels,
-    onModelChange,
     onNewChat,
     isOpen,
     onToggle
@@ -93,13 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     isCollapsed={!isOpen}
                                     icon={<MessageSquarePlus className="text-gray-300" size={20} />}
                                 />
-                                <div className="animate-fade-in">
-                                    <ModelSelector
-                                        model={model}
-                                        availableModels={availableModels}
-                                        onModelChange={onModelChange}
-                                    />
-                                </div>
+                                {/* ModelSelector removed from here */}
                             </div>
 
                             <div className="mt-auto pt-4 border-t border-gray-800">

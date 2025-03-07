@@ -1,6 +1,6 @@
 {
   "name": "A4Chat",
-  "version": "1.0.3",
+  "version": "1.0.2",
   "description": "A simple chat application built with Electron and React using TailwindCSS",
   "main": ".webpack/main",
   "scripts": {
@@ -36,6 +36,7 @@
     "cross-env": "^7.0.3",
     "css-loader": "^6.8.1",
     "electron": "^25.9.8",
+    "esbuild": "^0.25.0",
     "eslint": "^8.45.0",
     "eslint-plugin-import": "^2.27.5",
     "fork-ts-checker-webpack-plugin": "^8.0.0",
@@ -46,8 +47,7 @@
     "tailwindcss": "^3.3.3",
     "ts-loader": "^9.4.4",
     "ts-node": "^10.9.1",
-    "typescript": "~5.1.6",
-    "esbuild": "^0.25.0"
+    "typescript": "~5.1.6"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.8",

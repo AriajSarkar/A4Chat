@@ -192,15 +192,18 @@ const Chat: React.FC = () => {
                         )}
                     </div>
                 </div>
-                <footer className="sticky bottom-0 z-10 bg-white/80 dark:bg-gray-800/80 
+                <footer className="sticky bottom-0 z-10 rounded-tr-3xl bg-white/80 dark:bg-gray-800/80 
                                 backdrop-blur-md border-t border-gray-200 dark:border-gray-700">
-                    <div className="max-w-4xl mx-auto w-full p-4">
+                    <div className="max-w-4xl mx-auto w-full pb-4">
                         <ChatInput
                             input={input}
                             isLoading={isStreaming}
                             onInputChange={setInput}
                             onSubmit={handleSubmit}
                             onStop={handleStopGeneration}
+                            model={model}
+                            availableModels={availableModels}
+                            onModelChange={handleModelChange}
                         />
                     </div>
                 </footer>

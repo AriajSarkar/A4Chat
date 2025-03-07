@@ -48,8 +48,8 @@ module.exports = {
           '100%': { transform: 'scale(1) translateY(0)', opacity: 1 },
         },
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         fadeUp: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
