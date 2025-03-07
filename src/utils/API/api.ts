@@ -28,13 +28,13 @@ interface ModelInfo {
     parameters: Record<string, any>;
 }
 
-interface StreamResponse {
-    model: string;
-    created_at: string;
-    response: string;
-    done: boolean;
-    context?: number[];
-}
+// interface StreamResponse {
+//     model: string;
+//     created_at: string;
+//     response: string;
+//     done: boolean;
+//     context?: number[];
+// }
 
 interface EmbeddingsResponse {
     embedding: number[];
@@ -50,11 +50,20 @@ interface VersionInfo {
     version: string;
 }
 
+// Add request caching and timeout management
 export class OllamaAPI {
     private static baseUrl = window.env?.OLLAMA_API_URL || 'http://localhost:11434/api';
     private static controller: AbortController | null = null;
+    private static requestCache: Map<string, { data: any, timestamp: number }> = new Map();
+    private static CACHE_TTL = 60000; // 1 minute cache lifetime
+    private static requestTimeouts: Map<string, NodeJS.Timeout> = new Map();
+    private static DEFAULT_TIMEOUT = 30000; // 30 second default timeout
+    private static concurrentRequests = 0;
+    private static MAX_CONCURRENT_REQUESTS = 3; // Maximum concurrent requests
+    private static pendingRequests: Array<() => void> = [];
+    private static isOffline = false;
+    private static retryBackoff = 1000; // Start with 1s backoff, will increase exponentially
 
-    // Currently used methods
     static async generateStream(
         prompt: string, 
         model: string,
@@ -64,31 +73,70 @@ export class OllamaAPI {
     ): Promise<void> {
         try {
             this.controller = new AbortController();
+            
+            // Set a timeout for the request
+            const timeoutId = setTimeout(() => {
+                if (this.controller) {
+                    this.controller.abort();
+                    onError?.(new Error('Request timed out'));
+                }
+            }, this.DEFAULT_TIMEOUT);
 
             const response = await fetch(`${this.baseUrl}/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model, prompt, stream: true }),
+                body: JSON.stringify({ 
+                    model, 
+                    prompt, 
+                    stream: true,
+                    // Remove num_predict limit to allow unlimited token generation
+                    options: {
+                        num_ctx: 2048,     // Increased context window for better comprehension
+                        seed: 42,          // Consistent seed for more predictable memory usage
+                        repeat_penalty: 1.1 // Higher penalty helps avoid repetition/loops
+                    }
+                }),
                 signal: this.controller.signal
             });
+            
+            // Clear the timeout
+            clearTimeout(timeoutId);
 
-            const reader = response.body?.getReader();
+            const reader = response.body.getReader() as unknown as import("stream/web").ReadableStreamDefaultReader<Uint8Array>;
             if (!reader) throw new Error('No readable stream available');
 
-            const parser = createStreamParser({ onToken, onComplete, onError });
+            const parser = createStreamParser({ 
+                onToken, 
+                onComplete: () => {
+                    // Ensure controller is reset
+                    this.controller = null;
+                    // Ensure we call the completion callback
+                    onComplete();
+                },
+                onError 
+            });
             await parser.processStream(reader);
+            
+            // Reset the offline flag if the request was successful
+            this.isOffline = false;
+            this.retryBackoff = 1000; // Reset backoff time
         } catch (error) {
             if (error.name === 'AbortError') {
-                // Handle abort gracefully
                 console.log('Generation stopped by user');
                 return;
             }
+            
             onError?.(error);
+            
+            // Handle offline mode and connection issues
             if (error instanceof TypeError && 
                 (error.message === 'Failed to fetch' || 
                  error.message.includes('ERR_CONNECTION_REFUSED'))) {
+                
+                this.isOffline = true;
                 throw new Error('OLLAMA_SERVICE_OFFLINE');
             }
+            
             console.error('Stream error:', error);
             throw error;
         } finally {
@@ -104,20 +152,48 @@ export class OllamaAPI {
     }
 
     static async generateResponse(prompt: string, model: string): Promise<GenerateResponse> {
-        return await this.post('/generate', { model, prompt });
+        // Use cache if available
+        const cacheKey = `generate:${model}:${prompt}`;
+        const cached = this.getCachedResponse(cacheKey);
+        if (cached) return cached;
+        
+        const result = await this.post('/generate', { model, prompt });
+        this.cacheResponse(cacheKey, result);
+        return result;
     }
 
     static async chatCompletion(messages: ChatMessage[], model: string): Promise<ChatResponse> {
-        return await this.post('/chat', { model, messages });
+        // Create a deterministic cache key from messages
+        const messagesKey = JSON.stringify(messages);
+        const cacheKey = `chat:${model}:${messagesKey}`;
+        const cached = this.getCachedResponse(cacheKey);
+        if (cached) return cached;
+        
+        const result = await this.post('/chat', { model, messages });
+        this.cacheResponse(cacheKey, result);
+        return result;
     }
 
     static async getModels(): Promise<string[]> {
+        // Always use cache if available, with longer TTL
+        const cacheKey = 'models';
+        const cached = this.getCachedResponse(cacheKey, 300000); // 5 min TTL for models list
+        if (cached) return cached;
+        
         const response = await this.get('/tags');
-        return response.models?.map((model: { name: string }) => model.name) || [];
+        const models = response.models?.map((model: { name: string }) => model.name) || [];
+        this.cacheResponse(cacheKey, models);
+        return models;
     }
 
     static async getModelInfo(name: string): Promise<ModelInfo> {
-        return await this.post('/show', { name });
+        const cacheKey = `model:${name}`;
+        const cached = this.getCachedResponse(cacheKey, 3600000); // 1 hour TTL for model info
+        if (cached) return cached;
+        
+        const result = await this.post('/show', { name });
+        this.cacheResponse(cacheKey, result);
+        return result;
     }
 
     static async copyModel(source: string, destination: string): Promise<void> {
@@ -154,56 +230,223 @@ export class OllamaAPI {
     }
 
     private static async get(endpoint: string): Promise<any> {
+        await this.waitForRequestSlot();
+        
         try {
-            const response = await fetch(`${this.baseUrl}${endpoint}`);
-            if (!response.ok) {
-                throw new Error(`API error: ${response.statusText}`);
+            this.concurrentRequests++;
+            
+            // Add jitter to avoid request thundering herd
+            const jitter = Math.random() * 100;
+            await new Promise(resolve => setTimeout(resolve, jitter));
+            
+            const requestId = `get:${endpoint}:${Date.now()}`;
+            
+            // Set timeout
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                const timeoutId = setTimeout(() => {
+                    this.requestTimeouts.delete(requestId);
+                    reject(new Error(`Request timeout for ${endpoint}`));
+                }, this.DEFAULT_TIMEOUT);
+                
+                this.requestTimeouts.set(requestId, timeoutId);
+            });
+            
+            // Create fetch promise
+            const fetchPromise = fetch(`${this.baseUrl}${endpoint}`).then(async response => {
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusText}`);
+                }
+                return await response.json();
+            });
+            
+            // Race between timeout and fetch
+            const result = await Promise.race([fetchPromise, timeoutPromise]);
+            
+            // Clear timeout if fetch completed first
+            const timeoutId = this.requestTimeouts.get(requestId);
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                this.requestTimeouts.delete(requestId);
             }
-            return await response.json();
+            
+            // Request successful, reset offline status
+            this.isOffline = false;
+            this.retryBackoff = 1000;
+            
+            return result;
         } catch (error) {
             if (error instanceof TypeError && 
                 (error.message === 'Failed to fetch' || 
                 error.message.includes('ERR_CONNECTION_REFUSED'))) {
+                
+                this.isOffline = true;
                 throw new Error('OLLAMA_SERVICE_OFFLINE');
             }
             throw error;
+        } finally {
+            this.concurrentRequests--;
+            this.processNextRequest();
         }
     }
 
     private static async post(endpoint: string, body: any): Promise<any> {
+        await this.waitForRequestSlot();
+        
         try {
-            const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            this.concurrentRequests++;
+            
+            const requestId = `post:${endpoint}:${Date.now()}`;
+            
+            // Set timeout
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                const timeoutId = setTimeout(() => {
+                    this.requestTimeouts.delete(requestId);
+                    reject(new Error(`Request timeout for ${endpoint}`));
+                }, this.DEFAULT_TIMEOUT);
+                
+                this.requestTimeouts.set(requestId, timeoutId);
+            });
+            
+            // Create fetch promise
+            const fetchPromise = fetch(`${this.baseUrl}${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(body),
+            }).then(async response => {
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusText}`);
+                }
+                return await response.json();
             });
-            if (!response.ok) {
-                throw new Error(`API error: ${response.statusText}`);
+            
+            // Race between timeout and fetch
+            const result = await Promise.race([fetchPromise, timeoutPromise]);
+            
+            // Clear timeout if fetch completed first
+            const timeoutId = this.requestTimeouts.get(requestId);
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                this.requestTimeouts.delete(requestId);
             }
-            return await response.json();
+            
+            return result;
         } catch (error) {
             if (error instanceof TypeError && 
                 (error.message === 'Failed to fetch' || 
                  error.message.includes('ERR_CONNECTION_REFUSED'))) {
+                
+                this.isOffline = true;
                 throw new Error('OLLAMA_SERVICE_OFFLINE');
             }
             throw error;
+        } finally {
+            this.concurrentRequests--;
+            this.processNextRequest();
         }
     }
 
     private static async delete(endpoint: string, body: any): Promise<any> {
-        const response = await fetch(`${this.baseUrl}${endpoint}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        });
-        if (!response.ok) {
-            throw new Error(`API error: ${response.statusText}`);
+        await this.waitForRequestSlot();
+        
+        try {
+            this.concurrentRequests++;
+            
+            const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            if (error instanceof TypeError && 
+                (error.message === 'Failed to fetch' || 
+                error.message.includes('ERR_CONNECTION_REFUSED'))) {
+                
+                this.isOffline = true;
+                throw new Error('OLLAMA_SERVICE_OFFLINE');
+            }
+            throw error;
+        } finally {
+            this.concurrentRequests--;
+            this.processNextRequest();
         }
-        return await response.json();
+    }
+
+    // Cache management methods
+    private static getCachedResponse(key: string, customTtl?: number): any | null {
+        const cached = this.requestCache.get(key);
+        if (!cached) return null;
+        
+        const ttl = customTtl || this.CACHE_TTL;
+        const now = Date.now();
+        
+        // Check if the cache is still valid
+        if (now - cached.timestamp <= ttl) {
+            return cached.data;
+        }
+        
+        // Remove expired cache entry
+        this.requestCache.delete(key);
+        return null;
+    }
+    
+    private static cacheResponse(key: string, data: any): void {
+        this.requestCache.set(key, {
+            data,
+            timestamp: Date.now()
+        });
+        
+        // Limit cache size to prevent memory leaks
+        if (this.requestCache.size > 100) {
+            // Remove the oldest entry
+            const oldestKey = this.requestCache.keys().next().value;
+            this.requestCache.delete(oldestKey);
+        }
+    }
+    
+    // Request queue management for throttling
+    private static waitForRequestSlot(): Promise<void> {
+        if (this.concurrentRequests < this.MAX_CONCURRENT_REQUESTS) {
+            return Promise.resolve();
+        }
+        
+        return new Promise(resolve => {
+            this.pendingRequests.push(resolve);
+        });
+    }
+    
+    private static processNextRequest(): void {
+        if (this.pendingRequests.length > 0 && 
+            this.concurrentRequests < this.MAX_CONCURRENT_REQUESTS) {
+            const nextResolve = this.pendingRequests.shift();
+            if (nextResolve) {
+                nextResolve();
+            }
+        }
+    }
+    
+    // Add methods to clean up resources
+    static cleanup(): void {
+        // Clear all timeouts
+        for (const timeoutId of this.requestTimeouts.values()) {
+            clearTimeout(timeoutId);
+        }
+        this.requestTimeouts.clear();
+        
+        // Clear cache if needed
+        this.requestCache.clear();
+        
+        // Reset other state
+        this.pendingRequests = [];
+        this.concurrentRequests = 0;
     }
 }
