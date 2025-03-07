@@ -84,6 +84,16 @@ module.exports = {
             opacity: 1,
             transform: 'translateY(0)'
           }
+        },
+        bubbleIn: {
+          '0%': { 
+            opacity: 0,
+            transform: 'translateY(5px) scale(0.98)'
+          },
+          '100%': { 
+            opacity: 1,
+            transform: 'translateY(0) scale(1)'
+          }
         }
       },
       animation: {
@@ -95,7 +105,8 @@ module.exports = {
         'cursor-blink': 'blink 1s step-end infinite',
         'pulse-subtle': 'pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'typewriter-blink': 'typewriterCursor 0.7s step-end infinite',
-        'fade-in-up': 'fadeInUp 0.2s ease-out forwards'
+        'fade-in-up': 'fadeInUp 0.2s ease-out forwards',
+        'bubble-in': 'bubbleIn 0.3s ease-out forwards'
       },
       animationDelay: {
         '200ms': '200ms',
@@ -122,6 +133,30 @@ module.exports = {
         },
         '.animation-delay-400': {
           'animation-delay': '0.4s',
+        },
+        '.scrollbar-thin': {
+          'scrollbar-width': 'thin',
+          '&::-webkit-scrollbar': {
+            width: '6px',
+            height: '6px',
+          },
+        },
+        '.scrollbar-thumb-gray-300': {
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: '#D1D5DB',
+            borderRadius: '3px',
+          },
+        },
+        '.scrollbar-thumb-gray-700': {
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: '#374151',
+            borderRadius: '3px',
+          },
+        },
+        '.scrollbar-track-transparent': {
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'transparent',
+          },
         },
       }
       addUtilities(newUtilities)

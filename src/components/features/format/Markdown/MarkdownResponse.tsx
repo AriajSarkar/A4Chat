@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from '../Code/CodeBlock';
@@ -30,74 +30,90 @@ interface ListProps {
 
 /**
  * Enhanced markdown component with complete formatting support
+ * and optimized rendering
  */
 export const MarkdownResponse = React.memo(({ content, isStreaming }: MarkdownResponseProps) => {
+    const prevContentLength = useRef(0);
+    const shouldProcessContent = useMemo(() => {
+        // Only fully process content once it's completed streaming
+        // or if the content has changed significantly (more than 100 chars)
+        const contentLength = content.length;
+        const hasSignificantChange = Math.abs(contentLength - prevContentLength.current) > 100;
+        
+        if (!isStreaming || hasSignificantChange) {
+            prevContentLength.current = contentLength;
+            return true;
+        }
+        return false;
+    }, [content, isStreaming]);
+    
+    // Process content only when needed to avoid unnecessary work during streaming
     const processedContent = useMemo(() => 
-        cleanMarkdownContent(content || ''), [content]
-    );
+        shouldProcessContent 
+            ? cleanMarkdownContent(content || '') 
+            : content
+    , [content, shouldProcessContent]);
 
-    // Only re-process when content changes by more than 20 characters
+    // Skip rendering for tiny incremental updates during streaming
+    // to reduce jank and improve perceived performance
     return (
         <div className={`
             prose dark:prose-invert max-w-none overflow-hidden
             
             /* Headings */
-            prose-headings:border-b prose-headings:border-gray-200/50 dark:prose-headings:border-gray-700/50
-            prose-headings:font-semibold prose-headings:tracking-tight
-            prose-h1:text-3xl prose-h1:font-bold prose-h1:mb-6 prose-h1:mt-8 
-            prose-h2:text-2xl prose-h2:mb-5 prose-h2:mt-7
-            prose-h3:text-xl prose-h3:mb-4 prose-h3:mt-6
-            prose-h4:text-lg prose-h5:text-base prose-h6:text-sm
+            prose-headings:mt-6 prose-headings:mb-4 prose-headings:border-b prose-headings:border-gray-200/50 dark:prose-headings:border-gray-700/50
+            prose-headings:pb-1 prose-headings:font-medium prose-headings:tracking-tight
+            prose-h1:text-2xl prose-h1:font-semibold prose-h1:mb-5 prose-h1:mt-8 
+            prose-h2:text-xl prose-h2:mb-4 prose-h2:mt-7
+            prose-h3:text-lg prose-h3:mb-3 prose-h3:mt-6
+            prose-h4:text-base prose-h5:text-sm prose-h6:text-xs
             
             /* Paragraphs and text */
-            prose-p:my-4 prose-p:leading-7 prose-p:text-gray-600 dark:prose-p:text-gray-300
+            prose-p:my-3 prose-p:leading-relaxed prose-p:text-gray-700 dark:prose-p:text-gray-300
             prose-strong:font-semibold prose-strong:text-gray-900 dark:prose-strong:text-gray-100
             prose-em:italic prose-em:text-gray-700 dark:prose-em:text-gray-300
             
-            /* Code elements */
-            prose-pre:p-0 prose-pre:m-0 prose-pre:bg-transparent
+            /* Code elements - updated to match new CodeBlock styling */
+            prose-pre:my-6 prose-pre:p-0 prose-pre:bg-transparent prose-pre:overflow-hidden
+            prose-pre:border-0 prose-pre:rounded-lg
+            prose-pre:shadow-none
+            
             prose-code:before:hidden prose-code:after:hidden
             prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md
             prose-code:bg-gray-100/80 prose-code:dark:bg-gray-800/80
             prose-code:text-gray-800 prose-code:dark:text-gray-200
             prose-code:text-[0.9em] prose-code:font-medium
             
-            /* Fix overflow issues */
-            prose-pre:overflow-x-auto prose-pre:max-w-full
-            prose-code:break-words prose-code:whitespace-pre-wrap
-            prose-p:break-words prose-p:overflow-visible
-            
             /* Lists */
-            prose-ul:my-4 prose-ul:ml-2 prose-ul:list-disc
-            prose-ol:my-4 prose-ol:ml-2 prose-ol:list-decimal
-            prose-li:my-1 prose-li:text-gray-600 dark:prose-li:text-gray-300
+            prose-ul:my-3 prose-ul:ml-2 prose-ul:list-disc
+            prose-ol:my-3 prose-ol:ml-2 prose-ol:list-decimal
+            prose-li:my-1 prose-li:text-gray-700 dark:prose-li:text-gray-300
             
             /* Links */
-            prose-a:text-blue-600 dark:prose-a:text-blue-400 
+            prose-a:text-brand-600 dark:prose-a:text-brand-400 
             prose-a:no-underline hover:prose-a:underline
             prose-a:font-medium
             
             /* Images */
-            prose-img:rounded-xl prose-img:shadow-md 
-            prose-img:max-h-96 prose-img:mx-auto prose-img:my-8
+            prose-img:rounded-lg prose-img:shadow-md 
+            prose-img:max-h-96 prose-img:mx-auto prose-img:my-6
             
             /* Blockquotes */
             prose-blockquote:border-l-4 prose-blockquote:border-brand-500/40
             prose-blockquote:bg-brand-50/30 dark:prose-blockquote:bg-brand-900/10
             prose-blockquote:rounded-r-lg prose-blockquote:pl-6 
-            prose-blockquote:py-2 prose-blockquote:my-6
+            prose-blockquote:py-2 prose-blockquote:my-4
             prose-blockquote:text-gray-700 dark:prose-blockquote:text-gray-300
             prose-blockquote:font-normal
             
             /* Tables */
-            prose-table:border prose-table:border-collapse
-            prose-table:my-6 prose-table:w-full
+            prose-table:border prose-table:border-collapse prose-table:my-4 prose-table:w-full
             prose-thead:bg-gray-50 dark:prose-thead:bg-gray-800
-            prose-th:p-2 prose-th:text-left prose-th:font-semibold
+            prose-th:p-2 prose-th:text-left prose-th:font-medium
             prose-td:p-2 prose-td:border-t prose-td:border-gray-200 dark:prose-td:border-gray-700
             
             /* Horizontal rules */
-            prose-hr:my-8 prose-hr:border-t prose-hr:border-gray-300 dark:prose-hr:border-gray-700
+            prose-hr:my-6 prose-hr:border-t prose-hr:border-gray-200 dark:prose-hr:border-gray-700
             
             /* Animation and state */
             ${isStreaming ? 'streaming opacity-90' : 'completed opacity-100'}
@@ -182,17 +198,26 @@ export const MarkdownResponse = React.memo(({ content, isStreaming }: MarkdownRe
                 {processedContent}
             </ReactMarkdown>
             {isStreaming && (
-                <span className="hidden">&#8203;</span> // Using HTML entity instead of invisible character
+                <span className="hidden">&#8203;</span>
             )}
         </div>
     );
 }, (prevProps, nextProps) => {
-    // Prevent unnecessary re-renders for small content changes during streaming
-    if (prevProps.isStreaming && 
-        nextProps.isStreaming && 
-        nextProps.content.length - prevProps.content.length < 15) {
-        return true; // Skip re-render
+    // Improved memoization logic to avoid unnecessary re-renders
+    // Only re-render in these cases:
+    // 1. Streaming state changed 
+    // 2. When streaming, only update on substantial content changes
+    // 3. When completed, only if content is different
+    if (prevProps.isStreaming !== nextProps.isStreaming) {
+        return false; // Always re-render when streaming state changes
     }
-    return prevProps.content === nextProps.content && 
-           prevProps.isStreaming === nextProps.isStreaming;
+    
+    if (prevProps.isStreaming && nextProps.isStreaming) {
+        // During streaming, only re-render when content changes by more than 20 chars
+        // This significantly reduces jank during fast token streaming
+        return nextProps.content.length - prevProps.content.length < 20;
+    }
+    
+    // For completed messages, only re-render if content actually changed
+    return prevProps.content === nextProps.content;
 });
