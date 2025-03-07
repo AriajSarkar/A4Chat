@@ -14,21 +14,29 @@ on:
 
 jobs:
   check-doc-changes:
-    uses: ./.github/workflows/doc-changes.yml
-
-  version-update:
-    needs: check-doc-changes
-    if: ${{ github.event_name != 'workflow_dispatch' && needs.check-doc-changes.outputs.only_docs == 'false' }}
-    uses: ./.github/workflows/version-update.yml
-    secrets: inherit
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.check_docs.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check for doc-only changes
+        id: check_docs
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -qvE '\.(md|txt)$|^docs/'; then
+            echo "docs_only=false" >> $GITHUB_OUTPUT
+          else
+            echo "docs_only=true" >> $GITHUB_OUTPUT
+          fi
 
   check-release:
-    needs: [version-update]
-    if: always()
+    needs: check-doc-changes
+    if: ${{ needs.check-doc-changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-latest
     outputs:
       exists: ${{ steps.check.outputs.exists }}
       version: ${{ steps.version.outputs.value }}
+      should_build: ${{ steps.compare.outputs.should_build }}
     steps:
       - uses: actions/checkout@v3
       - name: Get version
@@ -40,6 +48,24 @@ jobs:
             echo "Error: package.json not found"
             exit 1
           fi
+
+      - name: Compare with latest release
+        id: compare
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST=$(curl -H "Authorization: token $GITHUB_TOKEN" \
+                       -s https://api.github.com/repos/${{ github.repository }}/releases/latest \
+                       | jq -r .tag_name | sed 's/^v//')
+          CURRENT="${{ steps.version.outputs.value }}"
+          if [ "$LATEST" = "$CURRENT" ]; then
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged, skipping build"
+          else
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "New version detected, proceeding with build"
+          fi
+
       - name: Check if release exists
         id: check
         env:
@@ -55,7 +81,8 @@ jobs:
           fi
 
   build-windows:
-    needs: check-release
+    needs: [check-release]
+    if: ${{ needs.check-release.outputs.should_build == 'true' }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
@@ -99,7 +126,8 @@ jobs:
           retention-days: 1
 
   build-linux:
-    needs: build-windows
+    needs: [build-windows, check-release]
+    if: ${{ needs.check-release.outputs.should_build == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -155,12 +183,13 @@ jobs:
 
   update-changelog:
     needs: [check-release, build-linux]
-    if: needs.check-release.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: ${{ needs.check-release.outputs.exists == 'false' && needs.check-release.outputs.should_build == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Get previous tag
         id: previoustag
@@ -191,18 +220,19 @@ jobs:
           
           mv temp_changelog.md CHANGELOG.md
           
-      - name: Commit changelog
+      - name: Commit and push changelog
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add CHANGELOG.md
           git commit -m "docs: update changelog for v${{ needs.check-release.outputs.version }}" || echo "No changes to commit"
-          git push
+          git pull --rebase origin main
+          git push || git push --force-with-lease
 
   create-release:
     needs: [check-release, build-linux, update-changelog]
     runs-on: ubuntu-latest
-    if: needs.check-release.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: ${{ needs.check-release.outputs.exists == 'false' && needs.check-release.outputs.should_build == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -236,7 +266,7 @@ jobs:
 
   cleanup:
     needs: [create-release]
-    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: ${{ success() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
