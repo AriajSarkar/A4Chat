@@ -1,21 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { NewChatButton } from './Sidebar-components/NewChatButton';
 import { SettingsPanel } from './Sidebar-components/SettingsPanel';
-import { MessageSquarePlus, Settings } from 'lucide-react';
+import { MessageSquarePlus, Settings, History } from 'lucide-react';
+import { PrevChatList } from '../../features/PrevChat/PrevChatList';
 
 interface SidebarProps {
     model: string;
     availableModels: string[];
     onModelChange: (model: string) => void;
     onNewChat: () => void;
+    onLoadChat: (chatId: number) => void;
+    activeChatId?: number;
     isOpen: boolean;
     onToggle: () => void;
+    refreshTrigger?: number; // Add this prop
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
     onNewChat,
+    onLoadChat,
+    activeChatId,
     isOpen,
-    onToggle
+    onToggle,
+    refreshTrigger = 0  // Use the prop with default value
 }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -89,7 +96,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     isCollapsed={!isOpen}
                                     icon={<MessageSquarePlus className="text-gray-300" size={20} />}
                                 />
-                                {/* ModelSelector removed from here */}
+                                
+                                {/* Previous chats section */}
+                                <div className="mt-6">
+                                    <div className="flex items-center gap-2 px-1 mb-2 text-xs font-medium text-brand-400 dark:text-brand-600 uppercase">
+                                        <History size={14} />
+                                        <span>Previous Chats</span>
+                                    </div>
+                                    <PrevChatList 
+                                        activeChatId={activeChatId} 
+                                        onChatSelect={onLoadChat}
+                                        refreshTrigger={refreshTrigger} // Pass the refresh trigger
+                                    />
+                                </div>
                             </div>
 
                             <div className="mt-auto pt-4 border-t border-gray-800">

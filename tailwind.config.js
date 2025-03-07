@@ -97,6 +97,10 @@ module.exports = {
         'typewriter-blink': 'typewriterCursor 0.7s step-end infinite',
         'fade-in-up': 'fadeInUp 0.2s ease-out forwards'
       },
+      animationDelay: {
+        '200ms': '200ms',
+        '400ms': '400ms',
+      },
       typography: {
         DEFAULT: {
           css: {
@@ -111,6 +115,17 @@ module.exports = {
   },
   plugins: [
     require('@tailwindcss/typography'),
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.animation-delay-200': {
+          'animation-delay': '0.2s',
+        },
+        '.animation-delay-400': {
+          'animation-delay': '0.4s',
+        },
+      }
+      addUtilities(newUtilities)
+    }
   ],
 }
 

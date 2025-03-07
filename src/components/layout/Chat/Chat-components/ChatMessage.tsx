@@ -11,7 +11,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     return (
         <div className={`
             rounded-lg p-4 transition-all duration-200 ease-in-out
-            overflow-hidden max-w-full
+            overflow-hidden w-full break-words
             ${message.role === 'assistant' 
                 ? 'bg-brand-50/50 dark:bg-brand-900/20' 
                 : 'bg-white dark:bg-gray-800/50'
@@ -36,11 +36,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                         {message.role === 'assistant' ? 'Assistant' : 'You'}
                     </div>
                     {message.role === 'assistant' ? (
-                        <div className="overflow-hidden">
+                        <div className="overflow-hidden max-w-full">
                             <MarkdownResponse content={message.content} isStreaming={false} />
                         </div>
                     ) : (
-                        <div className="text-gray-800 dark:text-gray-200 leading-relaxed break-words">
+                        <div className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap break-words">
                             {message.content}
                         </div>
                     )}

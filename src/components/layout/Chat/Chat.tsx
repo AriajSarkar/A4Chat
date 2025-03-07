@@ -7,6 +7,7 @@ import { StreamingMessage } from '../../features/Streaming/StreamingMessage';
 import { OllamaAPI } from '../../../utils/API/api';
 import { ServiceError } from '../../features/Services/ServiceError';
 import { loadConfig, updateLastUsedModel } from '../../../utils/config';
+import { db } from '../../LocDB/ChatDatabase';
 
 const Chat: React.FC = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -17,12 +18,30 @@ const Chat: React.FC = () => {
     const [isStreaming, setIsStreaming] = useState(false);
     const [serviceError, setServiceError] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [activeChatId, setActiveChatId] = useState<number | undefined>(undefined);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [renderKey, setRenderKey] = useState<number>(0); // Add render key for controlled re-renders
+    const [renderKey, setRenderKey] = useState<number>(0);
+    const [chatListRefresh, setChatListRefresh] = useState<number>(0); // Add refresh counter
 
     const handleModelChange = (newModel: string) => {
         setModel(newModel);
         updateLastUsedModel(newModel);
+        // Update model in active chat if there is one
+        if (activeChatId) {
+            updateChatModel(activeChatId, newModel);
+        }
+    };
+
+    // Function to update chat model in the database
+    const updateChatModel = async (chatId: number, modelName: string) => {
+        try {
+            const chat = await db.getChat(chatId);
+            if (chat) {
+                await db.chats.update(chatId, { model: modelName });
+            }
+        } catch (error) {
+            console.error('Failed to update chat model:', error);
+        }
     };
 
     const loadModels = async () => {
@@ -67,11 +86,18 @@ const Chat: React.FC = () => {
         setIsStreaming(false);
         // Keep the accumulated content by adding it as a complete message
         if (streamingContent) {
-            setMessages(prev => [...prev, {
+            const assistantMessage: ChatMessage = {
                 role: 'assistant',
                 content: streamingContent
-            }]);
+            };
+            
+            setMessages(prev => [...prev, assistantMessage]);
             setStreamingContent('');
+            
+            // Save to database if we have an active chat
+            if (activeChatId) {
+                db.addMessage(activeChatId, 'assistant', streamingContent);
+            }
         }
     };
 
@@ -82,16 +108,70 @@ const Chat: React.FC = () => {
         }, 50)
     ).current;
 
+    const handleNewChat = async () => {
+        setMessages([]);
+        setActiveChatId(undefined);
+        // Trigger refresh after creating a new chat (even though its empty at this point)
+        setChatListRefresh(prev => prev + 1);
+    };
+
+    // Load a chat from the database
+    const handleLoadChat = async (chatId: number) => {
+        try {
+            const chat = await db.getChat(chatId);
+            if (!chat) return;
+            
+            // Set the active model to the one used in the chat
+            if (chat.model && availableModels.includes(chat.model)) {
+                setModel(chat.model);
+                updateLastUsedModel(chat.model);
+            }
+            
+            // Load messages for this chat
+            const chatMessages = await db.getMessages(chatId);
+            
+            // Convert to ChatMessage format for the UI
+            const uiMessages: ChatMessage[] = chatMessages.map(msg => ({
+                role: msg.role,
+                content: msg.content
+            }));
+            
+            setMessages(uiMessages);
+            setActiveChatId(chatId);
+        } catch (error) {
+            console.error('Failed to load chat:', error);
+        }
+    };
+
+    // Create a new chat or use existing one before adding messages
+    const ensureActiveChatExists = async (): Promise<number> => {
+        if (activeChatId) return activeChatId;
+        
+        // Create a new chat in the database
+        const newChatId = await db.createChat('New Conversation', model);
+        setActiveChatId(newChatId);
+        // Trigger refresh after creating a chat
+        setChatListRefresh(prev => prev + 1);
+        return newChatId;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || !model) return;
 
+        const chatId = await ensureActiveChatExists();
+        
         const userMessage: ChatMessage = {
             role: 'user',
             content: input
         };
 
+        // Add message to UI
         setMessages(prev => [...prev, userMessage]);
+        
+        // Save user message to database
+        await db.addMessage(chatId, 'user', input);
+        
         setInput('');
         setIsStreaming(true);
         setStreamingContent('');
@@ -107,15 +187,23 @@ const Chat: React.FC = () => {
                     // Use debounced update to reduce flickering
                     updateStreamingContent(accumulatedResponse);
                 },
-                () => {
+                async () => {
                     setIsStreaming(false);
-                    setMessages(prev => [
-                        ...prev, 
-                        {
-                            role: 'assistant',
-                            content: accumulatedResponse
-                        }
-                    ]);
+                    
+                    // Add assistant's response to UI
+                    const assistantMessage: ChatMessage = {
+                        role: 'assistant',
+                        content: accumulatedResponse
+                    };
+                    
+                    setMessages(prev => [...prev, assistantMessage]);
+                    
+                    // Save assistant message to database
+                    await db.addMessage(chatId, 'assistant', accumulatedResponse);
+                    
+                    // Trigger refresh after adding message to update the chat list
+                    setChatListRefresh(prev => prev + 1);
+                    
                     setStreamingContent('');
                     // Increment render key to force clean re-render after completion
                     setRenderKey(prev => prev + 1);
@@ -130,13 +218,18 @@ const Chat: React.FC = () => {
             setIsStreaming(false);
             // Only add error message if we haven't accumulated any response
             if (!accumulatedResponse) {
-                setMessages(prev => [
-                    ...prev, 
-                    {
-                        role: 'assistant',
-                        content: 'Sorry, an error occurred.'
-                    }
-                ]);
+                const errorMessage: ChatMessage = {
+                    role: 'assistant',
+                    content: 'Sorry, an error occurred.'
+                };
+                
+                setMessages(prev => [...prev, errorMessage]);
+                
+                // Save error message to database
+                await db.addMessage(chatId, 'assistant', 'Sorry, an error occurred.');
+                
+                // Trigger refresh after adding message
+                setChatListRefresh(prev => prev + 1);
             }
         }
     };
@@ -156,9 +249,12 @@ const Chat: React.FC = () => {
                 model={model}
                 availableModels={availableModels}
                 onModelChange={handleModelChange}
-                onNewChat={() => setMessages([])}
+                onNewChat={handleNewChat}
+                onLoadChat={handleLoadChat}
+                activeChatId={activeChatId}
                 isOpen={isSidebarOpen}
                 onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+                refreshTrigger={chatListRefresh} // Pass the refresh trigger
             />
             <main className={`
                 flex-1 flex flex-col min-w-0
@@ -188,6 +284,8 @@ const Chat: React.FC = () => {
                                         />
                                     </div>
                                 )}
+                                {/* Invisible element to scroll to */}
+                                <div ref={messagesEndRef} />
                             </div>
                         )}
                     </div>

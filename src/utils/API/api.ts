@@ -28,13 +28,13 @@ interface ModelInfo {
     parameters: Record<string, any>;
 }
 
-interface StreamResponse {
-    model: string;
-    created_at: string;
-    response: string;
-    done: boolean;
-    context?: number[];
-}
+// interface StreamResponse {
+//     model: string;
+//     created_at: string;
+//     response: string;
+//     done: boolean;
+//     context?: number[];
+// }
 
 interface EmbeddingsResponse {
     embedding: number[];
