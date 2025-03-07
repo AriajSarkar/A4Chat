@@ -1,9 +1,33 @@
-## [v1.1.3] - 2025-03-07
+## Summary of Changes (v1.1.3)
 
-### Summary of recent changes:
+This release focuses on CI/CD improvements, versioning management, security enhancements, and bringing forward key features from a previous release (v1.0.2).
 
-- - feat: enhance changelog update process in CI workflow
-- - docs: clean up CHANGELOG and remove outdated version information
+*   **Versioning & CI/CD:**
+    *   Improved CI/CD workflows.
+    *   Streamlined version handling.
+    *   Automated version update process.
+    *   Cleaned up version update branches after release.
+    *   Adjusted job dependencies.
+
+*   **Security:**
+    *   Enhanced security with the addition of the `frame-src` directive.
+
+*   **Features (from v1.0.2):**
+    *   Theme support
+    *   Real-time chat
+    *   Model switching
+    *   Markdown support
+    *   Performance utilities (throttle, debounce, memory management)
+    *   Enhanced component styling (StreamingMessage, ModelSelector, ChatInput, PrevChatItem)
+    *   CodeBlock component with copy functionality
+    *   Dexie database integration for chat management
+
+*   **Documentation:**
+    *   Added documentation for GitHub Copilot instructions.
+
+*   **Fixes:**
+    *   Reverted version numbers to correct discrepancies.
+    *   Cleaned up the CHANGELOG.
 
 
 ## [1.0.2] - 2024-03-08
