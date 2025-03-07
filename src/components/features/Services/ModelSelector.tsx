@@ -35,19 +35,20 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
-                    px-2 py-1 text-left 
+                    px-2.5 py-1.5 text-left 
                     rounded-lg flex items-center gap-1
                     transition-all duration-200 ease-in-out group
-                    bg-brand-50/50 hover:bg-brand-100/50
-                    dark:bg-brand-900/20 dark:hover:bg-brand-800/30
-                    text-brand-600 dark:text-brand-light
-                    border border-brand-200/50 dark:border-brand-700/50
+                    bg-white/70 hover:bg-white
+                    dark:bg-gray-800/70 dark:hover:bg-gray-800
+                    text-gray-700 dark:text-gray-300
+                    border border-gray-200/70 dark:border-gray-700/50
+                    shadow-sm
                     ${compact ? 'text-xs' : 'text-sm w-full'}
                 `}
                 aria-label="Select model"
             >
-                <div className="flex items-center gap-1 min-w-0 flex-1">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 
                         ${model ? 'bg-green-500' : 'bg-gray-400'} 
                         group-hover:animate-pulse`}
                     />
@@ -64,12 +65,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             {isOpen && (
                 <div className={`
                     absolute z-[${zIndex.dropdown}] 
-                    ${compact ? 'bottom-full mb-1 left-0' : 'w-full mt-1'} 
-                    bg-white/95 dark:bg-gray-800/95 
-                    backdrop-blur-sm rounded-lg shadow-lg
-                    border border-brand-100 dark:border-brand-900/50
+                    ${compact ? 'bottom-full mb-1.5 right-0' : 'w-full mt-1.5'} 
+                    bg-white dark:bg-gray-800 
+                    shadow-lg rounded-lg
+                    border border-gray-200 dark:border-gray-700
                     max-h-56 overflow-y-auto
-                    min-w-[160px]
+                    min-w-[180px]
                 `}>
                     <div className="py-1">
                         {availableModels.map((modelName) => (
@@ -81,14 +82,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                 }}
                                 className={`
                                     w-full px-3 py-1.5 text-left 
-                                    hover:bg-brand-50 dark:hover:bg-brand-900/30
+                                    hover:bg-gray-50 dark:hover:bg-gray-700/50
                                     transition-colors duration-150 
-                                    text-brand-600 dark:text-brand-light
+                                    text-gray-700 dark:text-gray-300
                                     flex items-center gap-2 min-w-0
+                                    ${model === modelName ? 'bg-gray-50 dark:bg-gray-700/30' : ''}
                                     ${compact ? 'text-xs' : ''}
                                 `}
                             >
-                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0
+                                <span className={`w-2 h-2 rounded-full flex-shrink-0
                                     ${model === modelName ? 'bg-green-500' : 'bg-gray-500'}
                                 `} />
                                 <span className="truncate">{modelName}</span>

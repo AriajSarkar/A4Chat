@@ -7,36 +7,41 @@ interface StreamingMessageProps {
     isComplete: boolean;
 }
 
-// Memoize to prevent re-renders when parent components change
 export const StreamingMessage = memo(({ content, isComplete }: StreamingMessageProps) => {
     return (
         <div className={`
-            rounded-lg p-4 transition-opacity duration-200
-            bg-brand-50/50 dark:bg-brand-900/20
-            animate-once animate-duration-300
+            rounded-xl p-4 transition-all duration-200
+            bg-white dark:bg-gray-800/60 
+            shadow-sm border border-gray-100 dark:border-gray-700
         `}>
-            <div className="flex gap-4 items-start">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-                            bg-primary-600 text-white">
+            <div className="flex gap-3 items-start">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0
+                           bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-400">
                     <Bot size={18} />
                 </div>
                 <div className="flex-1 min-w-0 overflow-hidden">
-                    <div className="font-medium text-brand-600 dark:text-brand-light mb-1">
-                        Assistant {!isComplete && (
-                            <span className="inline-block w-1 h-4 ml-1 align-middle 
-                                        bg-brand-400/70 dark:bg-brand-light/70 
+                    <div className="font-medium text-brand-600 dark:text-brand-400 mb-1.5 flex items-center">
+                        Assistant 
+                        {!isComplete && (
+                            <span className="inline-block w-1.5 h-1.5 ml-2 
+                                        bg-brand-400 dark:bg-brand-light 
                                         animate-pulse rounded-full" />
                         )}
                     </div>
-                    <MarkdownResponse content={content} isStreaming={!isComplete} />
+                    <MarkdownResponse content={content || ' '} isStreaming={!isComplete} />
                 </div>
             </div>
         </div>
     );
 }, (prevProps, nextProps) => {
-    // Only re-render when content changes substantially (more than 20 chars)
-    if (nextProps.content.length - prevProps.content.length < 20 && !nextProps.isComplete) {
-        return true; // prevent re-render for small changes
+    // Only re-render on substantial changes to reduce jank
+    if (nextProps.isComplete !== prevProps.isComplete) {
+        return false; // Always re-render when completion state changes
     }
-    return false;
+    
+    if (!nextProps.isComplete && nextProps.content.length - prevProps.content.length < 15) {
+        return true; // Skip re-renders for small incremental updates
+    }
+    
+    return false; // Allow re-render for substantial changes
 });

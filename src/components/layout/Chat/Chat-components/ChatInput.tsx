@@ -60,10 +60,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <div className="relative">
             <form onSubmit={handleSubmit} className="relative">
                 <div
-                    className="flex flex-col dark:bg-transparent dark:text-white px-3 py-2 max-w-3xl mx-auto
-                              opacity-0 translate-y-2 animate-[fadeIn_0.3s_ease-out_forwards]"
+                    className="flex flex-col dark:bg-transparent dark:text-white px-2 py-1 max-w-3xl mx-auto"
                 >
-                    <div className="flex items-end">
+                    <div className="flex items-end border border-gray-200 dark:border-gray-700 rounded-2xl p-1.5 pr-2.5 
+                                  bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow-sm">
                         <textarea
                             ref={textareaRef}
                             value={input}
@@ -74,7 +74,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             disabled={isLoading}
                             className="bg-transparent dark:text-white rounded p-2 w-full 
                                     resize-none overflow-y-auto outline-none min-h-[40px]
-                                    transition-all duration-200 ease-out"
+                                    transition-all duration-200 ease-out placeholder:text-gray-400"
                             rows={1}
                             onInput={adjustHeight}
                         />
@@ -84,25 +84,29 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                 type="button"
                                 title='Stop'
                                 onClick={onStop}
-                                className="hover:text-white p-2 ml-2 bg-red-500 hover:bg-red-600 dark:hover:bg-red-700 text-white rounded-3xl transition-all duration-300 ease-in-out flex items-center gap-2"
+                                className="p-2.5 bg-red-500 hover:bg-red-600 dark:hover:bg-red-700 text-white rounded-xl 
+                                         transition-all duration-200 ease-in-out shadow-sm"
                             >
-                                <Ban />
+                                <Ban size={18} />
                             </button>
                         ) : (
                             <Tooltip content="Send" position="top">
                                 <button
                                     type="submit"
                                     aria-label="Send message"
-                                    className="hover:text-white p-2 ml-2 hover:bg-black dark:bg-black/50 dark:hover:bg-white dark:hover:text-black rounded-tr-3xl transition-all duration-300 ease-in-out"
+                                    disabled={!input.trim()}
+                                    className="p-2.5 bg-brand-500 hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500 
+                                             text-white rounded-xl transition-all duration-200 ease-in-out 
+                                             disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                                 >
-                                    <SendHorizontal className="w-6 h-6" />
+                                    <SendHorizontal size={18} />
                                 </button>
                             </Tooltip>
                         )}
                     </div>
 
                     {/* Model selector aligned with textarea */}
-                    <div className="mt-1 ml-2">
+                    <div className="mt-2 flex justify-end animate-once animate-fade-in animate-duration-300">
                         <ModelSelector
                             model={model}
                             availableModels={availableModels}
