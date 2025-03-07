@@ -153,8 +153,54 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  create-release:
+  update-changelog:
     needs: [check-release, build-linux]
+    if: needs.check-release.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Get previous tag
+        id: previoustag
+        run: |
+          echo "tag=$(git describe --tags --abbrev=0 || echo 'v0.0.0')" >> $GITHUB_OUTPUT
+          
+      - name: Generate changelog
+        run: |
+          echo "## [v${{ needs.check-release.outputs.version }}] - $(date +'%Y-%m-%d')" > temp_changelog.md
+          echo "" >> temp_changelog.md
+          
+          # Get commits since last tag
+          git log --pretty=format:"### %s%n%b" $(git describe --tags --abbrev=0)..HEAD | while read -r line; do
+            if [[ $line == "### "* ]]; then
+              # Format commit headlines
+              echo "- ${line#### }" >> temp_changelog.md
+            elif [[ -n "$line" ]]; then
+              # Format commit body with indent
+              echo "  ${line}" >> temp_changelog.md
+            fi
+          done
+          
+          echo "" >> temp_changelog.md
+          
+          if [ -f CHANGELOG.md ]; then
+            tail -n +1 CHANGELOG.md >> temp_changelog.md
+          fi
+          
+          mv temp_changelog.md CHANGELOG.md
+          
+      - name: Commit changelog
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog for v${{ needs.check-release.outputs.version }}" || echo "No changes to commit"
+          git push
+
+  create-release:
+    needs: [check-release, build-linux, update-changelog]
     runs-on: ubuntu-latest
     if: needs.check-release.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
