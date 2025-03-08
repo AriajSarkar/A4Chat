@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { NewChatButton } from './Sidebar-components/NewChatButton';
-import { SettingsPanel } from './Sidebar-components/SettingsPanel';
+import { NewChatButton } from './components/NewChatButton';
+import { SettingsPanel } from './components/SettingsPanel';
 import { MessageSquarePlus, Settings, History } from 'lucide-react';
 import { PrevChatList } from '../../features/PrevChat/PrevChatList';
 
