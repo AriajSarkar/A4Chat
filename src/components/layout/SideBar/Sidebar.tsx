@@ -90,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="flex flex-col h-full">
                         <LogoButton />
                         <div className="flex-1 flex flex-col overflow-hidden p-4">
-                            <div className="space-y-4 flex-1 overflow-y-auto scrollbar-thin">
+                            <div className="space-y-4 flex-1 overflow-y-auto">
                                 <NewChatButton 
                                     onClick={onNewChat} 
                                     isCollapsed={!isOpen}

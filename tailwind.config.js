@@ -41,6 +41,10 @@ module.exports = {
           default: '#F8FAFC',
           dark: '#111827',
         },
+        gray: {
+          750: '#2D3748', // Between 700 and 800
+          850: '#1A202C', // Between 800 and 900
+        },
       },
       keyframes: {
         modelDropdown: {
@@ -94,6 +98,26 @@ module.exports = {
             opacity: 1,
             transform: 'translateY(0) scale(1)'
           }
+        },
+        fadeInUpShort: {
+          '0%': { 
+            opacity: 0,
+            transform: 'translateY(5px)'
+          },
+          '100%': { 
+            opacity: 1,
+            transform: 'translateY(0)'
+          }
+        },
+        scaleIn: {
+          '0%': {
+            opacity: 0,
+            transform: 'scale(0.95)'
+          },
+          '100%': {
+            opacity: 1,
+            transform: 'scale(1)'
+          }
         }
       },
       animation: {
@@ -106,7 +130,9 @@ module.exports = {
         'pulse-subtle': 'pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'typewriter-blink': 'typewriterCursor 0.7s step-end infinite',
         'fade-in-up': 'fadeInUp 0.2s ease-out forwards',
-        'bubble-in': 'bubbleIn 0.3s ease-out forwards'
+        'bubble-in': 'bubbleIn 0.3s ease-out forwards',
+        'fade-in-up-short': 'fadeInUpShort 0.15s ease-out forwards',
+        'scale-in': 'scaleIn 0.2s ease-out forwards',
       },
       animationDelay: {
         '200ms': '200ms',

@@ -1,3 +1,48 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* Background blur effect when settings panel is open */
+#app.settings-open>*:not(.fixed) {
+    filter: blur(2px);
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: filter 0.3s ease-in-out;
+}
+
+/* Fix for Safari to prevent z-index stacking context issues */
+body {
+    isolation: isolate;
+}
+
+/* Global scrollbar styling */
+* {
+    scrollbar-width: thin;
+    /* Firefox */
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Light mode scrollbar thumb */
+::-webkit-scrollbar-thumb {
+    background-color: #D1D5DB;
+    /* Gray-300 */
+    border-radius: 3px;
+}
+
+/* Dark mode scrollbar thumb */
+.dark ::-webkit-scrollbar-thumb {
+    background-color: #374151;
+    /* Gray-700 */
+    border-radius: 3px;
+}
