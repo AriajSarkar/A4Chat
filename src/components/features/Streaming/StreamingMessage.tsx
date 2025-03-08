@@ -10,9 +10,10 @@ interface StreamingMessageProps {
 export const StreamingMessage = memo(({ content, isComplete }: StreamingMessageProps) => {
     return (
         <div className={`
-            rounded-xl p-4 transition-all duration-200
+            rounded-xl p-4
             bg-white dark:bg-gray-800/60 
             shadow-sm border border-gray-100 dark:border-gray-700
+            ${isComplete ? 'border-gray-200 dark:border-gray-700/50' : ''}
         `}>
             <div className="flex gap-3 items-start">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0
@@ -39,8 +40,9 @@ export const StreamingMessage = memo(({ content, isComplete }: StreamingMessageP
         return false; // Always re-render when completion state changes
     }
     
-    if (!nextProps.isComplete && nextProps.content.length - prevProps.content.length < 15) {
-        return true; // Skip re-renders for small incremental updates
+    // Lower threshold for skipping renders, allowing more updates
+    if (!nextProps.isComplete && nextProps.content.length - prevProps.content.length < 5) {
+        return true; // Skip re-renders only for very small incremental updates (changed from 10 to 5)
     }
     
     return false; // Allow re-render for substantial changes

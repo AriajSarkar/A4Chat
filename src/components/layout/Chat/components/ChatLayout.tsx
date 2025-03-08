@@ -32,7 +32,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 transition-all duration-300 ease-in-out
                 ${!isSidebarOpen ? 'pl-16' : 'pl-64'}
             `}>
-                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent" id="chat-scroll-container">
+                <div className="flex-1 overflow-y-auto" id="chat-scroll-container">
                     <div className="max-w-4xl mx-auto w-full px-4 py-6 pb-36">
                         {children}
                     </div>

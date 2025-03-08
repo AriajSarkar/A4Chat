@@ -1,4 +1,5 @@
 import { createStreamParser } from '../../components/features/format/utils/StreamParser';
+// import { StreamResponse } from '../../types/StreamResponse';
 
 interface GenerateResponse {
     response: string;
@@ -74,13 +75,13 @@ export class OllamaAPI {
         try {
             this.controller = new AbortController();
             
-            // Set a timeout for the request
+            // Increase the timeout for the request to allow for longer generations
             const timeoutId = setTimeout(() => {
                 if (this.controller) {
                     this.controller.abort();
                     onError?.(new Error('Request timed out'));
                 }
-            }, this.DEFAULT_TIMEOUT);
+            }, 180000); // Extended to 3 minutes from 2 minutes
 
             const response = await fetch(`${this.baseUrl}/generate`, {
                 method: 'POST',
@@ -89,37 +90,83 @@ export class OllamaAPI {
                     model, 
                     prompt, 
                     stream: true,
-                    // Remove num_predict limit to allow unlimited token generation
                     options: {
-                        num_ctx: 2048,     // Increased context window for better comprehension
-                        seed: 42,          // Consistent seed for more predictable memory usage
-                        repeat_penalty: 1.1 // Higher penalty helps avoid repetition/loops
+                        num_ctx: 2048,
+                        seed: 42,
+                        repeat_penalty: 1.1
                     }
                 }),
                 signal: this.controller.signal
             });
             
-            // Clear the timeout
             clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`API responded with status ${response.status}: ${response.statusText}`);
+            }
+            
+            if (!response.body) {
+                throw new Error('Response body is null, cannot stream response');
+            }
 
             const reader = response.body.getReader() as unknown as import("stream/web").ReadableStreamDefaultReader<Uint8Array>;
             if (!reader) throw new Error('No readable stream available');
 
+            // Improved stall detection with more lenient parameters
+            let lastChunkTime = Date.now();
+            let receivedDataSinceLastCheck = false;
+            let stallCheckCount = 0;
+            let totalBytesReceived = 0;
+            
+            const streamWatchdog = setInterval(() => {
+                const now = Date.now();
+                
+                // More lenient stall detection:
+                // 1. Only consider it stalled after more checks without data (40 seconds total)
+                // 2. Reset counter when data is received
+                if (receivedDataSinceLastCheck) {
+                    stallCheckCount = 0;
+                    receivedDataSinceLastCheck = false;
+                    lastChunkTime = now;
+                } else {
+                    stallCheckCount++;
+                    
+                    // Only force completion after 8 checks (40 seconds) with no data
+                    // and only if we've actually received some data already
+                    if (stallCheckCount >= 8 && now - lastChunkTime > 40000 && totalBytesReceived > 0) {
+                        clearInterval(streamWatchdog);
+                        console.warn('Stream appears stalled after extended period, forcing completion');
+                        onComplete();
+                    }
+                }
+            }, 5000); // Check every 5 seconds
+
             const parser = createStreamParser({ 
-                onToken, 
+                onToken: (token) => {
+                    receivedDataSinceLastCheck = true;
+                    lastChunkTime = Date.now();
+                    totalBytesReceived += token.length;
+                    onToken(token);
+                }, 
                 onComplete: () => {
-                    // Ensure controller is reset
+                    // Ensure we clear watchdog and controller before completion callback
+                    clearInterval(streamWatchdog);
                     this.controller = null;
-                    // Ensure we call the completion callback
-                    onComplete();
+                    
+                    // Small delay before triggering completion to ensure UI stabilizes
+                    setTimeout(() => {
+                        onComplete();
+                    }, 50);
                 },
                 onError 
             });
+            
             await parser.processStream(reader);
             
-            // Reset the offline flag if the request was successful
+            clearInterval(streamWatchdog);
+            
             this.isOffline = false;
-            this.retryBackoff = 1000; // Reset backoff time
+            this.retryBackoff = 1000;
         } catch (error) {
             if (error.name === 'AbortError') {
                 console.log('Generation stopped by user');

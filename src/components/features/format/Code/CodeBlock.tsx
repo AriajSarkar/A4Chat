@@ -66,13 +66,11 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
                 </div>
             )}
             
-            {/* Code block with pre > code structure */}
             <pre className={`
                 relative p-5 pt-8 pb-4 overflow-x-auto 
                 bg-gray-50/60 dark:bg-gray-900/60
                 border border-gray-200/70 dark:border-gray-800/70
                 rounded-lg shadow-sm
-                scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent
                 ${className}
             `}>
                 <code className={`language-${language || 'plaintext'} ${language ? '' : 'text-gray-800 dark:text-gray-300'} block`}>

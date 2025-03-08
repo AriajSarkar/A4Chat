@@ -4,9 +4,13 @@ import { MakerZIP } from '@electron-forge/maker-zip';
 import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
+import { readFileSync } from 'fs';
 
 import { mainConfig } from './webpack.main.config';
 import { rendererConfig } from './webpack.renderer.config';
+
+// Read version from package.json
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -28,7 +32,7 @@ const config: ForgeConfig = {
         productName: 'A4Chat',
         genericName: 'Chat Application',
         description: 'A simple chat application built with Electron',
-        version: '1.0.0',
+        version: packageJson.version,
         license: 'MIT',
         group: 'Applications/Internet',
         categories: ['Network', 'Utility']
