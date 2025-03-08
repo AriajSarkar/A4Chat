@@ -1,4 +1,4 @@
-import Dexie, { Table } from 'dexie';
+import { Dexie, Table } from 'dexie';
 import { ChatInfo, MessageInfo } from './models';
 
 // Queue for database operations

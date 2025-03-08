@@ -1,4 +1,9 @@
-import React from 'react';
+import React, {
+    HTMLAttributes,
+    Children,
+    isValidElement,
+    cloneElement
+} from 'react';
 
 interface OrderedListRendererProps {
     children?: React.ReactNode;
@@ -7,7 +12,7 @@ interface OrderedListRendererProps {
     [key: string]: any;
 }
 
-interface ListItemProps extends React.HTMLAttributes<HTMLElement> {
+interface ListItemProps extends HTMLAttributes<HTMLElement> {
     children?: React.ReactNode;
     index?: number;
 }
@@ -25,9 +30,9 @@ export const OrderedListRenderer: React.FC<OrderedListRendererProps> = ({
             start={start}
             {...rest}
         >
-            {React.Children.map(children, (child) => {
-                if (React.isValidElement<ListItemProps>(child)) {
-                    return React.cloneElement(child, {
+            {Children.map(children, (child) => {
+                if (isValidElement<ListItemProps>(child)) {
+                    return cloneElement(child, {
                         ...child.props,
                         className: `pl-2 mb-2 ${child.props.className || ''}`
                     });

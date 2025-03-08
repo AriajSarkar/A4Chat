@@ -38,6 +38,7 @@
     "electron": "^25.9.8",
     "esbuild": "^0.25.0",
     "eslint": "^8.45.0",
+    "eslint-import-resolver-typescript": "^3.8.3",
     "eslint-plugin-import": "^2.27.5",
     "fork-ts-checker-webpack-plugin": "^8.0.0",
     "node-loader": "^2.0.0",
@@ -52,14 +53,14 @@
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.8",
     "@types/prismjs": "^1.26.5",
+    "dexie": "^3.2.4",
     "electron-squirrel-startup": "^1.0.1",
     "lucide-react": "^0.476.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^10.0.0",
-    "remark-gfm": "^4.0.1",
-    "dexie": "^3.2.4"
+    "remark-gfm": "^4.0.1"
   },
   "resolutions": {
     "esbuild": "^0.25.0"

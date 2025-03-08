@@ -1,4 +1,4 @@
-import Prism from 'prismjs';
+import Prism, { highlightAll } from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 
 // Core languages
@@ -248,7 +248,7 @@ function formatPythonCode(code: string): string {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const highlightCode = (_code?: string, _language?: string): void => {
     requestAnimationFrame(() => {
-        Prism.highlightAll();
+        highlightAll();
     });
 };
 

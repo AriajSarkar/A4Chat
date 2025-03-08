@@ -1,5 +1,5 @@
 import { ReadableStreamDefaultReader } from 'stream/web';
-import { rafThrottle } from '../../../../utils/performance';
+import { rafThrottle } from '@/utils/performance';
 
 // Define the StreamResponse type locally instead of importing it
 interface StreamResponse {

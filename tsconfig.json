@@ -7,15 +7,16 @@
     "esModuleInterop": true,
     "noImplicitAny": false,
     "sourceMap": true,
-    "baseUrl": ".",
+    "baseUrl": "./",
     "outDir": "dist",
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "jsx": "react-jsx",
     "paths": {
-      "*": ["node_modules/*"]
+      "*": ["node_modules/*"],
+      "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*", "*.ts"]
+  "include": ["src/**/*", "*.ts", "*.tsx", "*.js", "*.jsx"],
 }

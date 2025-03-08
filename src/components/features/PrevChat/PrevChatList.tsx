@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { ChatInfo } from '../../LocDB/models';
 import { db } from '../../LocDB/ChatDatabase';
 import { PrevChatItem } from './PrevChatItem';
@@ -22,7 +22,7 @@ interface GroupedChats {
 }
 
 // Memoized chat item for better performance
-const MemoizedPrevChatItem = React.memo(PrevChatItem);
+const MemoizedPrevChatItem = memo(PrevChatItem);
 
 export const PrevChatList: React.FC<PrevChatListProps> = ({
     activeChatId,
@@ -320,4 +320,4 @@ export const PrevChatList: React.FC<PrevChatListProps> = ({
 };
 
 // Use memo to prevent unnecessary re-renders
-export default React.memo(PrevChatList);
+export default memo(PrevChatList);
