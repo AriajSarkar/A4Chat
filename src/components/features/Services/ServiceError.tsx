@@ -1,5 +1,5 @@
 import React from 'react';
-import { getPlatformReloadShortcut, getOllamaStartCommand } from '../../../utils/platform';
+import { getPlatformReloadShortcut, getOllamaStartCommand } from '@/utils/platform';
 
 interface ServiceErrorProps {
     onRetry: () => void;

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { zIndex } from '../../../styles/zindex';
+import { zIndex } from '@/styles/zindex';
 import { ChevronUp } from 'lucide-react';
 
 interface ModelSelectorProps {

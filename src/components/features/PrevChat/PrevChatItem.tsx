@@ -1,7 +1,7 @@
 import React from 'react';
 import { MessageSquare, Trash2 } from 'lucide-react';
 import { ChatInfo } from '../../LocDB/models';
-import { formatRelativeTime } from '../../../utils/dateUtils';
+import { formatRelativeTime } from '@/utils/dateUtils';
 
 interface PrevChatItemProps {
     chat: ChatInfo;

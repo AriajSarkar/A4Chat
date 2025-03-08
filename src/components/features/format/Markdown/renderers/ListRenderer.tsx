@@ -1,4 +1,11 @@
-import React from 'react';
+import React, 
+    {
+        HTMLAttributes,
+        Children, 
+        isValidElement, 
+        cloneElement
+    } 
+from 'react';
 
 interface ListRendererProps {
     ordered?: boolean;
@@ -8,7 +15,7 @@ interface ListRendererProps {
     [key: string]: any;
 }
 
-interface ListItemProps extends React.HTMLAttributes<HTMLLIElement> {
+interface ListItemProps extends HTMLAttributes<HTMLLIElement> {
     children?: React.ReactNode; // Make children optional
 }
 
@@ -23,9 +30,9 @@ export const ListRenderer: React.FC<ListRendererProps> = ({ ordered, children, .
                 : 'list-disc marker:text-gray-400 dark:marker:text-gray-500'
             }
         `} {...rest}>
-            {React.Children.map(children, child => {
-                if (React.isValidElement<ListItemProps>(child)) {
-                    return React.cloneElement(child, {
+            {Children.map(children, child => {
+                if (isValidElement<ListItemProps>(child)) {
+                    return cloneElement(child, {
                         ...child.props,
                         className: `pl-2 -ml-2 ${ordered ? 'text-base font-normal' : ''} ${child.props.className || ''}`
                     } as ListItemProps);
