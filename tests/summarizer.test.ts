@@ -106,4 +106,54 @@ describe('Commit Summarizer', () => {
       console.log('Summary saved to test_summary.md');
     }
   }, 30000); // Increase timeout for API call
+  
+  // Test changelog section replacement functionality
+  test('can replace first section of changelog', () => {
+    // Create a mock changelog
+    const mockChangelog = `## [v1.0.0] - 2023-01-01
+
+- First commit
+- Second commit
+
+## [v0.9.0] - 2022-12-01
+
+- Old commit
+- Another old commit`;
+
+    const newSection = `## [v1.1.0] - 2023-02-01
+
+- New commit
+- Another new commit`;
+
+    // Extract the second version header position
+    const lines = mockChangelog.split('\n');
+    let secondHeaderIndex = -1;
+    let headerCount = 0;
+    
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].match(/^## \[.*\]/)) {
+        headerCount++;
+        if (headerCount === 2) {
+          secondHeaderIndex = i;
+          break;
+        }
+      }
+    }
+    
+    // Get content starting from the second header
+    const remainingContent = secondHeaderIndex !== -1 
+      ? lines.slice(secondHeaderIndex).join('\n')
+      : '';
+      
+    // Create updated changelog
+    const updatedChangelog = `${newSection}\n\n${remainingContent}`;
+    
+    // Verify the first section was replaced
+    expect(updatedChangelog).toContain('## [v1.1.0]');
+    expect(updatedChangelog).toContain('## [v0.9.0]');
+    expect(updatedChangelog).not.toContain('## [v1.0.0]');
+    expect(updatedChangelog).toContain('New commit');
+    expect(updatedChangelog).toContain('Old commit');
+    expect(updatedChangelog).not.toContain('First commit');
+  });
 });

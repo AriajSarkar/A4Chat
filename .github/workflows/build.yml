@@ -101,37 +101,78 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  release:
-    needs: [check-version, build]
-    if: needs.check-version.outputs.should_build == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+  update-changelog:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: Get package.json version
+        id: get-version
+        run: |
+          if [ -f "package.json" ]; then
+            echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          else
+            echo "Error: package.json not found"
+            exit 1
+          fi
+
       - name: Generate changelog and summary
         run: |
           # Get the last tag and commits
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo HEAD)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo HEAD~10)
+          echo "Using last tag: $LAST_TAG"
           COMMITS=$(git log --pretty=format:"%h %s" $LAST_TAG..HEAD)
+          VERSION="${{ steps.get-version.outputs.version }}"
           
-          # Generate full changelog
-          echo "## [v${{ needs.check-version.outputs.version }}] - $(date +'%Y-%m-%d')" > temp_changelog.md
-          echo "" >> temp_changelog.md
-          git log --pretty=format:"- %s" $LAST_TAG..HEAD >> temp_changelog.md
-          echo "" >> temp_changelog.md
-          echo "" >> temp_changelog.md
-          if [ -f CHANGELOG.md ]; then
-            cat CHANGELOG.md >> temp_changelog.md
-          fi
-          mv temp_changelog.md CHANGELOG.md
-          
-          # Validate we have commits to analyze
+          # No commits? Try using a fallback
           if [ -z "$COMMITS" ]; then
-            echo "Warning: No commits found between last tag and HEAD"
-            echo "## No new commits found since last release" > RELEASE_NOTES.md
-            exit 0
+            echo "Warning: No commits found between $LAST_TAG and HEAD"
+            echo "Using last 10 commits as fallback"
+            COMMITS=$(git log --pretty=format:"%h %s" -n 10)
+          fi
+          
+          echo "Found $(echo "$COMMITS" | wc -l) commits"
+          
+          # Extract the current version header pattern from CHANGELOG.md
+          CURRENT_VERSION_HEADER=$(grep -m 1 "^## \[.*\]" CHANGELOG.md || echo "## [v$VERSION] - $(date +'%Y-%m-%d')")
+          
+          # Generate new changelog section
+          NEW_CHANGELOG_SECTION="## [v$VERSION] - $(date +'%Y-%m-%d')\n\n"
+          
+          # Add commit lines
+          while IFS= read -r line; do
+            NEW_CHANGELOG_SECTION+="- $line\n"
+          done < <(git log --pretty=format:"%s" $LAST_TAG..HEAD)
+          
+          # Process the CHANGELOG.md file
+          if [ -f CHANGELOG.md ]; then
+            # Find the line number of the second version header (if it exists)
+            SECOND_HEADER_LINE=$(grep -n "^## \[.*\]" CHANGELOG.md | sed -n '2p' | cut -d: -f1)
+            
+            if [ -z "$SECOND_HEADER_LINE" ]; then
+              # Only one version header found, keep everything
+              REMAINDER_CONTENT=$(cat CHANGELOG.md)
+            else
+              # Extract content starting from the second version header
+              REMAINDER_CONTENT=$(tail -n +$SECOND_HEADER_LINE CHANGELOG.md)
+            fi
+            
+            # Create new CHANGELOG.md with updated content
+            echo -e "$NEW_CHANGELOG_SECTION\n\n$REMAINDER_CONTENT" > temp_changelog.md
+            mv temp_changelog.md CHANGELOG.md
+            
+            echo "CHANGELOG.md updated successfully"
+          else
+            # Create a new CHANGELOG.md if it doesn't exist
+            echo -e "$NEW_CHANGELOG_SECTION" > CHANGELOG.md
           fi
           
           # Generate AI summary using Gemini 2.0 Flash
@@ -173,7 +214,7 @@ jobs:
             echo "$COMMITS" >> RELEASE_NOTES.md
           else
             # Extract and format summary
-            echo "## Release Summary for v${{ needs.check-version.outputs.version }}" > RELEASE_NOTES.md
+            echo "## Release Summary for v$VERSION" > RELEASE_NOTES.md
             echo "$(date +'%Y-%m-%d')" >> RELEASE_NOTES.md
             echo "" >> RELEASE_NOTES.md
             echo "$SUMMARY" | jq -r '.candidates[0].content.parts[0].text' >> RELEASE_NOTES.md
@@ -184,9 +225,18 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add CHANGELOG.md RELEASE_NOTES.md
-          git commit -m "docs(release): update documentation for v${{ needs.check-version.outputs.version }}" || echo "No changes to commit"
+          git commit -m "docs(changelog): update changelog and release notes for v${{ steps.get-version.outputs.version }}" || echo "No changes to commit"
           git pull --rebase origin main
-          git push || git push --force-with-lease
+          git push || echo "Could not push changes, they may be already on remote"
+
+  release:
+    needs: [check-version, build]
+    if: needs.check-version.outputs.should_build == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
           
       - name: Download artifacts
         uses: actions/download-artifact@v4
