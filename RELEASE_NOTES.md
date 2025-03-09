@@ -1,15 +1,16 @@
 ## Release Summary for v2.2.4
 2025-03-09
 
-Okay, here's a summary of the provided Git commits, categorized for clarity:
+### ✨ Features
+-   Enhance commit summarization by structuring the changelog with categorized bullet points and emoji headers for improved readability.
+-   Update changelog generation to include tests for changelog section replacement, ensuring accuracy and reliability.
+-   Introduce Jest configuration, an example environment file, and tests for commit summarization using the Gemini API, improving testing capabilities.
 
-*   **Features:**
-    *   Added Jest configuration.
-    *   Added an example environment file.
-    *   Added tests for commit summarization using the Gemini API.
-    *   Updated changelog generation.
-    *   Added tests for changelog section replacement.
+### 📝 Documentation
+-   Update changelog and release notes for v2.2.4, providing the latest information to users.
 
-*   **Other:**
-    *   Merged pull request #9 from AriajSarkar/New-Updates-v3. (This indicates integration of changes from a branch, but the specific details are not in the commit message itself).
+### 🔀 Merges
+-   Merge pull request #9 from AriajSarkar/New-Updates-v3.
 
+### 🧹 Chores
+-   Change the Git pull strategy to `no-rebase` to improve workflow stability in CI environments.
