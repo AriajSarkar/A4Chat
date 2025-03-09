@@ -266,7 +266,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git add CHANGELOG.md RELEASE_NOTES.md
           git commit -m "docs(changelog): update changelog with categorized summary for v${{ steps.get-version.outputs.version }}" || echo "No changes to commit"
-          git pull --rebase origin main
+          git pull --no-rebase origin main
           git push || echo "Could not push changes, they may be already on remote"
 
   release:
