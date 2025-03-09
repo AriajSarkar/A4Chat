@@ -103,7 +103,7 @@ jobs:
 
   update-changelog:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -124,13 +124,21 @@ jobs:
             exit 1
           fi
 
+      - name: Install required packages
+        run: npm install axios
+
       - name: Generate changelog and summary
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
+          # Get package.json version
+          VERSION=${{ steps.get-version.outputs.version }}
+          echo "Using version: $VERSION"
+
           # Get the last tag and commits
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo HEAD~10)
           echo "Using last tag: $LAST_TAG"
           COMMITS=$(git log --pretty=format:"%h %s" $LAST_TAG..HEAD)
-          VERSION="${{ steps.get-version.outputs.version }}"
           
           # No commits? Try using a fallback
           if [ -z "$COMMITS" ]; then
@@ -141,91 +149,123 @@ jobs:
           
           echo "Found $(echo "$COMMITS" | wc -l) commits"
           
-          # Extract the current version header pattern from CHANGELOG.md
-          CURRENT_VERSION_HEADER=$(grep -m 1 "^## \[.*\]" CHANGELOG.md || echo "## [v$VERSION] - $(date +'%Y-%m-%d')")
-          
-          # Generate new changelog section
-          NEW_CHANGELOG_SECTION="## [v$VERSION] - $(date +'%Y-%m-%d')\n\n"
-          
-          # Add commit lines
-          while IFS= read -r line; do
-            NEW_CHANGELOG_SECTION+="- $line\n"
-          done < <(git log --pretty=format:"%s" $LAST_TAG..HEAD)
-          
-          # Process the CHANGELOG.md file
-          if [ -f CHANGELOG.md ]; then
-            # Find the line number of the second version header (if it exists)
-            SECOND_HEADER_LINE=$(grep -n "^## \[.*\]" CHANGELOG.md | sed -n '2p' | cut -d: -f1)
-            
-            if [ -z "$SECOND_HEADER_LINE" ]; then
-              # Only one version header found, keep everything
-              REMAINDER_CONTENT=$(cat CHANGELOG.md)
-            else
-              # Extract content starting from the second version header
-              REMAINDER_CONTENT=$(tail -n +$SECOND_HEADER_LINE CHANGELOG.md)
-            fi
-            
-            # Create new CHANGELOG.md with updated content
-            echo -e "$NEW_CHANGELOG_SECTION\n\n$REMAINDER_CONTENT" > temp_changelog.md
-            mv temp_changelog.md CHANGELOG.md
-            
-            echo "CHANGELOG.md updated successfully"
-          else
-            # Create a new CHANGELOG.md if it doesn't exist
-            echo -e "$NEW_CHANGELOG_SECTION" > CHANGELOG.md
-          fi
-          
-          # Generate AI summary using Gemini 2.0 Flash
-          SUMMARY=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "contents": [
-              {
-                "role": "user",
-                "parts": [
-                  {
-                    "text": "Analyze these git commits and provide a clear, concise summary of changes. Focus on features, improvements, and fixes. Format as bullet points categorized by type (Features, Bug Fixes, etc):\n\n'"$COMMITS"'"
+          # Write JavaScript code to a file
+          cat > update-changelog.js << 'EOF'
+          const fs = require('fs');
+          const axios = require('axios');
+
+          // Read command line arguments
+          const version = process.argv[2];
+          const commits = process.argv[3];
+          const changelogPath = 'CHANGELOG.md';
+
+          async function main() {
+            try {
+              console.log(`Calling Gemini API to summarize ${commits.split('\n').length} commits...`);
+              
+              // Call Gemini API using the same structure as in the tests
+              const response = await axios.post(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                {
+                  system_instruction: {
+                    parts: [
+                      {
+                        text: "You are a commit summarizer for a changelog. Your job is to analyze git commits and organize them into logical categories with clear, concise explanations. Focus on the substance of each change, not the commit format. Use descriptive bullet points that explain the actual change rather than just repeating the commit message. Group similar changes together. Include emoji category headers for better readability. Always emphasize user-facing features and important fixes."
+                      }
+                    ]
+                  },
+                  contents: [
+                    {
+                      role: 'user',
+                      parts: [
+                        {
+                          text: "Analyze these git commits and provide a clear, concise summary of changes. Format as bullet points categorized by type with emojis like:\n\n### ✨ Features\n- Feature 1 description\n- Feature 2 description\n\n### ⚙ Improvements\n- Improvement 1 description\n\n### 🐛 Bug Fixes\n- Bug fix 1 description\n\n### 🧹 Chores\n- Chore 1 description\n\n### 📝 Documentation\n- Doc change 1 description\n\n### 🔀 Merges\n- Merge 1 description\n\nBe thorough and descriptive, but concise. Do not include commit hashes. Only include categories that have relevant commits:\n\n" + commits
+                        }
+                      ]
+                    }
+                  ],
+                  generationConfig: {
+                    temperature: 0.7,
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 2048
                   }
-                ]
+                },
+                {
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
+                }
+              );
+
+              if (!response.data.candidates || !response.data.candidates[0].content.parts) {
+                throw new Error('Invalid API response structure');
               }
-            ],
-            "generationConfig": {
-              "temperature": 0.7,
-              "topK": 40,
-              "topP": 0.95,
-              "maxOutputTokens": 2048
+
+              const summary = response.data.candidates[0].content.parts[0].text;
+              console.log('Received summary from API');
+              
+              // Generate new changelog section with date
+              const date = new Date().toISOString().slice(0, 10);
+              const newSection = `## [v${version}] - ${date}\n\n${summary}`;
+              
+              // Update CHANGELOG.md
+              let changelog = '';
+              if (fs.existsSync(changelogPath)) {
+                changelog = fs.readFileSync(changelogPath, 'utf8');
+              }
+              
+              // Find the second version header
+              const lines = changelog.split('\n');
+              let secondHeaderIndex = -1;
+              let headerCount = 0;
+              
+              for (let i = 0; i < lines.length; i++) {
+                if (lines[i].match(/^## \[.*\]/)) {
+                  headerCount++;
+                  if (headerCount === 2) {
+                    secondHeaderIndex = i;
+                    break;
+                  }
+                }
+              }
+              
+              // Get content starting from the second header
+              const remainingContent = secondHeaderIndex !== -1 
+                ? lines.slice(secondHeaderIndex).join('\n')
+                : '';
+              
+              // Create updated changelog
+              const updatedChangelog = `${newSection}\n\n${remainingContent}`;
+              
+              // Write updated changelog
+              fs.writeFileSync(changelogPath, updatedChangelog);
+              console.log('CHANGELOG.md updated successfully');
+              
+              // Create release notes file
+              fs.writeFileSync('RELEASE_NOTES.md', `## Release Summary for v${version}\n${date}\n\n${summary}`);
+              console.log('RELEASE_NOTES.md created');
+            } catch (error) {
+              console.error('Error:', error.message);
+              if (error.response) {
+                console.error('API Response:', error.response.data);
+              }
+              process.exit(1);
             }
-          }')
-          
-          # Debug output (redacted in logs)
-          echo "API Response debug (first 100 chars): ${SUMMARY:0:100}"
-          
-          # Check for API errors - improved error handling
-          if ! echo "$SUMMARY" | jq -e . > /dev/null 2>&1; then
-            echo "Error: Invalid JSON response from API"
-            echo "## Release Summary (Autogeneration Failed)" > RELEASE_NOTES.md
-            echo "Using commit list as fallback summary:" >> RELEASE_NOTES.md
-            echo "$COMMITS" >> RELEASE_NOTES.md
-          elif ! echo "$SUMMARY" | jq -e '.candidates[0].content.parts[0].text' > /dev/null 2>&1; then
-            echo "Error: Expected response fields missing in API response"
-            echo "Full response: $SUMMARY"
-            echo "## Release Summary (Autogeneration Failed)" > RELEASE_NOTES.md
-            echo "Using commit list as fallback summary:" >> RELEASE_NOTES.md
-            echo "$COMMITS" >> RELEASE_NOTES.md
-          else
-            # Extract and format summary
-            echo "## Release Summary for v$VERSION" > RELEASE_NOTES.md
-            echo "$(date +'%Y-%m-%d')" >> RELEASE_NOTES.md
-            echo "" >> RELEASE_NOTES.md
-            echo "$SUMMARY" | jq -r '.candidates[0].content.parts[0].text' >> RELEASE_NOTES.md
-          fi
+          }
+
+          main();
+          EOF
+
+          # Execute the Node.js script
+          node update-changelog.js "$VERSION" "$COMMITS"
 
       - name: Commit documentation
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add CHANGELOG.md RELEASE_NOTES.md
-          git commit -m "docs(changelog): update changelog and release notes for v${{ steps.get-version.outputs.version }}" || echo "No changes to commit"
+          git commit -m "docs(changelog): update changelog with categorized summary for v${{ steps.get-version.outputs.version }}" || echo "No changes to commit"
           git pull --rebase origin main
           git push || echo "Could not push changes, they may be already on remote"
 

@@ -57,14 +57,42 @@ describe('Commit Summarizer', () => {
 
     // Call Gemini API
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
+        system_instruction: {
+          parts: [
+            {
+              text: "You are a commit summarizer for a changelog. Your job is to analyze git commits and organize them into logical categories with clear, concise explanations. Focus on the substance of each change, not the commit format. Use descriptive bullet points that explain the actual change rather than just repeating the commit message. Group similar changes together. Include emoji category headers for better readability. Always emphasize user-facing features and important fixes."
+            }
+          ]
+        },
         contents: [
           {
             role: 'user',
             parts: [
               {
-                text: `Analyze these git commits and provide a clear, concise summary of changes. Focus on features, improvements, and fixes. Format as bullet points categorized by type (Features, Bug Fixes, etc):\n\n${commits}`
+                text: `Analyze these git commits and provide a clear, concise summary of changes. Format as bullet points categorized by type with emojis like:
+
+### ✨ Features
+- Feature 1 description
+- Feature 2 description
+
+### ⚙ Improvements
+- Improvement 1 description
+
+### 🐛 Bug Fixes
+- Bug fix 1 description
+
+### 🧹 Chores
+- Chore 1 description
+
+### 📝 Documentation
+- Doc change 1 description
+
+### 🔀 Merges
+- Merge 1 description
+
+Be thorough and descriptive, but concise. Do not include commit hashes. Only include categories that have relevant commits:\n\n${commits}`
               }
             ]
           }
@@ -96,8 +124,9 @@ describe('Commit Summarizer', () => {
     console.log('COMMIT SUMMARY:');
     console.log(summary);
 
-    // Verify summary has bullet points
-    expect(summary).toMatch(/[•*-]\s/);
+    // Verify summary has bullet points and categories
+    expect(summary).toMatch(/###\s+[✨⚙🐛🧹📝🔀]/u); // Should have at least one category header
+    expect(summary).toMatch(/[•*-]\s/); // Should have bullet points
     
     // Save summary to file for inspection
     if (require.main === module) {
@@ -112,18 +141,24 @@ describe('Commit Summarizer', () => {
     // Create a mock changelog
     const mockChangelog = `## [v1.0.0] - 2023-01-01
 
-- First commit
-- Second commit
+### ✨ Features
+- First feature
+- Second feature
 
 ## [v0.9.0] - 2022-12-01
 
-- Old commit
-- Another old commit`;
+### ✨ Features
+- Old feature
+- Another old feature`;
 
     const newSection = `## [v1.1.0] - 2023-02-01
 
-- New commit
-- Another new commit`;
+### ✨ Features
+- New feature
+- Another new feature
+
+### 🐛 Bug Fixes
+- Fixed a critical bug`;
 
     // Extract the second version header position
     const lines = mockChangelog.split('\n');
@@ -152,8 +187,9 @@ describe('Commit Summarizer', () => {
     expect(updatedChangelog).toContain('## [v1.1.0]');
     expect(updatedChangelog).toContain('## [v0.9.0]');
     expect(updatedChangelog).not.toContain('## [v1.0.0]');
-    expect(updatedChangelog).toContain('New commit');
-    expect(updatedChangelog).toContain('Old commit');
-    expect(updatedChangelog).not.toContain('First commit');
+    expect(updatedChangelog).toContain('New feature');
+    expect(updatedChangelog).toContain('Fixed a critical bug');
+    expect(updatedChangelog).toContain('Old feature');
+    expect(updatedChangelog).not.toContain('First feature');
   });
 });
