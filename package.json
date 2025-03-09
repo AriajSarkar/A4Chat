@@ -10,7 +10,9 @@
     "publish": "cross-env NODE_ENV=production electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
     "audit": "npm audit --production",
-    "audit:fix": "npm audit fix --production"
+    "audit:fix": "npm audit fix --production",
+    "test": "jest",
+    "test:summarizer": "jest summarizer.test.ts"
   },
   "keywords": [],
   "author": {
@@ -48,7 +50,12 @@
     "tailwindcss": "^3.3.3",
     "ts-loader": "^9.4.4",
     "ts-node": "^10.9.1",
-    "typescript": "~5.1.6"
+    "typescript": "~5.1.6",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "@types/jest": "^29.5.10"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.8",

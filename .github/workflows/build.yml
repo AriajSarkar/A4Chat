@@ -127,7 +127,14 @@ jobs:
           fi
           mv temp_changelog.md CHANGELOG.md
           
-          # Generate AI summary using Gemini
+          # Validate we have commits to analyze
+          if [ -z "$COMMITS" ]; then
+            echo "Warning: No commits found between last tag and HEAD"
+            echo "## No new commits found since last release" > RELEASE_NOTES.md
+            exit 0
+          fi
+          
+          # Generate AI summary using Gemini 2.0 Flash
           SUMMARY=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
           -H "Content-Type: application/json" \
           -d '{
@@ -136,25 +143,34 @@ jobs:
                 "role": "user",
                 "parts": [
                   {
-                    "text": "Analyze these git commits and provide a clear, concise summary of changes. Focus on features, improvements, and fixes. Format as bullet points:\n\n'"$COMMITS"'"
+                    "text": "Analyze these git commits and provide a clear, concise summary of changes. Focus on features, improvements, and fixes. Format as bullet points categorized by type (Features, Bug Fixes, etc):\n\n'"$COMMITS"'"
                   }
                 ]
               }
             ],
             "generationConfig": {
-              "temperature": 1,
+              "temperature": 0.7,
               "topK": 40,
               "topP": 0.95,
-              "maxOutputTokens": 8192,
-              "responseMimeType": "text/plain"
+              "maxOutputTokens": 2048
             }
           }')
-
-          # Check for API errors
-          if ! echo "$SUMMARY" | jq -e '.candidates[0].content.parts[0].text' >/dev/null; then
-            echo "Error calling Gemini API: $SUMMARY"
-            echo "Using commit list as fallback summary"
-            echo "$COMMITS" > RELEASE_NOTES.md
+          
+          # Debug output (redacted in logs)
+          echo "API Response debug (first 100 chars): ${SUMMARY:0:100}"
+          
+          # Check for API errors - improved error handling
+          if ! echo "$SUMMARY" | jq -e . > /dev/null 2>&1; then
+            echo "Error: Invalid JSON response from API"
+            echo "## Release Summary (Autogeneration Failed)" > RELEASE_NOTES.md
+            echo "Using commit list as fallback summary:" >> RELEASE_NOTES.md
+            echo "$COMMITS" >> RELEASE_NOTES.md
+          elif ! echo "$SUMMARY" | jq -e '.candidates[0].content.parts[0].text' > /dev/null 2>&1; then
+            echo "Error: Expected response fields missing in API response"
+            echo "Full response: $SUMMARY"
+            echo "## Release Summary (Autogeneration Failed)" > RELEASE_NOTES.md
+            echo "Using commit list as fallback summary:" >> RELEASE_NOTES.md
+            echo "$COMMITS" >> RELEASE_NOTES.md
           else
             # Extract and format summary
             echo "## Release Summary for v${{ needs.check-version.outputs.version }}" > RELEASE_NOTES.md
