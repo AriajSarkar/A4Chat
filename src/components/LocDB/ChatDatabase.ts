@@ -1,24 +1,17 @@
 import { Dexie, Table } from 'dexie';
 import { ChatInfo, MessageInfo } from './models';
-
-// Queue for database operations
-interface DBOperation {
-    execute: () => Promise<any>;
-    resolve: (result: any) => void;
-    reject: (error: any) => void;
-}
+import { ChatDBCache } from './cache/ChatDBCache';
+import { OperationQueue } from './queue/OperationQueue';
+import { BatchProcessor } from './batch/BatchProcessor';
 
 class ChatDB extends Dexie {
     chats!: Table<ChatInfo, number>;
     messages!: Table<MessageInfo, number>;
     
-    // Caching and operational improvements
-    private chatCache: Map<number, ChatInfo> = new Map();
-    private messageCache: Map<number, MessageInfo[]> = new Map();
-    private operationQueue: DBOperation[] = [];
-    private isProcessingQueue = false;
-    private batchTimeoutId: NodeJS.Timeout | null = null;
-    private pendingUpdates: Map<string, any> = new Map();
+    // Component instances for separation of concerns
+    private cache: ChatDBCache;
+    private queue: OperationQueue;
+    private batchProcessor: BatchProcessor;
 
     constructor() {
         super('A4ChatDatabase');
@@ -29,76 +22,29 @@ class ChatDB extends Dexie {
             messages: '++id, chatId, role, timestamp'
         });
         
-        // Add hooks for cache management - fix unused parameters
-        this.chats.hook('creating', function() {
-            // Cache will be updated in the method that calls add()
-        });
+        // Initialize components
+        this.cache = new ChatDBCache();
+        this.queue = new OperationQueue();
         
+        // Setup hooks for cache management
         this.chats.hook('updating', (modifications, primKey) => {
             // Update cache if the chat is already cached
-            if (this.chatCache.has(primKey as number)) {
-                const chat = this.chatCache.get(primKey as number);
-                if (chat) {
-                    this.chatCache.set(primKey as number, { ...chat, ...modifications });
-                }
+            if (this.cache.hasCachedChat(primKey as number)) {
+                this.cache.updateCachedChat(primKey as number, modifications);
             }
         });
         
         this.chats.hook('deleting', (primKey) => {
             // Remove from cache when deleted
-            this.chatCache.delete(primKey as number);
-            this.messageCache.delete(primKey as number);
+            this.cache.removeCachedChat(primKey as number);
         });
         
-        // Fix the messages.hook - using arrow function instead of this alias
-        this.messages.hook('creating', (primKey, obj) => {
-            // Check if obj exists before accessing its properties
-            if (obj && obj.chatId !== undefined) {
-                const chatId = obj.chatId;
-                if (this.messageCache.has(chatId)) {
-                    // Will be updated in the method that calls add()
-                }
-            }
-        });
-    }
-    
-    // Helper for batching database operations
-    private async enqueueOperation<T>(operation: () => Promise<T>): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            this.operationQueue.push({
-                execute: operation,
-                resolve,
-                reject
-            });
-            
-            if (!this.isProcessingQueue) {
-                this.processQueue();
-            }
-        });
-    }
-    
-    private async processQueue(): Promise<void> {
-        if (this.operationQueue.length === 0) {
-            this.isProcessingQueue = false;
-            return;
-        }
-        
-        this.isProcessingQueue = true;
-        const operation = this.operationQueue.shift();
-        
-        try {
-            const result = await operation!.execute();
-            operation!.resolve(result);
-        } catch (error) {
-            operation!.reject(error);
-        } finally {
-            // Process next item with a small delay to allow UI updates
-            setTimeout(() => this.processQueue(), 0);
-        }
+        // Initialize batch processor with the database instance and chats table
+        this.batchProcessor = new BatchProcessor(this, this.chats);
     }
 
     async createChat(title: string, model: string): Promise<number> {
-        return this.enqueueOperation(async () => {
+        return this.queue.enqueue(async () => {
             const now = new Date();
             const chatInfo: ChatInfo = {
                 title,
@@ -112,8 +58,8 @@ class ChatDB extends Dexie {
             
             // Update cache
             chatInfo.id = id as number;
-            this.chatCache.set(id as number, chatInfo);
-            this.messageCache.set(id as number, []);
+            this.cache.setCachedChat(id as number, chatInfo);
+            this.cache.setCachedMessages(id as number, []);
             
             return id as number;
         });
@@ -121,28 +67,29 @@ class ChatDB extends Dexie {
 
     async getChat(id: number): Promise<ChatInfo | undefined> {
         // Return from cache if available
-        if (this.chatCache.has(id)) {
-            return this.chatCache.get(id);
+        const cachedChat = this.cache.getCachedChat(id);
+        if (cachedChat) {
+            return cachedChat;
         }
         
         // Otherwise fetch from DB and update cache
-        return this.enqueueOperation(async () => {
+        return this.queue.enqueue(async () => {
             const chat = await this.chats.get(id);
             if (chat) {
-                this.chatCache.set(id, chat);
+                this.cache.setCachedChat(id, chat);
             }
             return chat;
         });
     }
 
     async getAllChats(): Promise<ChatInfo[]> {
-        return this.enqueueOperation(async () => {
+        return this.queue.enqueue(async () => {
             const chats = await this.chats.orderBy('updated').reverse().toArray();
             
             // Update cache with fetched chats
             chats.forEach(chat => {
                 if (chat.id) {
-                    this.chatCache.set(chat.id, chat);
+                    this.cache.setCachedChat(chat.id, chat);
                 }
             });
             
@@ -153,74 +100,33 @@ class ChatDB extends Dexie {
     async updateChatTitle(id: number, title: string): Promise<void> {
         // Schedule update for batching
         const key = `chat:${id}:title`;
-        this.pendingUpdates.set(key, { id, title });
+        this.batchProcessor.scheduleUpdate(key, { id, title });
         
         // Optimistically update cache
-        const chat = this.chatCache.get(id);
+        const chat = this.cache.getCachedChat(id);
         if (chat) {
-            this.chatCache.set(id, {
+            this.cache.setCachedChat(id, {
                 ...chat,
                 title,
                 updated: new Date()
             });
         }
-        
-        this.scheduleBatchUpdate();
-    }
-    
-    private scheduleBatchUpdate() {
-        if (this.batchTimeoutId) {
-            clearTimeout(this.batchTimeoutId);
-        }
-        
-        this.batchTimeoutId = setTimeout(() => {
-            this.processBatchUpdates();
-        }, 100); // 100ms batching window
-    }
-    
-    private async processBatchUpdates() {
-        if (this.pendingUpdates.size === 0) return;
-        
-        const updates = new Map(this.pendingUpdates);
-        this.pendingUpdates.clear();
-        
-        // Group updates by type
-        const titleUpdates: {id: number, title: string}[] = [];
-        
-        for (const [key, value] of updates.entries()) {
-            if (key.includes(':title')) {
-                titleUpdates.push(value);
-            }
-        }
-        
-        // Process title updates in a single transaction
-        if (titleUpdates.length > 0) {
-            await this.transaction('rw', this.chats, async () => {
-                for (const update of titleUpdates) {
-                    await this.chats.update(update.id, {
-                        title: update.title,
-                        updated: new Date()
-                    });
-                }
-            });
-        }
     }
 
     async deleteChat(id: number): Promise<void> {
-        return this.enqueueOperation(async () => {
+        return this.queue.enqueue(async () => {
             await this.transaction('rw', this.chats, this.messages, async () => {
                 await this.messages.where('chatId').equals(id).delete();
                 await this.chats.delete(id);
             });
             
-            // Remove from cache
-            this.chatCache.delete(id);
-            this.messageCache.delete(id);
+            // Remove from cache (hook will handle this, but we do it explicitly to be safe)
+            this.cache.removeCachedChat(id);
         });
     }
 
     async addMessage(chatId: number, role: 'user' | 'assistant' | 'system', content: string): Promise<number> {
-        return this.enqueueOperation(async () => {
+        return this.queue.enqueue(async () => {
             const now = new Date();
             const messageInfo: MessageInfo = {
                 chatId,
@@ -233,9 +139,7 @@ class ChatDB extends Dexie {
             
             // Update the cache
             messageInfo.id = messageId as number;
-            const messages = this.messageCache.get(chatId) || [];
-            messages.push(messageInfo);
-            this.messageCache.set(chatId, messages);
+            this.cache.addCachedMessage(messageInfo);
 
             // Update the chat's updated timestamp and message count
             await this.transaction('rw', this.chats, async () => {
@@ -253,7 +157,7 @@ class ChatDB extends Dexie {
                     };
                     
                     await this.chats.update(chatId, updatedChat);
-                    this.chatCache.set(chatId, updatedChat);
+                    this.cache.setCachedChat(chatId, updatedChat);
                 }
             });
 
@@ -263,18 +167,19 @@ class ChatDB extends Dexie {
 
     async getMessages(chatId: number): Promise<MessageInfo[]> {
         // Return from cache if available
-        if (this.messageCache.has(chatId)) {
-            return this.messageCache.get(chatId) || [];
+        const cachedMessages = this.cache.getCachedMessages(chatId);
+        if (cachedMessages) {
+            return cachedMessages;
         }
         
-        return this.enqueueOperation(async () => {
+        return this.queue.enqueue(async () => {
             const messages = await this.messages
                 .where('chatId')
                 .equals(chatId)
                 .sortBy('timestamp');
             
             // Cache the results
-            this.messageCache.set(chatId, messages);
+            this.cache.setCachedMessages(chatId, messages);
             
             return messages;
         });
@@ -282,26 +187,18 @@ class ChatDB extends Dexie {
     
     // Memory management methods
     clearCache(): void {
-        this.chatCache.clear();
-        this.messageCache.clear();
+        this.cache.clear();
     }
     
     pruneCache(maxChatEntries = 10): void {
-        // Keep only the most recent chats in cache
-        if (this.chatCache.size > maxChatEntries) {
-            // Get all chats and sort by updated date
-            const chats = Array.from(this.chatCache.entries())
-                .sort(([, chatA], [, chatB]) => {
-                    return new Date(chatB.updated).getTime() - new Date(chatA.updated).getTime();
-                });
-            
-            // Keep only the most recent ones
-            const outdatedChats = chats.slice(maxChatEntries);
-            outdatedChats.forEach(([id]) => {
-                this.chatCache.delete(id);
-                this.messageCache.delete(id);
-            });
-        }
+        this.cache.prune(maxChatEntries);
+    }
+    
+    // Resource cleanup
+    cleanup(): void {
+        this.batchProcessor.cleanup();
+        this.queue.clear();
+        this.cache.clear();
     }
 }
 
@@ -309,5 +206,5 @@ export const db = new ChatDB();
 
 // Export a function to cleanup resources when needed
 export function cleanupDB(): void {
-    db.clearCache();
+    db.cleanup();
 }
