@@ -48,10 +48,15 @@ pub async fn generate(
     let client = Client::new();
     let url = "https://openrouter.ai/api/v1/chat/completions";
 
-    let api_key = env::var("OPENROUTER_API_KEY").unwrap_or_default();
+    let api_key = crate::commands::config::get_stored_api_key(&app)
+        .or_else(|| env::var("OPENROUTER_API_KEY").ok())
+        .unwrap_or_default();
+
     if api_key.is_empty() {
-        log::error!("OpenRouter API Key is missing!");
-        return Err("OpenRouter API Key not found".to_string());
+        log::error!("OpenRouter API Key is missing! Please set it in Settings.");
+        return Err(
+            "OpenRouter API Key not found. Please set your API key in Settings.".to_string(),
+        );
     }
 
     let payload = serde_json::json!({

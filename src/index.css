@@ -3,9 +3,23 @@
 :root {
     --brand-1: #0b63ff;
     --brand-2: #7fd3ff;
+    /* Dynamic viewport height - updated by JS */
+    --vh: 1vh;
 }
 
-body {
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    /* Use CSS variable instead of 100vh */
+    height: calc(var(--vh, 1vh) * 100);
+    overflow: hidden;
     background-color: #1a202c;
     color: white;
 }

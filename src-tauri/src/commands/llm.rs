@@ -1,6 +1,5 @@
-use crate::AppState;
 use serde::{Deserialize, Serialize};
-use tauri::{command, AppHandle, State};
+use tauri::{command, AppHandle};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -19,7 +18,6 @@ pub struct LlmGenerateResponse {
 #[command]
 pub async fn llm_generate(
     app: AppHandle,
-    _state: State<'_, AppState>,
     request: LlmGenerateRequest,
 ) -> Result<LlmGenerateResponse, String> {
     // Generate a unique stream ID

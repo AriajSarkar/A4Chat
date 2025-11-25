@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
     RiMenuFoldLine,
@@ -8,14 +8,17 @@ import {
     RiSettingsLine,
     RiQuestionLine
 } from "@remixicon/react";
+import { useMobile } from "../../hooks/use-mobile";
 
 interface SidebarProps {
     isCollapsed: boolean;
     onToggle: () => void;
+    onNavigateToSettings: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, onNavigateToSettings }) => {
     const [searchQuery, setSearchQuery] = useState("");
+    const isMobile = useMobile();
 
     // Mock chat history
     const chats = [
@@ -24,11 +27,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
         { id: "3", title: "Google search limits", preview: "How many searches per day..." },
     ];
 
+    // Close sidebar when switching to mobile if it was open (optional, but good UX)
+    useEffect(() => {
+        if (isMobile && !isCollapsed) {
+            // We might want to start collapsed on mobile, but let's respect parent state for now
+            // or maybe force collapse on mount if mobile?
+            // For now, let's just let the parent control it, but we'll render differently.
+        }
+    }, [isMobile]);
+
     return (
         <>
-            {/* Mini Icon Sidebar (Always visible when collapsed) */}
+            {/* Mobile Backdrop */}
             <AnimatePresence>
-                {isCollapsed && (
+                {isMobile && !isCollapsed && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onToggle}
+                        className="fixed inset-0 bg-black/50 z-40"
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Mini Icon Sidebar (Hidden on mobile) */}
+            <AnimatePresence>
+                {isCollapsed && !isMobile && (
                     <motion.div
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -65,6 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                         <button
                             className="p-3 hover:bg-[#2d2d2d] rounded-lg transition-all text-gray-400 hover:text-white"
                             title="Settings"
+                            onClick={onNavigateToSettings}
                         >
                             <RiSettingsLine size={20} />
                         </button>
@@ -78,9 +104,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
 
             {/* Full Sidebar */}
             <motion.div
-                className="h-screen bg-[#171717] border-r border-[#2d2d2d] flex flex-col overflow-hidden"
+                className={`h-screen bg-[#171717] border-r border-[#2d2d2d] flex flex-col overflow-hidden ${isMobile ? "fixed inset-y-0 left-0 z-50 shadow-xl" : ""
+                    }`}
                 initial={false}
-                animate={{ width: isCollapsed ? "0px" : "260px" }}
+                animate={{
+                    width: isCollapsed ? 0 : 260,
+                    x: isMobile && isCollapsed ? -260 : 0 // Slide out on mobile
+                }}
                 transition={{ duration: 0.2, ease: "easeInOut" }}
             >
                 <AnimatePresence mode="wait">
@@ -140,7 +170,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
 
                             {/* User Menu */}
                             <div className="p-3 border-t border-[#2d2d2d]">
-                                <button className="w-full flex items-center gap-3 px-3 py-2.5 bg-transparent border-none rounded-lg text-white text-sm hover:bg-[#2d2d2d] transition-all mb-1">
+                                <button
+                                    onClick={onNavigateToSettings}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 bg-transparent border-none rounded-lg text-white text-sm hover:bg-[#2d2d2d] transition-all mb-1"
+                                >
                                     <RiSettingsLine size={18} />
                                     <span>Settings</span>
                                 </button>
@@ -156,3 +189,4 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
         </>
     );
 };
+
