@@ -1,0 +1,9 @@
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+
+onlyBuiltDependencies:
+  - optipng-bin
+  - pngquant-bin
+  - tauri
+  - zopflipng-bin
