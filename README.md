@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# A4Chat
+
+A4Chat is a Tauri 2 + Next.js desktop/mobile client for OpenAI-compatible AI APIs,
+starting with LM Studio and OpenRouter.
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies with pnpm:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run the Tauri desktop app:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm tauri:dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Run Android development after Android tooling is installed:
 
-## Learn More
+```bash
+pnpm android:init
+pnpm android:dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Build an Android APK for arm64:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm android:build:aarch64
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Providers
 
-## Deploy on Vercel
+- LM Studio default URL: `http://localhost:1234/v1`
+- OpenRouter default URL: `https://openrouter.ai/api/v1`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Provider URL, model, and API key are editable in Settings.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Quality
+
+```bash
+pnpm check
+pnpm build
+```
+
+Rust owns provider HTTP calls and SQLite persistence. Prisma keeps the local database schema
+documented and ready for migrations/cloud sync.

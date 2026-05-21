@@ -3,7 +3,9 @@ ignoredBuiltDependencies:
   - unrs-resolver
 
 onlyBuiltDependencies:
+  - "@prisma/engines"
   - optipng-bin
   - pngquant-bin
+  - prisma
   - tauri
   - zopflipng-bin

@@ -1,0 +1,24 @@
+[package]
+name = "a4chat"
+version = "0.1.0"
+description = "Cross-provider AI chat client"
+authors = ["Ariaj Sarkar"]
+edition = "2021"
+rust-version = "1.81"
+
+[lib]
+name = "a4chat_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.2", features = [] }
+
+[dependencies]
+anyhow = "1.0.102"
+reqwest = { version = "0.13.3", default-features = false, features = ["json", "rustls"] }
+rusqlite = { version = "0.39.0", features = ["bundled"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+tauri = { version = "2.11.2", features = [] }
+tauri-plugin-opener = "2.5.4"
+uuid = { version = "1.23.1", features = ["v4", "serde"] }

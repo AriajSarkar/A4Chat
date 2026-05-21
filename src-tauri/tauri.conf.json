@@ -1,8 +1,37 @@
 {
-    "build": {
-        "beforeDevCommand": "pnpm dev",
-        "beforeBuildCommand": "pnpm build",
-        "devUrl": "http://localhost:3000",
-        "frontendDist": "../out"
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "A4Chat",
+  "version": "0.1.0",
+  "identifier": "com.ariajsarkar.a4chat",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build",
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../out"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "A4Chat",
+        "width": 1280,
+        "height": 860,
+        "minWidth": 360,
+        "minHeight": 640,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
     }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Productivity",
+    "icon": ["icons/icon.png", "icons/icon.ico"],
+    "shortDescription": "Cross-provider AI chat client",
+    "longDescription": "A4Chat is a cross-platform AI chat client for OpenRouter, LM Studio, and compatible APIs."
+  }
 }

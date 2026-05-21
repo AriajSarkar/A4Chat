@@ -3,25 +3,44 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --hostname 0.0.0.0",
+    "dev:web": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "tauri": "tauri"
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint .",
+    "format": "oxfmt .",
+    "check": "pnpm typecheck && pnpm lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "android:init": "tauri android init",
+    "android:dev": "tauri android dev --host 0.0.0.0",
+    "android:build:aarch64": "tauri android build --apk --target aarch64"
   },
   "dependencies": {
+    "@remixicon/react": "4.9.0",
+    "@tauri-apps/api": "2.11.0",
+    "clsx": "2.1.1",
+    "motion": "12.40.0",
     "next": "16.2.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "tauri": "^0.15.0"
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "zod": "4.4.3"
   },
   "devDependencies": {
+    "@prisma/client": "7.8.0",
     "@tailwindcss/postcss": "^4",
     "@tauri-apps/cli": "^2.11.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "oxfmt": "0.51.0",
+    "oxlint": "1.66.0",
+    "prisma": "7.8.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
