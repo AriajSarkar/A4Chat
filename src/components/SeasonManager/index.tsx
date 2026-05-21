@@ -1,1 +1,0 @@
-// SeasonManager component
