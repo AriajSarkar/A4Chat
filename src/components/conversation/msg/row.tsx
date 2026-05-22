@@ -4,7 +4,7 @@ import { useState } from "react";
 import { RiArrowDownSLine, RiBrainLine } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import type { ConversationMessage } from "@/features/conversation/data/conversation";
+import type { ConversationMessage } from "@/components/conversation/utils/conversation";
 import { cn } from "@/lib/cn";
 
 type MessageRowProps = {

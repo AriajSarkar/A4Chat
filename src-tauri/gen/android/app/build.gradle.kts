@@ -13,9 +13,32 @@ val tauriProperties = Properties().apply {
     }
 }
 
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+
 android {
     compileSdk = 36
     namespace = "com.ariajsarkar.a4chat"
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(
+                    keystoreProperties.getProperty("storeFile")
+                        ?: error("keystore.properties is missing storeFile")
+                )
+                storePassword = keystoreProperties.getProperty("storePassword")
+                    ?: error("keystore.properties is missing storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                    ?: error("keystore.properties is missing keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                    ?: error("keystore.properties is missing keyPassword")
+            }
+        }
+    }
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "com.ariajsarkar.a4chat"
@@ -38,6 +61,11 @@ android {
         }
         getByName("release") {
             isMinifyEnabled = true
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
                     .plus(getDefaultProguardFile("proguard-android-optimize.txt"))

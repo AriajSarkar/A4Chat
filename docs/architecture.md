@@ -14,7 +14,8 @@ Providers are OpenAI-compatible chat completion endpoints. The configured base U
 - `http://localhost:1234/v1` for LM Studio.
 - `https://openrouter.ai/api/v1` for OpenRouter.
 
-The Rust command appends `/chat/completions` unless the full endpoint is already supplied.
+If the base URL has no path, A4Chat infers `/v1/chat/completions`; otherwise it appends
+`/chat/completions` unless the full endpoint is already supplied.
 
 ## Persistence
 

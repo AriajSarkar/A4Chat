@@ -7,16 +7,16 @@ import {
   createUserMessage,
   toCompletionMessages,
   type ConversationMessage,
-} from "@/features/conversation/data/conversation";
-import { ConversationView } from "@/features/conversation/components/conversation-view";
-import { NavigationSidebar } from "@/features/conversation/components/navigation-sidebar";
-import { SettingsDialog } from "@/features/settings/components/settings-dialog";
+} from "@/components/conversation/utils/conversation";
+import { ConversationView } from "@/components/conversation/view";
+import { NavigationSidebar } from "@/components/nav/sidebar";
+import { SettingsDialog } from "@/components/settings/settings-dialog";
 import {
   DEFAULT_PROVIDERS,
   findActiveProvider,
   normalizeProviders,
   type ProviderSettings,
-} from "@/features/settings/data/providers";
+} from "@/components/settings/utils/providers";
 import {
   getAppHealth,
   loadProviders,

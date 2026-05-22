@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-import { MessageRow } from "@/features/conversation/components/message-row";
-import type { ConversationMessage } from "@/features/conversation/data/conversation";
+import { MessageRow } from "@/components/conversation/msg/row";
+import type { ConversationMessage } from "@/components/conversation/utils/conversation";
 
 type MessageListProps = {
   messages: ConversationMessage[];

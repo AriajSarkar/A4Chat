@@ -4,8 +4,8 @@ import type {
   CompletionRequestMessage,
   CompletionResponse,
   ConversationMessage,
-} from "@/features/conversation/data/conversation";
-import { normalizeProviders, type ProviderSettings } from "@/features/settings/data/providers";
+} from "@/components/conversation/utils/conversation";
+import { normalizeProviders, type ProviderSettings } from "@/components/settings/utils/providers";
 
 export type AppHealth = {
   platform: string;
@@ -15,6 +15,26 @@ export type AppHealth = {
 
 export function isTauriRuntime() {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+function chatCompletionsEndpoint(baseUrl: string) {
+  const trimmed = baseUrl.trim().replace(/\/+$/, "");
+
+  if (trimmed.endsWith("/chat/completions")) {
+    return trimmed;
+  }
+
+  try {
+    const url = new URL(trimmed);
+
+    if (url.pathname === "" || url.pathname === "/") {
+      return `${trimmed}/v1/chat/completions`;
+    }
+  } catch {
+    // Fall back to the historical behavior when the URL parser cannot inspect the base URL.
+  }
+
+  return `${trimmed}/chat/completions`;
 }
 
 export async function getAppHealth() {
@@ -72,7 +92,7 @@ export async function sendChatCompletion(input: {
     });
   }
 
-  const endpoint = `${input.provider.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  const endpoint = chatCompletionsEndpoint(input.provider.baseUrl);
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {

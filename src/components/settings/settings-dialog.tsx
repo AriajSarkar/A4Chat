@@ -10,7 +10,7 @@ import {
 } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { normalizeProviders, type ProviderSettings } from "@/features/settings/data/providers";
+import { normalizeProviders, type ProviderSettings } from "@/components/settings/utils/providers";
 import { cn } from "@/lib/cn";
 
 type SettingsDialogProps = {

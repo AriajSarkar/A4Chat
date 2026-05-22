@@ -4,7 +4,7 @@ import { FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { RiAddLine, RiArrowDownSLine, RiMicLine, RiSendPlane2Fill } from "@remixicon/react";
 import { motion } from "motion/react";
 
-import type { ProviderSettings } from "@/features/settings/data/providers";
+import type { ProviderSettings } from "@/components/settings/utils/providers";
 
 type MessageComposerProps = {
   disabled: boolean;

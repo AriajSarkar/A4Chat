@@ -3,10 +3,10 @@
 import { RiLoader4Line, RiSettings3Line } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { MessageComposer } from "@/features/conversation/components/message-composer";
-import { MessageList } from "@/features/conversation/components/message-list";
-import type { ConversationMessage } from "@/features/conversation/data/conversation";
-import type { ProviderSettings } from "@/features/settings/data/providers";
+import { MessageComposer } from "./msg/composer";
+import { MessageList } from "@/components/conversation/msg/list";
+import type { ConversationMessage } from "@/components/conversation/utils/conversation";
+import type { ProviderSettings } from "@/components/settings/utils/providers";
 
 type ConversationViewProps = {
   error: string | null;

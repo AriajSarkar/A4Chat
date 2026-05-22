@@ -216,7 +216,53 @@ fn chat_completions_endpoint(base_url: &str) -> String {
     if trimmed.ends_with("/chat/completions") {
         trimmed.to_owned()
     } else {
-        format!("{trimmed}/chat/completions")
+        let has_path = trimmed
+            .split_once("://")
+            .and_then(|(_, rest)| rest.split_once('/'))
+            .is_some();
+
+        if has_path {
+            format!("{trimmed}/chat/completions")
+        } else {
+            format!("{trimmed}/v1/chat/completions")
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::chat_completions_endpoint;
+
+    #[test]
+    fn infers_v1_for_bare_base_urls() {
+        assert_eq!(
+            chat_completions_endpoint("http://localhost:1234"),
+            "http://localhost:1234/v1/chat/completions"
+        );
+        assert_eq!(
+            chat_completions_endpoint("http://localhost:1234/"),
+            "http://localhost:1234/v1/chat/completions"
+        );
+    }
+
+    #[test]
+    fn preserves_versioned_base_urls() {
+        assert_eq!(
+            chat_completions_endpoint("http://localhost:1234/v1"),
+            "http://localhost:1234/v1/chat/completions"
+        );
+        assert_eq!(
+            chat_completions_endpoint("https://openrouter.ai/api/v1"),
+            "https://openrouter.ai/api/v1/chat/completions"
+        );
+    }
+
+    #[test]
+    fn preserves_full_chat_completions_endpoint() {
+        assert_eq!(
+            chat_completions_endpoint("https://openrouter.ai/api/v1/chat/completions"),
+            "https://openrouter.ai/api/v1/chat/completions"
+        );
     }
 }
 

@@ -1,4 +1,4 @@
-import type { ProviderSettings } from "@/features/settings/data/providers";
+import type { ProviderSettings } from "@/components/settings/utils/providers";
 
 export type ConversationRole = "user" | "assistant";
 
