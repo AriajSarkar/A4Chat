@@ -10,7 +10,11 @@ pub fn run() {
             commands::list_provider_settings,
             commands::save_provider_settings,
             commands::send_chat_completion,
-            commands::save_conversation_snapshot
+            commands::save_conversation_snapshot,
+            commands::list_conversations,
+            commands::load_conversation_messages,
+            commands::delete_conversation,
+            commands::rename_conversation
         ])
         .run(tauri::generate_context!())
         .expect("failed to run A4Chat");
