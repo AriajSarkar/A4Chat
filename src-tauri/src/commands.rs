@@ -82,6 +82,26 @@ pub struct MessageSnapshot {
     pub(crate) token_count: Option<i64>,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedConversation {
+    pub(crate) id: String,
+    pub(crate) title: String,
+    pub(crate) updated_at: i64,
+    pub(crate) provider_id: String,
+    pub(crate) model: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedMessage {
+    pub(crate) id: String,
+    pub(crate) role: String,
+    pub(crate) content: String,
+    pub(crate) reasoning: Option<String>,
+    pub(crate) token_count: Option<i64>,
+}
+
 #[tauri::command]
 pub fn app_health(app: AppHandle) -> Result<AppHealth, String> {
     let database_path = storage::database_path(&app).map_err(to_command_error)?;
@@ -178,6 +198,37 @@ pub fn save_conversation_snapshot(
 ) -> Result<(), String> {
     let mut connection = storage::connect(&app).map_err(to_command_error)?;
     storage::save_conversation_snapshot(&mut connection, &snapshot).map_err(to_command_error)
+}
+
+#[tauri::command]
+pub fn list_conversations(app: AppHandle) -> Result<Vec<SavedConversation>, String> {
+    let connection = storage::connect(&app).map_err(to_command_error)?;
+    storage::list_conversations(&connection).map_err(to_command_error)
+}
+
+#[tauri::command]
+pub fn load_conversation_messages(
+    app: AppHandle,
+    conversation_id: String,
+) -> Result<Vec<SavedMessage>, String> {
+    let connection = storage::connect(&app).map_err(to_command_error)?;
+    storage::load_conversation_messages(&connection, &conversation_id).map_err(to_command_error)
+}
+
+#[tauri::command]
+pub fn delete_conversation(app: AppHandle, conversation_id: String) -> Result<(), String> {
+    let connection = storage::connect(&app).map_err(to_command_error)?;
+    storage::delete_conversation(&connection, &conversation_id).map_err(to_command_error)
+}
+
+#[tauri::command]
+pub fn rename_conversation(
+    app: AppHandle,
+    conversation_id: String,
+    new_title: String,
+) -> Result<(), String> {
+    let connection = storage::connect(&app).map_err(to_command_error)?;
+    storage::rename_conversation(&connection, &conversation_id, &new_title).map_err(to_command_error)
 }
 
 fn to_command_error(error: anyhow::Error) -> String {
