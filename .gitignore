@@ -170,3 +170,9 @@ vite.config.ts.timestamp-*
 
 
 public/generated
+release
+*.db
+generated
+src/generated
+.api-stash
+.npmrc_temp
