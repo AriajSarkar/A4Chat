@@ -6,54 +6,50 @@ plugins {
     id("rust")
 }
 
-val tauriProperties = Properties().apply {
-    val propFile = file("tauri.properties")
-    if (propFile.exists()) {
-        propFile.inputStream().use { load(it) }
-    }
-}
-
-val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = Properties().apply {
-    if (keystorePropertiesFile.exists()) {
-        keystorePropertiesFile.inputStream().use { load(it) }
-    }
-}
+val tauriProperties =
+        Properties().apply {
+            val propFile = file("tauri.properties")
+            if (propFile.exists()) {
+                propFile.inputStream().use { load(it) }
+            }
+        }
 
 android {
     compileSdk = 36
     namespace = "com.ariajsarkar.a4chat"
-    signingConfigs {
-        if (keystorePropertiesFile.exists()) {
-            create("release") {
-                storeFile = rootProject.file(
-                    keystoreProperties.getProperty("storeFile")
-                        ?: error("keystore.properties is missing storeFile")
-                )
-                storePassword = keystoreProperties.getProperty("storePassword")
-                    ?: error("keystore.properties is missing storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                    ?: error("keystore.properties is missing keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
-                    ?: error("keystore.properties is missing keyPassword")
-            }
-        }
-    }
     defaultConfig {
-        manifestPlaceholders["usesCleartextTraffic"] = "true"
+        manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "com.ariajsarkar.a4chat"
         minSdk = 24
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
+    signingConfigs {
+        create("release") {
+            val keyPropertyFile = file("key.properties")
+            if (keyPropertyFile.exists()) {
+                val props = Properties()
+                keyPropertyFile.inputStream().use { props.load(it) }
+
+                storeFile = file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            } else {
+                println("key.properties not found, release build will not be signed.")
+            }
+        }
+    }
+
     buildTypes {
         getByName("debug") {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
             isDebuggable = true
             isJniDebuggable = true
             isMinifyEnabled = false
-            packaging {                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
+            packaging {
+                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
                 jniLibs.keepDebugSymbols.add("*/armeabi-v7a/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86_64/*.so")
@@ -61,29 +57,20 @@ android {
         }
         getByName("release") {
             isMinifyEnabled = true
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
-                *fileTree(".") { include("**/*.pro") }
-                    .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
-                    .toList().toTypedArray()
+                    *fileTree(".") { include("**/*.pro") }
+                            .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
+                            .toList()
+                            .toTypedArray()
             )
         }
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-    buildFeatures {
-        buildConfig = true
-    }
+    kotlinOptions { jvmTarget = "1.8" }
+    buildFeatures { buildConfig = true }
 }
 
-rust {
-    rootDirRel = "../../../"
-}
+rust { rootDirRel = "../../../" }
 
 dependencies {
     implementation("androidx.webkit:webkit:1.14.0")
