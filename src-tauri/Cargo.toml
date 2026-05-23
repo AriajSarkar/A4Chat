@@ -1,6 +1,6 @@
 [package]
 name = "a4chat"
-version = "0.1.0"
+version = "3.0.0"
 description = "Cross-provider AI chat client"
 authors = ["Ariaj Sarkar"]
 edition = "2021"
