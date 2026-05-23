@@ -40,7 +40,7 @@ android {
         }
     }
     defaultConfig {
-        manifestPlaceholders["usesCleartextTraffic"] = "false"
+        manifestPlaceholders["usesCleartextTraffic"] = "true"
         applicationId = "com.ariajsarkar.a4chat"
         minSdk = 24
         targetSdk = 36
