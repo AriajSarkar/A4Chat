@@ -176,3 +176,9 @@ generated
 src/generated
 .api-stash
 .npmrc_temp
+
+# Android signing
+_signing/
+**/android/key.properties
+*.keystore
+*.jks
