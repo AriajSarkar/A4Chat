@@ -1,6 +1,7 @@
 "use client";
 
-import { RiLoader4Line, RiSettings3Line } from "@remixicon/react";
+import { useCallback, useEffect, useRef } from "react";
+import { RiMenuLine } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { MessageComposer } from "./msg/composer";
@@ -10,95 +11,138 @@ import type { ProviderSettings } from "@/components/settings/utils/providers";
 
 type ConversationViewProps = {
   error: string | null;
+  isStreaming: boolean;
   messages: ConversationMessage[];
   providers: ProviderSettings[];
   selectedProviderId: string;
-  status: "idle" | "sending";
-  onOpenSettings: () => void;
+  status: "idle" | "sending" | "streaming";
   onProviderChange: (providerId: string) => void;
+  onStopStreaming: () => void;
   onSubmit: (content: string) => Promise<void>;
+  onToggleSidebar: () => void;
 };
+
+/** Swipe-from-left-edge to open sidebar (Android/iOS) */
+function useSwipeToOpenSidebar(onOpen: () => void) {
+  const startX = useRef(0);
+  const startY = useRef(0);
+
+  useEffect(() => {
+    const isTouchDevice = () =>
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+
+    if (!isTouchDevice()) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      startX.current = t.clientX;
+      startY.current = t.clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX.current;
+      const dy = t.clientY - startY.current;
+      // Swipe right from left edge (within 30px), at least 50px horizontal, mostly horizontal
+      if (startX.current < 30 && dx > 50 && Math.abs(dx) > Math.abs(dy)) {
+        onOpen();
+      }
+    };
+
+    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [onOpen]);
+}
 
 export function ConversationView({
   error,
+  isStreaming,
   messages,
   providers,
   selectedProviderId,
   status,
-  onOpenSettings,
   onProviderChange,
+  onStopStreaming,
   onSubmit,
+  onToggleSidebar,
 }: ConversationViewProps) {
   const hasMessages = messages.length > 0;
 
+  // Swipe from left edge to open sidebar on touch devices
+  const stableToggle = useCallback(onToggleSidebar, [onToggleSidebar]);
+  useSwipeToOpenSidebar(stableToggle);
+
   return (
-    <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_50%_42%,rgba(25,75,180,0.28),transparent_34rem),linear-gradient(180deg,rgba(12,15,21,0.98),#07090d_72%)]">
-      <header className="flex h-16 shrink-0 items-center justify-between px-4 md:px-7">
-        <div>
-          <div className="text-sm font-semibold text-white/92">A4Chat</div>
-          <div className="text-xs text-white/42">OpenAI-compatible local and online providers</div>
-        </div>
-        <div className="flex items-center gap-2">
-          {status === "sending" ? (
-            <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-2 text-xs text-white/70 sm:flex">
-              <RiLoader4Line className="animate-spin text-accent-soft" size={16} />
-              Waiting for provider
-            </div>
-          ) : null}
-          <button
-            aria-label="Open settings"
-            className="grid size-10 place-items-center rounded-xl text-white/80 transition hover:bg-white/10 md:hidden"
-            onClick={onOpenSettings}
-            type="button"
-          >
-            <RiSettings3Line size={21} />
-          </button>
-        </div>
+    <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
+      <header className="flex h-12 shrink-0 items-center px-3 md:h-14 md:px-6">
+        <button
+          aria-label="Open sidebar"
+          className="grid size-10 cursor-pointer place-items-center rounded-xl text-text-secondary active:bg-white/10 md:hidden"
+          onClick={onToggleSidebar}
+          style={{ touchAction: "manipulation" }}
+          type="button"
+        >
+          <RiMenuLine size={22} />
+        </button>
       </header>
 
       {hasMessages ? (
-        <MessageList messages={messages} />
+        <MessageList isStreaming={isStreaming} messages={messages} status={status} />
       ) : (
         <section className="flex flex-1 items-center justify-center px-4 pb-28">
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-4xl text-center"
-            initial={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.28 }}
-          >
-            <h1 className="mb-10 text-3xl font-medium text-white/82 md:text-5xl">
+          <div className="w-full max-w-3xl text-center">
+            <h1 className="mb-10 bg-gradient-to-b from-text-primary to-text-tertiary bg-clip-text text-3xl font-light tracking-wide text-transparent md:text-5xl">
               What can I help with?
             </h1>
             <MessageComposer
-              disabled={status === "sending"}
+              disabled={status !== "idle"}
               onProviderChange={onProviderChange}
+              onStopStreaming={onStopStreaming}
               onSubmit={onSubmit}
               providers={providers}
               selectedProviderId={selectedProviderId}
+              status={status}
             />
-          </motion.div>
+          </div>
         </section>
       )}
 
-      {hasMessages ? (
-        <div className="shrink-0 px-3 pb-3 md:px-6 md:pb-5">
-          <MessageComposer
-            disabled={status === "sending"}
-            onProviderChange={onProviderChange}
-            onSubmit={onSubmit}
-            providers={providers}
-            selectedProviderId={selectedProviderId}
-          />
-        </div>
-      ) : null}
+      {/* Bottom composer — smooth entrance animation */}
+      <AnimatePresence>
+        {hasMessages ? (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="safe-bottom shrink-0 px-3 pb-3 md:px-6 md:pb-5"
+            exit={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 24 }}
+            key="bottom-composer"
+            transition={{ type: "spring", damping: 24, stiffness: 300 }}
+          >
+            <MessageComposer
+              disabled={status === "sending"}
+              onProviderChange={onProviderChange}
+              onStopStreaming={onStopStreaming}
+              onSubmit={onSubmit}
+              providers={providers}
+              selectedProviderId={selectedProviderId}
+              status={status}
+            />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <AnimatePresence>
         {error ? (
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-24 left-1/2 w-[min(92vw,720px)] -translate-x-1/2 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100"
+            className="absolute inset-x-3 bottom-24 z-20 mx-auto max-w-[720px] rounded-xl border border-danger/20 bg-danger/[0.08] px-4 py-3 text-sm text-red-200 backdrop-blur-sm md:inset-x-6"
             exit={{ opacity: 0, y: 8 }}
             initial={{ opacity: 0, y: 8 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
           >
             {error}
           </motion.div>
