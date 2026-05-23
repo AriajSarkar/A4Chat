@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use rusqlite::{params, Connection};
 use tauri::{AppHandle, Manager};
 
-use crate::commands::{ConversationSnapshot, ProviderSettings};
+use crate::commands::{ConversationSnapshot, ProviderSettings, SavedConversation, SavedMessage};
 
 const DATABASE_FILE: &str = "a4chat.sqlite3";
 
@@ -152,6 +152,87 @@ pub fn save_conversation_snapshot(
         .commit()
         .context("unable to commit conversation")
 }
+
+// ── CRUD additions ─────────────────────────────────────────
+
+pub fn list_conversations(connection: &Connection) -> Result<Vec<SavedConversation>> {
+    let mut statement = connection
+        .prepare(
+            "SELECT id, title, updated_at, provider_id, model
+             FROM conversations
+             ORDER BY updated_at DESC",
+        )
+        .context("unable to prepare conversation list query")?;
+
+    let rows = statement
+        .query_map([], |row| {
+            Ok(SavedConversation {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                updated_at: row.get(2)?,
+                provider_id: row.get(3)?,
+                model: row.get::<_, Option<String>>(4)?.unwrap_or_default(),
+            })
+        })
+        .context("unable to read conversations")?;
+
+    rows.collect::<rusqlite::Result<Vec<_>>>()
+        .context("unable to collect conversations")
+}
+
+pub fn load_conversation_messages(
+    connection: &Connection,
+    conversation_id: &str,
+) -> Result<Vec<SavedMessage>> {
+    let mut statement = connection
+        .prepare(
+            "SELECT id, role, content, reasoning, token_count
+             FROM messages
+             WHERE conversation_id = ?1
+             ORDER BY created_at ASC",
+        )
+        .context("unable to prepare messages query")?;
+
+    let rows = statement
+        .query_map(params![conversation_id], |row| {
+            Ok(SavedMessage {
+                id: row.get(0)?,
+                role: row.get(1)?,
+                content: row.get(2)?,
+                reasoning: row.get(3)?,
+                token_count: row.get(4)?,
+            })
+        })
+        .context("unable to read messages")?;
+
+    rows.collect::<rusqlite::Result<Vec<_>>>()
+        .context("unable to collect messages")
+}
+
+pub fn delete_conversation(connection: &Connection, conversation_id: &str) -> Result<()> {
+    // Foreign key cascade will delete messages automatically
+    connection
+        .execute("DELETE FROM conversations WHERE id = ?1", params![conversation_id])
+        .context("unable to delete conversation")?;
+    Ok(())
+}
+
+pub fn rename_conversation(
+    connection: &Connection,
+    conversation_id: &str,
+    new_title: &str,
+) -> Result<()> {
+    let now = unix_timestamp();
+    connection
+        .execute(
+            "UPDATE conversations SET title = ?1, updated_at = ?2 WHERE id = ?3",
+            params![new_title, now, conversation_id],
+        )
+        .context("unable to rename conversation")?;
+    Ok(())
+}
+
+// ── Migrations & helpers ───────────────────────────────────
 
 fn migrate(connection: &Connection) -> Result<()> {
     connection
