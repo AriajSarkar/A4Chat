@@ -32,7 +32,7 @@ export function isTauriRuntime() {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-function chatCompletionsEndpoint(baseUrl: string) {
+export function chatCompletionsEndpoint(baseUrl: string) {
   const trimmed = baseUrl.trim().replace(/\/+$/, "");
   if (trimmed.endsWith("/chat/completions")) return trimmed;
   try {
@@ -44,7 +44,7 @@ function chatCompletionsEndpoint(baseUrl: string) {
 
 /* ── <think> tag parser ──────────────────────────────── */
 
-class ThinkTagParser {
+export class ThinkTagParser {
   private inThink = false;
   private pending = "";
 
@@ -101,14 +101,14 @@ class ThinkTagParser {
   }
 }
 
-function partialTagMatch(text: string, tag: string): number {
+export function partialTagMatch(text: string, tag: string): number {
   for (let len = Math.min(tag.length - 1, text.length); len > 0; len--) {
     if (text.endsWith(tag.slice(0, len))) return len;
   }
   return 0;
 }
 
-function stripThinkTags(text: string): { content: string; reasoning: string } {
+export function stripThinkTags(text: string): { content: string; reasoning: string } {
   let reasoning = "";
   const content = text.replace(/<think>([\s\S]*?)<\/think>/g, (_, r) => {
     reasoning += r;
@@ -117,7 +117,7 @@ function stripThinkTags(text: string): { content: string; reasoning: string } {
   return { content: content.trim(), reasoning };
 }
 
-function extractContentText(content: unknown): string {
+export function extractContentText(content: unknown): string {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     return content
