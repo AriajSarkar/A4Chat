@@ -1,7 +1,13 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────
+   A4Chat Design System — Dark Luxury Aesthetic
+   ───────────────────────────────────────────────────────── */
+
 :root {
   color-scheme: dark;
+
+  /* Core palette */
   --background: #07090d;
   --foreground: #f4f7fb;
   --panel: #111419;
@@ -11,7 +17,20 @@
   --muted: #99a5b7;
   --accent: #3d8bff;
   --accent-soft: #72d7ff;
+  --accent-glow: #5ea3ff;
   --danger: #ff6b6b;
+
+  /* Layered surfaces for depth */
+  --surface-0: #07090d;
+  --surface-1: #0d1017;
+  --surface-2: #131720;
+  --surface-3: #1a1f2a;
+
+  /* Text hierarchy */
+  --text-primary: #f4f7fb;
+  --text-secondary: #c0c8d8;
+  --text-tertiary: #8892a6;
+  --text-quaternary: #5a6478;
 }
 
 @theme inline {
@@ -24,9 +43,23 @@
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
-  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --color-accent-glow: var(--accent-glow);
+  --color-danger: var(--danger);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-quaternary: var(--text-quaternary);
+  --font-sans: var(--font-geist-sans), "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: var(--font-geist-mono), "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
+
+/* ─────────────────────────────────────────────────────────
+   Browser resets
+   ───────────────────────────────────────────────────────── */
 
 * {
   box-sizing: border-box;
@@ -53,7 +86,93 @@ button {
 
 textarea {
   scrollbar-width: thin;
+  scrollbar-color: var(--panel-strong) transparent;
 }
+
+/* Android / iOS safe area bottom padding */
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
+}
+
+/* ─────────────────────────────────────────────────────────
+   Scrollbar styling
+   ───────────────────────────────────────────────────────── */
+
+/* WebKit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--panel-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--panel-strong) transparent;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Utility classes
+   ───────────────────────────────────────────────────────── */
+
+.glass {
+  background: rgba(17, 20, 25, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+}
+
+.glow-accent {
+  box-shadow:
+    0 0 12px rgba(61, 139, 255, 0.25),
+    0 0 32px rgba(61, 139, 255, 0.1);
+}
+
+/* Scroll container with gradient fades at edges */
+.scroll-fade {
+  position: relative;
+}
+
+.scroll-fade::before,
+.scroll-fade::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 32px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.scroll-fade::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--background), transparent);
+}
+
+.scroll-fade::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--background), transparent);
+}
+
+/* ─────────────────────────────────────────────────────────
+   Reduced motion
+   ───────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -64,4 +183,395 @@ textarea {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Composer animated gradient border */
+@keyframes rotate {
+  from {
+    --composer-angle: 0deg;
+  }
+  to {
+    --composer-angle: 360deg;
+  }
+}
+
+@property --composer-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.composer-glow:focus-within::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--composer-angle),
+    var(--accent),
+    var(--accent-soft),
+    transparent,
+    var(--accent)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: rotate 4s linear infinite;
+  opacity: 0.5;
+}
+
+/* Typing indicator dots */
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+
+.typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  animation: typing-dot 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Streaming cursor — blinking caret at end of streaming content */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.streaming-cursor::after {
+  content: "▋";
+  display: inline;
+  color: var(--accent-soft);
+  animation: cursor-blink 1s step-end infinite;
+  margin-left: 1px;
+}
+
+/* Append blinking cursor to last element inside streaming prose */
+.prose-chat.streaming > :last-child::after {
+  content: "▋";
+  display: inline;
+  color: var(--accent-soft);
+  animation: cursor-blink 1s step-end infinite;
+  margin-left: 1px;
+  font-size: 0.85em;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Syntax highlighting — rehype-highlight (dark theme)
+   Palette built from our accent colors:
+     keywords:  accent-soft (#72d7ff)
+     strings:   warm teal  (#5ce5c5)
+     comments:  text-quaternary
+     functions: accent (#3d8bff)
+     numbers:   soft violet (#c4a0ff)
+     types:     amber (#f5c542)
+     literals:  coral (#ff8a6b)
+   ───────────────────────────────────────────────────────── */
+
+.hljs {
+  color: var(--text-secondary);
+  background: var(--surface-1);
+}
+
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #72d7ff;
+  font-weight: 500;
+}
+
+.hljs-string,
+.hljs-addition {
+  color: #5ce5c5;
+}
+
+.hljs-comment {
+  color: var(--text-quaternary);
+  font-style: italic;
+}
+
+.hljs-function,
+.hljs-title {
+  color: #3d8bff;
+}
+
+.hljs-number {
+  color: #c4a0ff;
+}
+
+.hljs-built_in {
+  color: #72d7ff;
+}
+
+.hljs-literal {
+  color: #ff8a6b;
+}
+
+.hljs-type {
+  color: #f5c542;
+}
+
+.hljs-params {
+  color: var(--text-secondary);
+}
+
+.hljs-meta {
+  color: #8892a6;
+}
+
+.hljs-attr,
+.hljs-attribute {
+  color: #72d7ff;
+}
+
+.hljs-tag {
+  color: var(--text-tertiary);
+}
+
+.hljs-name {
+  color: #3d8bff;
+}
+
+.hljs-selector-class {
+  color: #5ce5c5;
+}
+
+.hljs-selector-id {
+  color: #f5c542;
+}
+
+.hljs-regexp {
+  color: #ff8a6b;
+}
+
+.hljs-link {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #c4a0ff;
+}
+
+.hljs-deletion {
+  color: var(--danger);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.hljs-addition {
+  background: rgba(92, 229, 197, 0.08);
+}
+
+/* ─────────────────────────────────────────────────────────
+   Markdown prose styles — .prose-chat
+   Used inside assistant chat messages for rich content.
+   ───────────────────────────────────────────────────────── */
+
+.prose-chat {
+  color: var(--text-secondary);
+  line-height: 1.75;
+  font-size: 0.9375rem;
+}
+
+/* Headings */
+.prose-chat h1 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.prose-chat h2 {
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 650;
+  margin-top: 1.5rem;
+  margin-bottom: 0.625rem;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+}
+
+.prose-chat h3 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.prose-chat h4 {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.45;
+}
+
+/* First child heading has no top margin */
+.prose-chat > :first-child {
+  margin-top: 0;
+}
+
+/* Paragraphs */
+.prose-chat p {
+  margin-top: 0.625rem;
+  margin-bottom: 0.625rem;
+}
+
+/* Links */
+.prose-chat a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: rgba(61, 139, 255, 0.4);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.prose-chat a:hover {
+  text-decoration-color: var(--accent);
+}
+
+/* Bold & italic */
+.prose-chat strong {
+  color: var(--text-primary);
+  font-weight: 650;
+}
+
+.prose-chat em {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Lists */
+.prose-chat ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose-chat ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose-chat li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  padding-left: 0.25rem;
+}
+
+.prose-chat li::marker {
+  color: var(--text-quaternary);
+}
+
+/* Nested lists */
+.prose-chat ul ul,
+.prose-chat ol ul {
+  list-style-type: circle;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Blockquotes */
+.prose-chat blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 0.5rem 1rem;
+  margin: 0.75rem 0;
+  background: rgba(61, 139, 255, 0.05);
+  border-radius: 0 6px 6px 0;
+  color: var(--text-tertiary);
+}
+
+.prose-chat blockquote p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Horizontal rules */
+.prose-chat hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+/* Inline code */
+.prose-chat :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--accent-soft);
+  background: var(--surface-2);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.prose-chat pre {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0.75rem 0;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.prose-chat pre code {
+  font-family: var(--font-mono);
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* Tables */
+.prose-chat table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.875rem;
+}
+
+.prose-chat thead th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--panel-strong);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.prose-chat tbody td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.prose-chat tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.prose-chat tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
