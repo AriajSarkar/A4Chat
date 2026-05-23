@@ -1,12 +1,10 @@
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
-
-onlyBuiltDependencies:
-  - '@prisma/engines'
-  - better-sqlite3
-  - optipng-bin
-  - pngquant-bin
-  - prisma
-  - tauri
-  - zopflipng-bin
+allowBuilds:
+  '@prisma/engines': true
+  better-sqlite3: true
+  optipng-bin: true
+  pngquant-bin: true
+  prisma: true
+  sharp: false
+  tauri: true
+  unrs-resolver: false
+  zopflipng-bin: true
