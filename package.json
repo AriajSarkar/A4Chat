@@ -13,6 +13,10 @@
     "lint": "oxlint .",
     "format": "oxfmt . && cd src-tauri && cargo fmt --all",
     "check": "pnpm typecheck && pnpm lint",
+    "test": "pnpm test:ts && pnpm test:rust",
+    "test:watch": "vitest",
+    "test:rust": "cd src-tauri && cargo test",
+    "test:ts": "vitest run",
     "prisma:sync": "node scripts/prisma-sync.mjs",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
@@ -52,7 +56,8 @@
     "oxlint": "1.66.0",
     "prisma": "7.8.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.7"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
