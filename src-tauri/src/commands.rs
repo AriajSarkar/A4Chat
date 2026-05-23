@@ -15,15 +15,15 @@ pub struct AppHealth {
     database_path: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProviderSettings {
-    pub(crate) id: String,
-    pub(crate) label: String,
-    pub(crate) base_url: String,
-    pub(crate) api_key: Option<String>,
-    pub(crate) model: String,
-    pub(crate) enabled: bool,
+    pub id: String,
+    pub label: String,
+    pub base_url: String,
+    pub api_key: Option<String>,
+    pub model: String,
+    pub enabled: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -46,60 +46,60 @@ pub struct CompletionMessage {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CompletionRequest {
-    provider: CompletionProvider,
-    messages: Vec<CompletionMessage>,
-    temperature: Option<f32>,
-    max_tokens: Option<u32>,
+    pub provider: CompletionProvider,
+    pub messages: Vec<CompletionMessage>,
+    pub temperature: Option<f32>,
+    pub max_tokens: Option<u32>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CompletionResponse {
-    content: String,
-    reasoning: Option<String>,
-    model: Option<String>,
-    input_tokens: Option<i64>,
-    output_tokens: Option<i64>,
+    pub content: String,
+    pub reasoning: Option<String>,
+    pub model: Option<String>,
+    pub input_tokens: Option<i64>,
+    pub output_tokens: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConversationSnapshot {
-    pub(crate) id: String,
-    pub(crate) title: String,
-    pub(crate) provider_id: String,
-    pub(crate) model: Option<String>,
-    pub(crate) messages: Vec<MessageSnapshot>,
+    pub id: String,
+    pub title: String,
+    pub provider_id: String,
+    pub model: Option<String>,
+    pub messages: Vec<MessageSnapshot>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MessageSnapshot {
-    pub(crate) id: String,
-    pub(crate) role: String,
-    pub(crate) content: String,
-    pub(crate) reasoning: Option<String>,
-    pub(crate) token_count: Option<i64>,
+    pub id: String,
+    pub role: String,
+    pub content: String,
+    pub reasoning: Option<String>,
+    pub token_count: Option<i64>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SavedConversation {
-    pub(crate) id: String,
-    pub(crate) title: String,
-    pub(crate) updated_at: i64,
-    pub(crate) provider_id: String,
-    pub(crate) model: String,
+    pub id: String,
+    pub title: String,
+    pub updated_at: i64,
+    pub provider_id: String,
+    pub model: String,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SavedMessage {
-    pub(crate) id: String,
-    pub(crate) role: String,
-    pub(crate) content: String,
-    pub(crate) reasoning: Option<String>,
-    pub(crate) token_count: Option<i64>,
+    pub id: String,
+    pub role: String,
+    pub content: String,
+    pub reasoning: Option<String>,
+    pub token_count: Option<i64>,
 }
 
 #[tauri::command]
@@ -228,7 +228,8 @@ pub fn rename_conversation(
     new_title: String,
 ) -> Result<(), String> {
     let connection = storage::connect(&app).map_err(to_command_error)?;
-    storage::rename_conversation(&connection, &conversation_id, &new_title).map_err(to_command_error)
+    storage::rename_conversation(&connection, &conversation_id, &new_title)
+        .map_err(to_command_error)
 }
 
 fn to_command_error(error: anyhow::Error) -> String {
@@ -236,7 +237,7 @@ fn to_command_error(error: anyhow::Error) -> String {
 }
 
 impl CompletionRequest {
-    fn validate(&self) -> anyhow::Result<()> {
+    pub fn validate(&self) -> anyhow::Result<()> {
         if self.provider.base_url.trim().is_empty() {
             return Err(anyhow!("provider base URL is required"));
         }
@@ -261,7 +262,7 @@ impl CompletionRequest {
     }
 }
 
-fn chat_completions_endpoint(base_url: &str) -> String {
+pub fn chat_completions_endpoint(base_url: &str) -> String {
     let trimmed = base_url.trim().trim_end_matches('/');
 
     if trimmed.ends_with("/chat/completions") {
@@ -317,7 +318,7 @@ mod tests {
     }
 }
 
-fn parse_completion_response(payload: Value) -> anyhow::Result<CompletionResponse> {
+pub fn parse_completion_response(payload: Value) -> anyhow::Result<CompletionResponse> {
     let choice = payload
         .get("choices")
         .and_then(Value::as_array)
