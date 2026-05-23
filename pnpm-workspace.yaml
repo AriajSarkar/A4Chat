@@ -3,7 +3,8 @@ ignoredBuiltDependencies:
   - unrs-resolver
 
 onlyBuiltDependencies:
-  - "@prisma/engines"
+  - '@prisma/engines'
+  - better-sqlite3
   - optipng-bin
   - pngquant-bin
   - prisma
