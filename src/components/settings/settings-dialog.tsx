@@ -37,10 +37,19 @@ export function SettingsDialog({ open, providers, onClose, onSave }: SettingsDia
     }
   }, [open, providers]);
 
+  /* Close on Escape */
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-
     try {
       await onSave(normalizeProviders(draftProviders));
       onClose();
@@ -51,9 +60,7 @@ export function SettingsDialog({ open, providers, onClose, onSave }: SettingsDia
 
   function updateProvider(providerId: string, patch: Partial<ProviderSettings>) {
     setDraftProviders((current) =>
-      current.map((provider) =>
-        provider.id === providerId ? { ...provider, ...patch } : provider,
-      ),
+      current.map((p) => (p.id === providerId ? { ...p, ...patch } : p)),
     );
   }
 
@@ -62,41 +69,45 @@ export function SettingsDialog({ open, providers, onClose, onSave }: SettingsDia
       {open ? (
         <motion.div
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-50 grid place-items-center bg-black/62 px-3 py-5 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-3 py-5 backdrop-blur-sm"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
+          onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
           <motion.form
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="flex h-[min(760px,92dvh)] w-[min(960px,96vw)] overflow-hidden rounded-3xl border border-white/10 bg-[#202124] shadow-2xl"
-            exit={{ opacity: 0, scale: 0.98, y: 10 }}
-            initial={{ opacity: 0, scale: 0.98, y: 10 }}
+            className="flex h-[min(760px,92dvh)] w-[min(960px,96vw)] overflow-hidden rounded-2xl border border-white/[0.08] bg-surface-1 shadow-2xl shadow-black/40 md:rounded-3xl"
+            exit={{ opacity: 0, scale: 0.97, y: 12 }}
+            initial={{ opacity: 0, scale: 0.97, y: 12 }}
             onSubmit={handleSubmit}
+            transition={{ type: "spring", damping: 26, stiffness: 320 }}
           >
-            <aside className="hidden w-64 shrink-0 border-r border-white/8 p-3 md:block">
+            {/* Desktop sidebar nav */}
+            <aside className="hidden w-60 shrink-0 border-r border-white/[0.06] p-3 md:block">
               <button
                 aria-label="Close settings"
-                className="mb-4 grid size-12 place-items-center rounded-xl bg-white/8 text-white/88 transition hover:bg-white/12"
+                className="mb-4 grid size-11 place-items-center rounded-xl bg-white/[0.06] text-text-secondary transition-colors hover:bg-white/[0.1]"
                 onClick={onClose}
                 type="button"
               >
-                <RiCloseLine size={24} />
+                <RiCloseLine size={22} />
               </button>
-              <nav className="space-y-1">
+              <nav className="space-y-0.5">
                 {sections.map((section) => {
                   const Icon = section.icon;
-
                   return (
                     <button
                       className={cn(
-                        "flex h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm text-white/84 transition",
-                        activeSection === section.id ? "bg-white/10" : "hover:bg-white/8",
+                        "flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm transition-colors",
+                        activeSection === section.id
+                          ? "bg-white/[0.08] text-text-primary"
+                          : "text-text-secondary hover:bg-white/[0.05]",
                       )}
                       key={section.id}
                       onClick={() => setActiveSection(section.id)}
                       type="button"
                     >
-                      <Icon size={21} />
+                      <Icon size={20} />
                       {section.label}
                     </button>
                   );
@@ -104,24 +115,28 @@ export function SettingsDialog({ open, providers, onClose, onSave }: SettingsDia
               </nav>
             </aside>
 
+            {/* Content area */}
             <section className="min-w-0 flex-1 overflow-y-auto">
-              <div className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-white/10 bg-[#202124]/95 px-5 backdrop-blur md:px-8">
-                <h2 className="text-xl font-semibold text-white">Settings</h2>
+              <div className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-white/[0.06] bg-surface-1/95 px-5 backdrop-blur md:h-16 md:px-8">
+                <h2 className="text-lg font-semibold text-text-primary md:text-xl">Settings</h2>
                 <button
                   aria-label="Close settings"
-                  className="grid size-10 place-items-center rounded-xl text-white/82 transition hover:bg-white/10 md:hidden"
+                  className="grid size-10 place-items-center rounded-xl text-text-secondary transition-colors hover:bg-white/[0.08] md:hidden"
                   onClick={onClose}
                   type="button"
                 >
-                  <RiCloseLine size={24} />
+                  <RiCloseLine size={22} />
                 </button>
               </div>
-              <div className="flex gap-2 overflow-x-auto border-b border-white/8 px-5 py-3 md:hidden">
+              {/* Mobile tabs */}
+              <div className="flex gap-1.5 overflow-x-auto border-b border-white/[0.06] px-5 py-2.5 md:hidden">
                 {sections.map((section) => (
                   <button
                     className={cn(
-                      "rounded-full px-3 py-2 text-sm text-white/74",
-                      activeSection === section.id && "bg-white/10 text-white",
+                      "rounded-full px-3 py-1.5 text-sm transition-colors",
+                      activeSection === section.id
+                        ? "bg-white/[0.1] text-text-primary"
+                        : "text-text-tertiary hover:text-text-secondary",
                     )}
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
@@ -140,20 +155,20 @@ export function SettingsDialog({ open, providers, onClose, onSave }: SettingsDia
                 {activeSection === "security" ? <SecuritySettings /> : null}
               </div>
 
-              <div className="sticky bottom-0 flex justify-end gap-3 border-t border-white/10 bg-[#202124]/95 px-5 py-4 backdrop-blur md:px-8">
+              <div className="sticky bottom-0 flex justify-end gap-3 border-t border-white/[0.06] bg-surface-1/95 px-5 py-4 backdrop-blur md:px-8">
                 <button
-                  className="rounded-full px-4 py-2 text-sm text-white/74 transition hover:bg-white/8"
+                  className="rounded-full px-4 py-2 text-sm text-text-tertiary transition-colors hover:bg-white/[0.06]"
                   onClick={onClose}
                   type="button"
                 >
                   Cancel
                 </button>
                 <button
-                  className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-accent/90 disabled:opacity-55"
+                  className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white shadow-[0_0_16px_rgba(61,139,255,0.2)] transition-all hover:shadow-[0_0_24px_rgba(61,139,255,0.35)] disabled:opacity-50 disabled:shadow-none"
                   disabled={saving}
                   type="submit"
                 >
-                  {saving ? "Saving" : "Save"}
+                  {saving ? "Saving…" : "Save"}
                 </button>
               </div>
             </section>
@@ -166,7 +181,7 @@ export function SettingsDialog({ open, providers, onClose, onSave }: SettingsDia
 
 function GeneralSettings() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SettingRow label="Appearance" value="Dark" />
       <SettingRow label="Accent color" value="Blue" dot />
       <SettingRow label="Local data" value="SQLite" />
@@ -176,12 +191,12 @@ function GeneralSettings() {
 
 function SecuritySettings() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black px-5 py-5">
-      <div className="mb-3 flex items-center gap-3 text-white">
-        <RiKey2Line size={22} />
+    <div className="rounded-2xl border border-white/[0.06] bg-surface-0 px-5 py-5">
+      <div className="mb-3 flex items-center gap-3 text-text-primary">
+        <RiKey2Line size={20} />
         <h3 className="font-semibold">API keys</h3>
       </div>
-      <p className="text-sm leading-6 text-white/62">
+      <p className="text-sm leading-6 text-text-tertiary">
         Keys are stored locally for the current app profile. A dedicated OS keychain adapter should
         replace this before public release.
       </p>
@@ -197,41 +212,41 @@ function ProviderSettingsEditor({
   onChange: (providerId: string, patch: Partial<ProviderSettings>) => void;
 }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {providers.map((provider) => (
         <div
-          className="rounded-2xl border border-white/10 bg-black/40 p-4 md:p-5"
+          className="rounded-2xl border border-white/[0.06] bg-surface-0/60 p-4 md:p-5"
           key={provider.id}
         >
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-semibold text-white">{provider.label}</h3>
-              <p className="text-xs text-white/44">{provider.id}</p>
+              <h3 className="text-base font-semibold text-text-primary">{provider.label}</h3>
+              <p className="text-xs text-text-quaternary">{provider.id}</p>
             </div>
             <label className="relative inline-flex cursor-pointer items-center">
               <input
                 checked={provider.enabled}
                 className="peer sr-only"
-                onChange={(event) => onChange(provider.id, { enabled: event.target.checked })}
+                onChange={(e) => onChange(provider.id, { enabled: e.target.checked })}
                 type="checkbox"
               />
-              <span className="h-7 w-12 rounded-full bg-white/14 transition after:absolute after:left-1 after:top-1 after:size-5 after:rounded-full after:bg-white after:transition peer-checked:bg-accent peer-checked:after:translate-x-5" />
+              <span className="h-7 w-12 rounded-full bg-white/[0.1] transition-colors after:absolute after:left-1 after:top-1 after:size-5 after:rounded-full after:bg-text-secondary after:transition-all peer-checked:bg-accent peer-checked:after:translate-x-5 peer-checked:after:bg-white" />
             </label>
           </div>
           <div className="grid gap-4">
             <Field
               label="Base URL"
-              onChange={(value) => onChange(provider.id, { baseUrl: value })}
+              onChange={(v) => onChange(provider.id, { baseUrl: v })}
               value={provider.baseUrl}
             />
             <Field
               label="Model"
-              onChange={(value) => onChange(provider.id, { model: value })}
+              onChange={(v) => onChange(provider.id, { model: v })}
               value={provider.model}
             />
             <Field
               label="API key"
-              onChange={(value) => onChange(provider.id, { apiKey: value })}
+              onChange={(v) => onChange(provider.id, { apiKey: v })}
               type="password"
               value={provider.apiKey}
             />
@@ -254,11 +269,11 @@ function Field({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="grid gap-2 text-sm text-white/68">
+    <label className="grid gap-1.5 text-sm text-text-tertiary">
       {label}
       <input
-        className="h-11 rounded-xl border border-white/10 bg-white/6 px-3 text-white outline-none transition placeholder:text-white/30 focus:border-accent/70"
-        onChange={(event) => onChange(event.target.value)}
+        className="h-11 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 text-text-primary outline-none transition-colors placeholder:text-text-quaternary focus:border-accent/50 focus:bg-white/[0.05]"
+        onChange={(e) => onChange(e.target.value)}
         type={type}
         value={value}
       />
@@ -276,9 +291,9 @@ function SettingRow({
   dot?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between border-b border-white/10 py-4">
-      <span className="text-white/88">{label}</span>
-      <span className="flex items-center gap-2 text-white/72">
+    <div className="flex items-center justify-between border-b border-white/[0.06] py-4">
+      <span className="text-text-secondary">{label}</span>
+      <span className="flex items-center gap-2 text-text-tertiary">
         {dot ? <span className="size-3 rounded-full bg-accent" /> : null}
         {value}
       </span>
