@@ -212,7 +212,10 @@ pub fn load_conversation_messages(
 pub fn delete_conversation(connection: &Connection, conversation_id: &str) -> Result<()> {
     // Foreign key cascade will delete messages automatically
     connection
-        .execute("DELETE FROM conversations WHERE id = ?1", params![conversation_id])
+        .execute(
+            "DELETE FROM conversations WHERE id = ?1",
+            params![conversation_id],
+        )
         .context("unable to delete conversation")?;
     Ok(())
 }
@@ -234,7 +237,7 @@ pub fn rename_conversation(
 
 // ── Migrations & helpers ───────────────────────────────────
 
-fn migrate(connection: &Connection) -> Result<()> {
+pub fn migrate(connection: &Connection) -> Result<()> {
     connection
         .execute_batch(
             "
@@ -300,7 +303,7 @@ fn migrate(connection: &Connection) -> Result<()> {
     Ok(())
 }
 
-fn unix_timestamp() -> i64 {
+pub fn unix_timestamp() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_secs() as i64)
