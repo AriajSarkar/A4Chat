@@ -178,7 +178,7 @@ src/generated
 .npmrc_temp
 
 # Android signing
-_signing/
+_signing
 **/android/key.properties
 *.keystore
 *.jks
