@@ -75,11 +75,12 @@ export function MessageList({ isStreaming, messages, status }: MessageListProps)
   }, []);
 
   return (
-    <section
-      ref={scrollRef}
-      className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-2 md:px-8"
-      style={{ contain: "content" }}
-    >
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <section
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-2 md:px-8"
+        style={{ contain: "content" }}
+      >
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
         {messages.map((message, index) => {
           const isLast = index === messages.length - 1;
@@ -101,23 +102,25 @@ export function MessageList({ isStreaming, messages, status }: MessageListProps)
         })}
       </div>
 
+      </section>
+
       {/* Scroll-to-bottom FAB */}
       <AnimatePresence>
         {showScrollBtn ? (
           <motion.button
-            animate={{ opacity: 1, scale: 1 }}
+            animate={{ opacity: 1, y: 0 }}
             aria-label="Scroll to bottom"
-            className="fixed bottom-28 right-6 z-30 grid size-10 place-items-center rounded-full border border-white/10 bg-surface-2 text-text-secondary shadow-lg shadow-black/30 transition-colors hover:bg-surface-3 hover:text-text-primary md:bottom-24 md:right-10"
-            exit={{ opacity: 0, scale: 0.8 }}
-            initial={{ opacity: 0, scale: 0.8 }}
+            className="absolute bottom-2 left-1/2 z-30 flex h-9 -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-surface-2 px-2.5 text-[13px] font-medium text-text-secondary shadow-lg shadow-black/40 backdrop-blur-md transition-all hover:bg-surface-3 hover:text-text-primary active:scale-95"
+            exit={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 10 }}
             onClick={scrollToBottom}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            transition={{ type: "spring", damping: 25, stiffness: 400 }}
             type="button"
           >
-            <RiArrowDownLine size={20} />
+            <RiArrowDownLine size={16} />
           </motion.button>
         ) : null}
       </AnimatePresence>
-    </section>
+    </div>
   );
 }

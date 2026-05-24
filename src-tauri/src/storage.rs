@@ -8,7 +8,9 @@ use anyhow::{Context, Result};
 use rusqlite::{params, Connection};
 use tauri::{AppHandle, Manager};
 
-use crate::commands::{ConversationSnapshot, ProviderSettings, SavedConversation, SavedMessage};
+use crate::commands::{
+    ConversationSnapshot, ProviderModelRow, ProviderSettings, SavedConversation, SavedMessage,
+};
 
 const DATABASE_FILE: &str = "a4chat.sqlite3";
 
@@ -235,6 +237,88 @@ pub fn rename_conversation(
     Ok(())
 }
 
+// ── Provider models ────────────────────────────────────────
+
+pub fn save_provider_models(
+    connection: &mut Connection,
+    provider_id: &str,
+    models: &[ProviderModelRow],
+) -> Result<()> {
+    let transaction = connection
+        .transaction()
+        .context("unable to start provider models transaction")?;
+
+    for model in models {
+        transaction
+            .execute(
+                "INSERT INTO provider_models (provider_id, model_id, display_name, is_favorite, last_seen_at)
+                 VALUES (?1, ?2, ?3, 0, ?4)
+                 ON CONFLICT(provider_id, model_id) DO UPDATE SET
+                   display_name = excluded.display_name,
+                   last_seen_at = excluded.last_seen_at",
+                params![provider_id, model.model_id, model.display_name, model.last_seen_at],
+            )
+            .with_context(|| {
+                format!(
+                    "unable to persist model {} for provider {}",
+                    model.model_id, provider_id
+                )
+            })?;
+    }
+
+    transaction
+        .commit()
+        .context("unable to commit provider models")
+}
+
+pub fn list_provider_models(
+    connection: &Connection,
+    provider_id: &str,
+) -> Result<Vec<ProviderModelRow>> {
+    let mut statement = connection
+        .prepare(
+            "SELECT provider_id, model_id, display_name, is_favorite, last_seen_at
+             FROM provider_models
+             WHERE provider_id = ?1
+             ORDER BY is_favorite DESC, display_name COLLATE NOCASE ASC",
+        )
+        .context("unable to prepare provider models query")?;
+
+    let rows = statement
+        .query_map(params![provider_id], |row| {
+            Ok(ProviderModelRow {
+                provider_id: row.get(0)?,
+                model_id: row.get(1)?,
+                display_name: row.get(2)?,
+                is_favorite: row.get::<_, i64>(3)? == 1,
+                last_seen_at: row.get(4)?,
+            })
+        })
+        .context("unable to read provider models")?;
+
+    rows.collect::<rusqlite::Result<Vec<_>>>()
+        .context("unable to collect provider models")
+}
+
+pub fn toggle_model_favorite(
+    connection: &Connection,
+    provider_id: &str,
+    model_id: &str,
+    is_favorite: bool,
+) -> Result<()> {
+    connection
+        .execute(
+            "UPDATE provider_models SET is_favorite = ?1 WHERE provider_id = ?2 AND model_id = ?3",
+            params![
+                if is_favorite { 1_i64 } else { 0_i64 },
+                provider_id,
+                model_id
+            ],
+        )
+        .context("unable to toggle model favorite")?;
+    Ok(())
+}
+
 // ── Migrations & helpers ───────────────────────────────────
 
 pub fn migrate(connection: &Connection) -> Result<()> {
@@ -282,6 +366,19 @@ pub fn migrate(connection: &Connection) -> Result<()> {
 
             CREATE INDEX IF NOT EXISTS idx_messages_conversation_created_at
               ON messages(conversation_id, created_at ASC);
+
+            CREATE TABLE IF NOT EXISTS provider_models (
+              provider_id TEXT NOT NULL,
+              model_id TEXT NOT NULL,
+              display_name TEXT NOT NULL DEFAULT '',
+              is_favorite INTEGER NOT NULL DEFAULT 0,
+              last_seen_at INTEGER NOT NULL,
+              PRIMARY KEY (provider_id, model_id),
+              FOREIGN KEY (provider_id) REFERENCES provider_settings(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_provider_models_provider
+              ON provider_models(provider_id);
             ",
         )
         .context("unable to migrate local database")?;

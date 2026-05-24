@@ -5,7 +5,7 @@ import type {
   CompletionResponse,
   ConversationMessage,
 } from "@/components/conversation/utils/conversation";
-import { normalizeProviders, type ProviderSettings } from "@/components/settings/utils/providers";
+import { normalizeProviders, type ProviderModel, type ProviderSettings } from "@/components/settings/utils/providers";
 
 export type AppHealth = {
   platform: string;
@@ -40,6 +40,77 @@ export function chatCompletionsEndpoint(baseUrl: string) {
     if (url.pathname === "" || url.pathname === "/") return `${trimmed}/v1/chat/completions`;
   } catch { /* fall through */ }
   return `${trimmed}/chat/completions`;
+}
+
+export function modelsEndpoint(baseUrl: string) {
+  const trimmed = baseUrl.trim().replace(/\/+$/, "");
+  if (trimmed.endsWith("/models")) return trimmed;
+  return `${trimmed}/models`;
+}
+
+type ProviderErrorOptions = {
+  fallback?: string;
+  providerLabel?: string;
+  retryAfter?: string | null;
+  status?: number;
+};
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null ? value as Record<string, unknown> : null;
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function asRetryAfterSeconds(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(1, Math.ceil(value));
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value.trim());
+    if (Number.isFinite(parsed)) {
+      return Math.max(1, Math.ceil(parsed));
+    }
+  }
+
+  return null;
+}
+
+export function formatProviderError(payload: unknown, options: ProviderErrorOptions = {}) {
+  const record = asRecord(payload);
+  const error = asRecord(record?.error ?? payload) ?? record;
+  const metadata = asRecord(error?.metadata);
+
+  const message =
+    asString(metadata?.raw) ??
+    asString(error?.message) ??
+    asString(record?.message) ??
+    asString(typeof record?.error === "string" ? record.error : null);
+
+  const providerName =
+    asString(metadata?.provider_name) ??
+    asString(error?.provider_name) ??
+    asString(record?.provider_name) ??
+    options.providerLabel ??
+    null;
+
+  const retryAfterSeconds =
+    asRetryAfterSeconds(metadata?.retry_after_seconds_raw) ??
+    asRetryAfterSeconds(metadata?.retry_after_seconds) ??
+    asRetryAfterSeconds(error?.retry_after_seconds) ??
+    asRetryAfterSeconds(record?.retry_after_seconds) ??
+    asRetryAfterSeconds(options.retryAfter);
+
+  const fallback = options.fallback ?? (options.status ? `Provider error (HTTP ${options.status})` : "Provider request failed");
+  const baseMessage = message ?? fallback;
+  const providerPrefix = providerName && !baseMessage.toLowerCase().includes(providerName.toLowerCase())
+    ? `${providerName}: `
+    : "";
+  const retrySuffix = retryAfterSeconds ? ` (retry after ${retryAfterSeconds}s)` : "";
+
+  return `${providerPrefix}${baseMessage}${retrySuffix}`;
 }
 
 /* ── <think> tag parser ──────────────────────────────── */
@@ -152,6 +223,92 @@ export async function persistProviders(providers: ProviderSettings[]) {
   });
 }
 
+/* ── Model discovery ─────────────────────────────────── */
+
+export async function detectProviderModels(
+  providerId: string,
+  baseUrl: string,
+  apiKey: string,
+): Promise<ProviderModel[]> {
+  if (isTauriRuntime()) {
+    const rows = await invoke<Array<{
+      providerId: string; modelId: string; displayName: string;
+      isFavorite: boolean; lastSeenAt: number;
+    }>>("detect_provider_models", {
+      providerId, baseUrl, apiKey: apiKey || null,
+    });
+    return rows.map((r) => ({
+      modelId: r.modelId,
+      displayName: r.displayName || r.modelId,
+      isFavorite: r.isFavorite,
+      lastSeenAt: r.lastSeenAt,
+    }));
+  }
+
+  /* Browser fallback — call /models directly */
+  const endpoint = modelsEndpoint(baseUrl);
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (apiKey) headers.authorization = `Bearer ${apiKey}`;
+
+  const response = await fetch(endpoint, { headers });
+  if (!response.ok) {
+    const rawBody = await response.text().catch(() => "");
+    let payload: unknown = rawBody;
+    try {
+      payload = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      payload = rawBody ? { error: { message: rawBody } } : {};
+    }
+    throw new Error(
+      formatProviderError(payload, {
+        fallback: `Model discovery failed (HTTP ${response.status})`,
+        providerLabel: providerId,
+        retryAfter: response.headers.get("retry-after"),
+        status: response.status,
+      }),
+    );
+  }
+
+  const payload = await response.json();
+  const data = payload?.data ?? payload ?? [];
+  const now = Date.now();
+
+  return (Array.isArray(data) ? data : []).map((m: { id?: string; name?: string }) => ({
+    modelId: m.id ?? m.name ?? "unknown",
+    displayName: m.id ?? m.name ?? "unknown",
+    isFavorite: false,
+    lastSeenAt: now,
+  }));
+}
+
+export async function loadProviderModels(providerId: string): Promise<ProviderModel[]> {
+  if (!isTauriRuntime()) return [];
+  const rows = await invoke<Array<{
+    providerId: string; modelId: string; displayName: string;
+    isFavorite: boolean; lastSeenAt: number;
+  }>>("list_provider_models", { providerId });
+  return rows.map((r) => ({
+    modelId: r.modelId,
+    displayName: r.displayName || r.modelId,
+    isFavorite: r.isFavorite,
+    lastSeenAt: r.lastSeenAt,
+  }));
+}
+
+export async function toggleModelFavorite(
+  providerId: string,
+  modelId: string,
+  isFavorite: boolean,
+): Promise<void> {
+  if (!isTauriRuntime()) return;
+  await invoke("toggle_model_favorite", { providerId, modelId, isFavorite });
+}
+
+export async function resolvePairingBaseUrl(baseUrl: string): Promise<string> {
+  if (!isTauriRuntime()) return baseUrl;
+  return invoke<string>("resolve_pairing_base_url", { baseUrl });
+}
+
 /* ── Non-streaming ──────────────────────────────────── */
 
 export async function sendChatCompletion(input: {
@@ -181,8 +338,25 @@ export async function sendChatCompletion(input: {
     },
     body: JSON.stringify({ model: input.provider.model, messages: input.messages, stream: false }),
   });
+  if (!response.ok) {
+    const rawBody = await response.text().catch(() => "");
+    let payload: unknown = rawBody;
+    try {
+      payload = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      payload = rawBody ? { error: { message: rawBody } } : {};
+    }
+    throw new Error(
+      formatProviderError(payload, {
+        fallback: "Provider rejected the request.",
+        providerLabel: input.provider.label,
+        retryAfter: response.headers.get("retry-after"),
+        status: response.status,
+      }),
+    );
+  }
+
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload?.error?.message ?? "Provider rejected the request.");
   const message = payload?.choices?.[0]?.message;
 
   const rawContent = extractContentText(message?.content);
@@ -225,8 +399,19 @@ export async function streamChatCompletion(
   }
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    callbacks.onError(new Error(payload?.error?.message ?? `Provider error: ${response.status}`));
+    const rawBody = await response.text().catch(() => "");
+    let payload: unknown = rawBody;
+    try {
+      payload = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      payload = rawBody ? { error: { message: rawBody } } : {};
+    }
+    callbacks.onError(new Error(formatProviderError(payload, {
+      fallback: "Provider rejected the request.",
+      providerLabel: input.provider.label,
+      retryAfter: response.headers.get("retry-after"),
+      status: response.status,
+    })));
     return;
   }
 
@@ -276,6 +461,16 @@ export async function streamChatCompletion(
 
         try {
           const chunk = JSON.parse(data);
+
+          /* Handle inline SSE errors (provider sends error in stream data) */
+          if (chunk.error) {
+            callbacks.onError(new Error(formatProviderError(chunk.error, {
+              fallback: "Provider returned error",
+              providerLabel: input.provider.label,
+            })));
+            return;
+          }
+
           const delta = chunk.choices?.[0]?.delta;
           if (!delta) {
             if (chunk.usage) {

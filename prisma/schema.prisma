@@ -17,9 +17,24 @@ model ProviderSetting {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  conversations Conversation[]
+  conversations  Conversation[]
+  providerModels ProviderModel[]
 
   @@map("provider_settings")
+}
+
+model ProviderModel {
+  providerId  String  @map("provider_id")
+  modelId     String  @map("model_id")
+  displayName String  @default("") @map("display_name")
+  isFavorite  Boolean @default(false) @map("is_favorite")
+  lastSeenAt  Int     @map("last_seen_at")
+
+  provider ProviderSetting @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@id([providerId, modelId])
+  @@index([providerId])
+  @@map("provider_models")
 }
 
 model Conversation {

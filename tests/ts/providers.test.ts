@@ -4,6 +4,13 @@ import {
   normalizeProviders,
   findActiveProvider,
   DEFAULT_PROVIDERS,
+  MODEL_AUTO_REFRESH_MS,
+  MODEL_REFRESH_COOLDOWN_MS,
+  formatCompactDuration,
+  formatModelCacheAge,
+  getLatestModelSyncAt,
+  getModelRefreshCooldownRemainingMs,
+  isModelCacheStale,
   type ProviderSettings,
 } from "@/components/settings/utils/providers";
 
@@ -58,9 +65,10 @@ describe("providerSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects empty model", () => {
+  it("allows empty model strings for blank providers", () => {
     const result = providerSchema.safeParse({ ...VALID_PROVIDER, model: "" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.model).toBe("");
   });
 });
 
@@ -105,7 +113,7 @@ describe("normalizeProviders", () => {
     expect(or?.label).toBe("OpenRouter");
   });
 
-  it("ignores unknown provider IDs", () => {
+  it("preserves custom provider IDs", () => {
     const custom: ProviderSettings[] = [
       {
         id: "unknown-provider",
@@ -117,9 +125,15 @@ describe("normalizeProviders", () => {
       },
     ];
     const result = normalizeProviders(custom);
-    // Should return defaults, not include the unknown
-    expect(result).toHaveLength(DEFAULT_PROVIDERS.length);
-    expect(result.find((p) => p.id === "unknown-provider")).toBeUndefined();
+    // Defaults stay available and custom providers are appended.
+    expect(result).toHaveLength(DEFAULT_PROVIDERS.length + 1);
+    expect(result.find((p) => p.id === "unknown-provider")).toMatchObject({
+      id: "unknown-provider",
+      label: "Unknown",
+      baseUrl: "http://example.com",
+      model: "model",
+      enabled: true,
+    });
   });
 });
 
@@ -172,5 +186,42 @@ describe("findActiveProvider", () => {
     const allDisabled = providers.map((p) => ({ ...p, enabled: false }));
     const result = findActiveProvider(allDisabled, "a");
     expect(result?.id).toBe("a"); // providers[0]
+  });
+});
+
+// ── model cache helpers ────────────────────────────────────
+
+describe("model cache helpers", () => {
+  const now = 1_700_000_000_000;
+  const models = [
+    { modelId: "old", displayName: "Old", isFavorite: false, lastSeenAt: now - MODEL_AUTO_REFRESH_MS - 1 },
+    { modelId: "new", displayName: "New", isFavorite: true, lastSeenAt: now - 25_000 },
+  ];
+  const agedModels = [
+    { modelId: "aged", displayName: "Aged", isFavorite: false, lastSeenAt: now - 90_000 },
+  ];
+
+  it("returns the latest sync timestamp", () => {
+    expect(getLatestModelSyncAt(models)).toBe(now - 25_000);
+    expect(getLatestModelSyncAt(now - 25_000)).toBe(now - 25_000);
+  });
+
+  it("detects stale caches after the auto refresh window", () => {
+    expect(isModelCacheStale(models, now)).toBe(false);
+    expect(isModelCacheStale([{ ...models[1], lastSeenAt: now - MODEL_AUTO_REFRESH_MS - 1 }], now)).toBe(true);
+    expect(isModelCacheStale(now - MODEL_AUTO_REFRESH_MS - 1, now)).toBe(true);
+  });
+
+  it("reports the remaining refresh cooldown", () => {
+    expect(getModelRefreshCooldownRemainingMs(models, now)).toBe(MODEL_REFRESH_COOLDOWN_MS - 25_000);
+    expect(getModelRefreshCooldownRemainingMs(now - 25_000, now)).toBe(MODEL_REFRESH_COOLDOWN_MS - 25_000);
+  });
+
+  it("formats compact durations and cache age labels", () => {
+    expect(formatCompactDuration(9_500)).toBe("10s");
+    expect(formatCompactDuration(61_000)).toBe("2m");
+    expect(formatModelCacheAge(agedModels, now)).toBe("Cached 2m ago");
+    expect(formatModelCacheAge(now - 90_000, now)).toBe("Cached 2m ago");
+    expect(formatModelCacheAge([], now)).toBe("No cache yet");
   });
 });

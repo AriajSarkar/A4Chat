@@ -12,6 +12,7 @@ import {
 } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 
 import type { ConversationMessage } from "@/components/conversation/utils/conversation";
@@ -74,9 +75,11 @@ export function MessageRow({ isStreaming, message, status }: MessageRowProps) {
         ) : (
           <div className="space-y-2.5 text-[15px] leading-7 text-text-secondary">
             {/* Model badge */}
-            <div className="inline-block rounded-full bg-accent/10 px-2.5 py-0.5 font-mono text-xs text-accent-soft">
-              {message.model ?? message.providerLabel}
-            </div>
+            {(message.model || message.providerLabel || message.providerId) ? (
+              <div className="inline-block rounded-full bg-accent/10 px-2.5 py-0.5 font-mono text-xs text-accent-soft">
+                {message.model || message.providerLabel || message.providerId}
+              </div>
+            ) : null}
 
             {/* Inline thinking indicator — waiting for first token */}
             {isSending ? (
@@ -135,6 +138,7 @@ export function MessageRow({ isStreaming, message, status }: MessageRowProps) {
             {message.content ? (
               <div className={cn("prose-chat", isStreaming && "streaming")}>
                 <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
                   rehypePlugins={isStreaming ? undefined : [rehypeHighlight]}
                   components={{ pre: CodeBlock }}
                 >

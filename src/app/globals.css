@@ -89,9 +89,36 @@ textarea {
   scrollbar-color: var(--panel-strong) transparent;
 }
 
-/* Android / iOS safe area bottom padding */
+/* Android / iOS safe area padding — notch, camera, navigation bar */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 .safe-bottom {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
+}
+
+.safe-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.safe-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* ─────────────────────────────────────────────────────────
+   Model selector panel — warm glassmorphic dropdown
+   ───────────────────────────────────────────────────────── */
+
+.model-selector-panel {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 20, 35, 0.95) 0%,
+    rgba(20, 16, 30, 0.97) 50%,
+    rgba(15, 12, 24, 0.98) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -544,28 +571,54 @@ textarea {
 }
 
 /* Tables */
+/* Wrap tables in a responsive container */
+.prose-chat .table-wrapper,
 .prose-chat table {
   width: 100%;
+}
+
+.prose-chat table {
   border-collapse: collapse;
   margin: 0.75rem 0;
   font-size: 0.875rem;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border-style: hidden;
+  box-shadow: 0 0 0 1px var(--border); /* Better border radius hack for tables */
 }
 
 .prose-chat thead th {
   text-align: left;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   border-bottom: 2px solid var(--panel-strong);
+  background: var(--surface-1);
   color: var(--text-primary);
   font-weight: 600;
   font-size: 0.8125rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.prose-chat thead th:first-child {
+  border-radius: 7px 0 0 0;
+}
+
+.prose-chat thead th:last-child {
+  border-radius: 0 7px 0 0;
 }
 
 .prose-chat tbody td {
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   border-bottom: 1px solid var(--border);
   color: var(--text-secondary);
+  min-width: 120px;
 }
 
 .prose-chat tbody tr:last-child td {
@@ -573,5 +626,9 @@ textarea {
 }
 
 .prose-chat tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.prose-chat tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.01);
 }

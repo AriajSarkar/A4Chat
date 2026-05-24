@@ -127,7 +127,7 @@ export function NavigationSidebar({
   };
 
   const sidebarContent = (
-    <div className="flex min-h-0 w-full flex-col px-3 py-4">
+    <div className="safe-top safe-bottom flex h-full min-h-0 w-full flex-col px-3 py-4">
       {/* ── Top: Toggle / Close + Brand ── */}
       <div className="mb-3 flex items-center justify-between">
         <button
@@ -337,7 +337,7 @@ export function NavigationSidebar({
       </div>
 
       {/* ── Bottom: Settings, GitHub, Version ── */}
-      <div className="mt-3 flex flex-col gap-1 border-t border-white/[0.06] pt-3">
+      <div className="mt-3 flex shrink-0 flex-col gap-1 border-t border-white/[0.06] pt-3">
         <button
           aria-label="Settings"
           className={cn(
@@ -401,7 +401,7 @@ export function NavigationSidebar({
             />
             <motion.aside
               animate={{ x: 0 }}
-              className="fixed inset-y-0 left-0 z-50 w-[280px] touch-pan-y border-r border-white/[0.06] bg-surface-0 md:hidden"
+              className="safe-left fixed inset-y-0 left-0 z-50 w-[min(280px,85vw)] touch-pan-y border-r border-white/[0.06] bg-surface-0 md:hidden"
               drag="x"
               dragConstraints={{ left: -280, right: 0 }}
               dragElastic={0.1}

@@ -24,6 +24,8 @@ pnpm android:init
 pnpm android:dev
 ```
 
+The Android dev script reuses the same Next.js dev server as desktop when it is already running on port `3000`. If nothing is running yet, it starts the dev server for you.
+
 Build an Android APK for arm64:
 
 ```bash
