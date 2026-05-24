@@ -75,7 +75,6 @@ export const ModelSelector = memo(function ModelSelector({
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<string>("all");
   const [clock, setClock] = useState(() => Date.now());
-  const [panelMode, setPanelMode] = useState<"desktop" | "popup">("desktop");
   const [panelStyle, setPanelStyle] = useState<CSSProperties | undefined>(undefined);
   const deferredSearch = useDeferredValue(search);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -246,16 +245,6 @@ export const ModelSelector = memo(function ModelSelector({
     if (!open) return;
 
     const updatePanelPosition = () => {
-      const isAndroid = typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
-      const isCompactViewport = window.innerWidth < 640;
-      const usePopup = isAndroid || isCompactViewport;
-
-      if (usePopup) {
-        setPanelMode((prev) => (prev === "popup" ? prev : "popup"));
-        setPanelStyle((prev) => (prev === undefined ? prev : undefined));
-        return;
-      }
-
       const trigger = triggerRef.current?.getBoundingClientRect();
       if (!trigger) return;
 
@@ -265,15 +254,16 @@ export const ModelSelector = memo(function ModelSelector({
       // Calculate available space using viewport height
       const spaceBelow = window.innerHeight - trigger.bottom - 12;
       const spaceAbove = trigger.top - 12;
-      const shouldOpenBelow = spaceBelow >= preferredPanelHeight || spaceBelow >= spaceAbove;
-
-      setPanelMode((prev) => (prev === "desktop" ? prev : "desktop"));
+      const shouldOpenBelow = spaceBelow >= 300 || spaceBelow >= spaceAbove;
 
       const left = Math.max(8, Math.min(trigger.left, window.innerWidth - maxPanelWidth - 8));
 
+      const availableHeight = shouldOpenBelow ? spaceBelow : spaceAbove;
+      const maxHeight = Math.min(preferredPanelHeight, availableHeight);
+
       const newStyle = shouldOpenBelow
-        ? { left, top: trigger.bottom + 8, width: maxPanelWidth }
-        : { left, bottom: window.innerHeight - trigger.top + 8, width: maxPanelWidth };
+        ? { left, top: trigger.bottom + 8, width: maxPanelWidth, maxHeight }
+        : { left, bottom: window.innerHeight - trigger.top + 8, width: maxPanelWidth, maxHeight };
 
       setPanelStyle((prev) => {
         if (
@@ -281,7 +271,8 @@ export const ModelSelector = memo(function ModelSelector({
           prev.left === newStyle.left &&
           prev.top === newStyle.top &&
           prev.bottom === newStyle.bottom &&
-          prev.width === newStyle.width
+          prev.width === newStyle.width &&
+          prev.maxHeight === newStyle.maxHeight
         ) {
           return prev;
         }
@@ -376,34 +367,17 @@ export const ModelSelector = memo(function ModelSelector({
         ? createPortal(
             <AnimatePresence>
               {open ? (
-                <>
-                  {panelMode === "popup" ? (
-                    <motion.button
-                      aria-label="Close model picker"
-                      animate={{ opacity: 1 }}
-                      className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px]"
-                      exit={{ opacity: 0 }}
-                      initial={{ opacity: 0 }}
-                      onClick={() => setOpen(false)}
-                      type="button"
-                    />
-                  ) : null}
                   <motion.div
                     ref={panelRef}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    className={cn(
-                      "model-selector-panel fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-white/8 bg-neutral-900/95 shadow-2xl shadow-black/50 backdrop-blur-md",
-                      panelMode === "popup"
-                        ? "inset-3 max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)]"
-                        : "max-h-[min(72dvh,36rem)] w-[min(30rem,calc(100vw-1rem))]",
-                    )}
-                    style={panelMode === "popup" ? undefined : panelStyle}
+                    className="model-selector-panel fixed z-50 flex max-h-[min(72dvh,36rem)] w-[min(30rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-white/8 bg-neutral-900/95 shadow-2xl shadow-black/50 backdrop-blur-md"
+                    style={panelStyle}
                     exit={{ opacity: 0, y: 8, scale: 0.96 }}
                     initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                    transition={{ type: "spring", damping: 24, stiffness: 340 }}
+                    transition={{ type: "spring", damping: 25, stiffness: 350 }}
                   >
                     {/* Search header */}
-                    <div className="flex items-center gap-2 border-b border-white/6 px-3 py-2.5">
+                    <div className="flex shrink-0 items-center gap-2 border-b border-white/6 px-3 py-2.5">
                       <RiSearchLine className="shrink-0 text-text-quaternary" size={16} />
                       <input
                         className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-quaternary"
@@ -450,7 +424,7 @@ export const ModelSelector = memo(function ModelSelector({
                     </div>
 
                     {/* Mobile tabs */}
-                    <div className="flex gap-1 overflow-x-auto border-b border-white/6 px-2 py-1.5 md:hidden">
+                    <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/6 px-2 py-1.5 md:hidden">
                       {tabs.map((tab) => (
                         <button
                           className={cn(
@@ -469,7 +443,7 @@ export const ModelSelector = memo(function ModelSelector({
                     </div>
 
                     {/* Desktop: sidebar + list side-by-side */}
-                    <div className={cn("flex min-h-0 flex-1", panelMode === "popup" && "flex-col")}>
+                    <div className="flex min-h-0 flex-1 flex-col md:flex-row">
                       {/* Provider tabs sidebar — desktop only */}
                       <div className="hidden w-10 shrink-0 flex-col items-center gap-1 border-r border-white/6 py-2 md:flex">
                         {tabs.map((tab) => (
@@ -497,13 +471,13 @@ export const ModelSelector = memo(function ModelSelector({
                       </div>
 
                       {/* Model list */}
-                      <div className="max-h-[min(340px,48dvh)] min-w-0 flex-1 overflow-y-auto py-1">
+                      <div className="min-w-0 flex-1 overflow-y-auto py-1">
                         {renderedModelList}
                       </div>
                     </div>
 
                     {/* Footer — current selection */}
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/6 px-3 py-2">
+                    <div className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/6 px-3 py-2">
                       <ProviderIcon providerId={selectedProviderId} size={16} />
                       <span className="truncate text-xs font-medium text-text-secondary">
                         {displayLabel}
@@ -517,7 +491,6 @@ export const ModelSelector = memo(function ModelSelector({
                       </span>
                     </div>
                   </motion.div>
-                </>
               ) : null}
             </AnimatePresence>,
             document.body,

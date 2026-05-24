@@ -603,7 +603,7 @@ export function ConversationWorkspace() {
   }, []);
 
   return (
-    <div className="flex h-dvh min-h-dvh overflow-hidden bg-background text-foreground">
+    <div className="absolute inset-0 flex overflow-hidden bg-background text-foreground">
       <NavigationSidebar
         conversations={conversations}
         expanded={sidebarExpanded}

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, memo, useEffect, useRef, useState } from "react";
+import { FormEvent, memo, useCallback, useEffect, useRef, useState } from "react";
 import { RiAddLine, RiSendPlane2Fill, RiStopCircleFill } from "@remixicon/react";
 
 import { ModelSelector } from "@/components/conversation/msg/model-selector";
@@ -61,6 +61,16 @@ export const MessageComposer = memo(function MessageComposer({
     await onSubmit(nextValue);
   }
 
+  const handleModelSelect = useCallback(
+    (providerId: string, modelId: string) => {
+      onModelChange(providerId, modelId);
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 10);
+    },
+    [onModelChange],
+  );
+
   return (
     <form
       className="relative mx-auto flex w-full max-w-4xl flex-col rounded-2xl border border-white/8 bg-white/3 shadow-lg shadow-black/20 backdrop-blur-xl transition-colors duration-200 focus-within:border-accent/40 md:rounded-3xl"
@@ -72,13 +82,15 @@ export const MessageComposer = memo(function MessageComposer({
           autoComplete="off"
           className="max-h-44 min-h-10 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 text-text-primary outline-none placeholder:text-text-quaternary"
           disabled={disabled}
-          enterKeyHint="send"
           inputMode="text"
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              e.currentTarget.form?.requestSubmit();
+              const isMobile = typeof navigator !== "undefined" && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+              if (!isMobile) {
+                e.preventDefault();
+                e.currentTarget.form?.requestSubmit();
+              }
             }
           }}
           placeholder="Message"
@@ -101,7 +113,7 @@ export const MessageComposer = memo(function MessageComposer({
         {/* Model selector (replaces old provider dropdown) */}
         <ModelSelector
           isActive={isActive}
-          onSelect={onModelChange}
+          onSelect={handleModelSelect}
           onRefreshProviderModels={onRefreshProviderModels}
           onToggleFavorite={onToggleFavorite}
           providerModels={providerModels}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import {
   RiArrowDownSLine,
   RiBrainLine,
@@ -24,7 +24,7 @@ type MessageRowProps = {
   status: "idle" | "sending" | "streaming";
 };
 
-export function MessageRow({ isStreaming, message, status }: MessageRowProps) {
+export const MessageRow = memo(function MessageRow({ isStreaming, message, status }: MessageRowProps) {
   const [reasoningOpen, setReasoningOpen] = useState(false);
   const reasoningScrollRef = useRef<HTMLDivElement>(null);
   const wasReasoningStreamingRef = useRef(false);
@@ -168,7 +168,7 @@ export function MessageRow({ isStreaming, message, status }: MessageRowProps) {
       </div>
     </article>
   );
-}
+});
 
 /* ── Code block with copy button ─────────────────────── */
 

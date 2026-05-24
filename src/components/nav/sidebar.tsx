@@ -142,7 +142,7 @@ export function NavigationSidebar({
       <div className="mb-3 flex items-center justify-between">
         <button
           aria-label="Toggle sidebar"
-          className="hidden size-10 place-items-center rounded-xl text-text-secondary transition-colors hover:bg-white/8 md:grid"
+          className="hidden size-10 place-items-center rounded-xl text-text-secondary transition-colors hover:bg-white/8 lg:grid"
           onClick={onToggleExpanded}
           type="button"
         >
@@ -150,7 +150,7 @@ export function NavigationSidebar({
         </button>
         <button
           aria-label="Close sidebar"
-          className="grid size-10 place-items-center rounded-xl text-text-secondary transition-colors hover:bg-white/8 md:hidden"
+          className="grid size-10 place-items-center rounded-xl text-text-secondary transition-colors hover:bg-white/8 lg:hidden"
           onClick={onMobileClose}
           type="button"
         >
@@ -159,7 +159,7 @@ export function NavigationSidebar({
         <span
           className={cn(
             "text-lg font-semibold tracking-tight text-text-primary transition-opacity duration-200",
-            showLabels ? "opacity-100" : "pointer-events-none opacity-0 md:hidden",
+            showLabels ? "opacity-100" : "pointer-events-none opacity-0 lg:hidden",
           )}
         >
           A4Chat
@@ -171,14 +171,14 @@ export function NavigationSidebar({
         <button
           className={cn(
             "group flex h-11 items-center gap-3 rounded-xl bg-gradient-to-r from-accent/20 to-accent/10 px-3 text-sm font-medium text-accent-soft transition-all hover:from-accent/30 hover:to-accent/15 active:scale-[0.98]",
-            !showLabels && "justify-center px-0 md:justify-center",
+            !showLabels && "justify-center px-0 lg:justify-center",
           )}
           onClick={handleNewChat}
           title={showLabels ? undefined : "New chat"}
           type="button"
         >
           <RiAddLine className="shrink-0" size={20} />
-          <span className={cn("truncate", showLabels ? "opacity-100" : "hidden md:sr-only")}>
+          <span className={cn("truncate", showLabels ? "opacity-100" : "hidden lg:sr-only")}>
             New chat
           </span>
         </button>
@@ -186,7 +186,7 @@ export function NavigationSidebar({
         <button
           className={cn(
             "group flex h-11 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-all hover:bg-white/[0.06] hover:text-text-primary active:scale-[0.98]",
-            !showLabels && "justify-center px-0 md:justify-center",
+            !showLabels && "justify-center px-0 lg:justify-center",
           )}
           onClick={() => {
             onOpenSearch();
@@ -196,7 +196,7 @@ export function NavigationSidebar({
           type="button"
         >
           <RiSearchLine className="shrink-0" size={20} />
-          <span className={cn("truncate", showLabels ? "opacity-100" : "hidden md:sr-only")}>
+          <span className={cn("truncate", showLabels ? "opacity-100" : "hidden lg:sr-only")}>
             Search
           </span>
         </button>
@@ -316,7 +316,7 @@ export function NavigationSidebar({
                       {/* Three-dot menu — visible always on mobile, hover on desktop */}
                       {!selectMode ? (
                         <span
-                          className="grid size-6 shrink-0 place-items-center rounded-lg text-text-quaternary opacity-100 transition-all hover:bg-white/[0.08] hover:text-text-secondary md:opacity-0 md:group-hover:opacity-100"
+                          className="grid size-6 shrink-0 place-items-center rounded-lg text-text-quaternary opacity-100 transition-all hover:bg-white/[0.08] hover:text-text-secondary lg:opacity-0 lg:group-hover:opacity-100"
                           onClick={(e) => {
                             e.stopPropagation();
                             setMenuId(menuId === conv.id ? null : conv.id);
@@ -375,7 +375,7 @@ export function NavigationSidebar({
           aria-label="Settings"
           className={cn(
             "flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-colors hover:bg-white/[0.06] hover:text-text-primary active:scale-[0.98]",
-            !showLabels && "justify-center px-0 md:justify-center",
+            !showLabels && "justify-center px-0 lg:justify-center",
           )}
           onClick={() => {
             onOpenSettings();
@@ -385,13 +385,13 @@ export function NavigationSidebar({
           type="button"
         >
           <RiSettings3Line size={20} />
-          <span className={cn(showLabels ? "opacity-100" : "hidden md:sr-only")}>Settings</span>
+          <span className={cn(showLabels ? "opacity-100" : "hidden lg:sr-only")}>Settings</span>
         </button>
         <a
           aria-label="GitHub"
           className={cn(
             "flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-colors hover:bg-white/[0.06] hover:text-text-primary",
-            !showLabels && "justify-center px-0 md:justify-center",
+            !showLabels && "justify-center px-0 lg:justify-center",
           )}
           href={GITHUB_URL}
           rel="noreferrer"
@@ -399,7 +399,7 @@ export function NavigationSidebar({
           title={showLabels ? undefined : "GitHub"}
         >
           <RiGithubFill size={20} />
-          <span className={cn(showLabels ? "opacity-100" : "hidden md:sr-only")}>GitHub</span>
+          <span className={cn(showLabels ? "opacity-100" : "hidden lg:sr-only")}>GitHub</span>
         </a>
         <div
           className={cn(
@@ -418,7 +418,7 @@ export function NavigationSidebar({
       {/* Desktop sidebar */}
       <motion.aside
         animate={{ width: expanded ? 280 : 68 }}
-        className="hidden shrink-0 overflow-hidden border-r border-white/[0.06] bg-surface-0 md:flex"
+        className="hidden shrink-0 overflow-hidden border-r border-white/[0.06] bg-surface-0 lg:flex"
         initial={false}
         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       >
@@ -431,7 +431,7 @@ export function NavigationSidebar({
           <>
             <motion.div
               animate={{ opacity: 1 }}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-40 bg-black/60 lg:hidden"
               exit={{ opacity: 0 }}
               initial={{ opacity: 0 }}
               onClick={onMobileClose}
@@ -439,7 +439,7 @@ export function NavigationSidebar({
             />
             <motion.aside
               animate={{ x: 0 }}
-              className="safe-left fixed inset-y-0 left-0 z-50 w-[min(280px,85vw)] touch-pan-y border-r border-white/[0.06] bg-surface-0 md:hidden"
+              className="safe-left fixed inset-y-0 left-0 z-50 w-[min(280px,85vw)] touch-pan-y border-r border-white/[0.06] bg-surface-0 lg:hidden"
               drag="x"
               dragConstraints={{ left: -280, right: 0 }}
               dragElastic={0.1}
@@ -451,7 +451,7 @@ export function NavigationSidebar({
                 }
               }}
               style={{ willChange: "transform" }}
-              transition={{ type: "spring", damping: 28, stiffness: 340 }}
+              transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
             >
               {sidebarContent}
             </motion.aside>
