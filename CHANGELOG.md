@@ -1,4 +1,4 @@
-## [v3.0.0] - 2026-05-24
+## [v3.0.0] - 2026-05-25
 
 ### ✨ Features
 - Rebuild A4Chat around the Tauri/Next.js app shell and restore the real conversation workspace on the root route.
