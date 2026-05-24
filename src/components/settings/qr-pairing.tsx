@@ -19,7 +19,12 @@ import { cn } from "@/lib/cn";
 
 type QrPairingSectionProps = {
   providers: ProviderSettings[];
-  onProviderScanned?: (data: { id: string; label: string; baseUrl: string; model?: string }) => void;
+  onProviderScanned?: (data: {
+    id: string;
+    label: string;
+    baseUrl: string;
+    model?: string;
+  }) => void;
 };
 
 export const QrPairingSection = memo(function QrPairingSection({
@@ -133,11 +138,11 @@ function QrGeneratePanel({
         <h3 className="font-semibold">Share provider</h3>
       </div>
       <p className="mb-5 text-sm leading-6 text-text-tertiary">
-        Generate a QR code for any provider. Scan it on another device to add the connection.
-        Only the base URL is shared — <strong>API keys are never included</strong>.
+        Generate a QR code for any provider. Scan it on another device to add the connection. Only
+        the base URL is shared — <strong>API keys are never included</strong>.
         <br />
-        Localhost addresses are converted to your machine&apos;s LAN IP when possible so phones
-        can reach the server.
+        Localhost addresses are converted to your machine&apos;s LAN IP when possible so phones can
+        reach the server.
       </p>
 
       {enabledProviders.length === 0 ? (
@@ -186,9 +191,7 @@ function QrGeneratePanel({
                   <p className="text-sm font-medium text-text-primary">
                     {enabledProviders.find((p) => p.id === selectedProviderId)?.label}
                   </p>
-                  <p className="mt-1 text-xs text-text-quaternary">
-                    Scan with your phone camera
-                  </p>
+                  <p className="mt-1 text-xs text-text-quaternary">Scan with your phone camera</p>
                 </div>
                 <button
                   className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-text-tertiary transition-colors hover:bg-white/6"
@@ -285,7 +288,13 @@ function QrScanPanel({
 
     /* Try BarcodeDetector (native API, fast) */
     if ("BarcodeDetector" in window) {
-      const detector = new (window as unknown as { BarcodeDetector: new (opts: { formats: string[] }) => { detect: (source: HTMLCanvasElement) => Promise<Array<{ rawValue: string }>> } }).BarcodeDetector({
+      const detector = new (
+        window as unknown as {
+          BarcodeDetector: new (opts: { formats: string[] }) => {
+            detect: (source: HTMLCanvasElement) => Promise<Array<{ rawValue: string }>>;
+          };
+        }
+      ).BarcodeDetector({
         formats: ["qr_code"],
       });
       detector
@@ -314,11 +323,14 @@ function QrScanPanel({
     if (scanning && videoRef.current && streamRef.current) {
       const video = videoRef.current;
       video.srcObject = streamRef.current;
-      video.play().then(() => {
-        scanFrame();
-      }).catch(err => {
-        console.error("Camera play failed", err);
-      });
+      video
+        .play()
+        .then(() => {
+          scanFrame();
+        })
+        .catch((err) => {
+          console.error("Camera play failed", err);
+        });
     }
   }, [scanning, scanFrame]);
 
@@ -333,7 +345,12 @@ function QrScanPanel({
           setScanSuccess(true);
           setTimeout(() => {
             stopCamera();
-            onScanned?.({ id: data.id, label: data.label, baseUrl: data.baseUrl, model: data.model });
+            onScanned?.({
+              id: data.id,
+              label: data.label,
+              baseUrl: data.baseUrl,
+              model: data.model,
+            });
           }, 600);
         } else {
           stopCamera();
@@ -380,10 +397,12 @@ function QrScanPanel({
           />
           {/* Scan overlay */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className={cn(
-              "relative size-56 overflow-hidden rounded-2xl border-2 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] transition-colors duration-300",
-              scanSuccess ? "border-green-500 bg-green-500/20" : "border-white/40"
-            )}>
+            <div
+              className={cn(
+                "relative size-56 overflow-hidden rounded-2xl border-2 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] transition-colors duration-300",
+                scanSuccess ? "border-green-500 bg-green-500/20" : "border-white/40",
+              )}
+            >
               {!scanSuccess && (
                 <motion.div
                   animate={{ top: ["0%", "100%", "0%"] }}

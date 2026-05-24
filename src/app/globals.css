@@ -53,7 +53,8 @@
   --color-text-secondary: var(--text-secondary);
   --color-text-tertiary: var(--text-tertiary);
   --color-text-quaternary: var(--text-quaternary);
-  --font-sans: var(--font-geist-sans), "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans:
+    var(--font-geist-sans), "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: var(--font-geist-mono), "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
@@ -71,6 +72,12 @@ body {
   font-family: var(--font-sans);
   min-width: 320px;
   overflow: hidden;
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 button,
@@ -78,10 +85,6 @@ input,
 textarea,
 select {
   font: inherit;
-}
-
-button {
-  -webkit-tap-highlight-color: transparent;
 }
 
 textarea {
@@ -212,48 +215,20 @@ textarea {
   }
 }
 
-/* Composer animated gradient border */
-@keyframes rotate {
-  from {
-    --composer-angle: 0deg;
-  }
-  to {
-    --composer-angle: 360deg;
-  }
-}
-
-@property --composer-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
-.composer-glow:focus-within::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(
-    from var(--composer-angle),
-    var(--accent),
-    var(--accent-soft),
-    transparent,
-    var(--accent)
-  );
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-  animation: rotate 4s linear infinite;
-  opacity: 0.5;
-}
+/* Removed unwanted rotating composer-glow animation to improve performance and save battery */
 
 /* Typing indicator dots */
 @keyframes typing-dot {
-  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
-  30% { opacity: 1; transform: translateY(-4px); }
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
 }
 
 .typing-dot {
@@ -265,13 +240,22 @@ textarea {
   animation: typing-dot 1.4s ease-in-out infinite;
 }
 
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 /* Streaming cursor — blinking caret at end of streaming content */
 @keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .streaming-cursor::after {

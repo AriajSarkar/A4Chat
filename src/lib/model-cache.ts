@@ -46,14 +46,20 @@ export function parseProviderModelCache(payload: unknown): ProviderModelCacheEnt
 }
 
 function canUseCacheStorage() {
-  return typeof caches !== "undefined" && typeof Request !== "undefined" && typeof Response !== "undefined";
+  return (
+    typeof caches !== "undefined" &&
+    typeof Request !== "undefined" &&
+    typeof Response !== "undefined"
+  );
 }
 
 function providerModelCacheRequest(providerId: string) {
   return new Request(`${MODEL_CACHE_PREFIX}/${encodeURIComponent(providerId)}`);
 }
 
-export async function loadProviderModelCache(providerId: string): Promise<ProviderModelCacheEntry | null> {
+export async function loadProviderModelCache(
+  providerId: string,
+): Promise<ProviderModelCacheEntry | null> {
   if (!canUseCacheStorage()) return null;
 
   try {

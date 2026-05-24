@@ -194,7 +194,12 @@ describe("findActiveProvider", () => {
 describe("model cache helpers", () => {
   const now = 1_700_000_000_000;
   const models = [
-    { modelId: "old", displayName: "Old", isFavorite: false, lastSeenAt: now - MODEL_AUTO_REFRESH_MS - 1 },
+    {
+      modelId: "old",
+      displayName: "Old",
+      isFavorite: false,
+      lastSeenAt: now - MODEL_AUTO_REFRESH_MS - 1,
+    },
     { modelId: "new", displayName: "New", isFavorite: true, lastSeenAt: now - 25_000 },
   ];
   const agedModels = [
@@ -208,13 +213,19 @@ describe("model cache helpers", () => {
 
   it("detects stale caches after the auto refresh window", () => {
     expect(isModelCacheStale(models, now)).toBe(false);
-    expect(isModelCacheStale([{ ...models[1], lastSeenAt: now - MODEL_AUTO_REFRESH_MS - 1 }], now)).toBe(true);
+    expect(
+      isModelCacheStale([{ ...models[1], lastSeenAt: now - MODEL_AUTO_REFRESH_MS - 1 }], now),
+    ).toBe(true);
     expect(isModelCacheStale(now - MODEL_AUTO_REFRESH_MS - 1, now)).toBe(true);
   });
 
   it("reports the remaining refresh cooldown", () => {
-    expect(getModelRefreshCooldownRemainingMs(models, now)).toBe(MODEL_REFRESH_COOLDOWN_MS - 25_000);
-    expect(getModelRefreshCooldownRemainingMs(now - 25_000, now)).toBe(MODEL_REFRESH_COOLDOWN_MS - 25_000);
+    expect(getModelRefreshCooldownRemainingMs(models, now)).toBe(
+      MODEL_REFRESH_COOLDOWN_MS - 25_000,
+    );
+    expect(getModelRefreshCooldownRemainingMs(now - 25_000, now)).toBe(
+      MODEL_REFRESH_COOLDOWN_MS - 25_000,
+    );
   });
 
   it("formats compact durations and cache age labels", () => {

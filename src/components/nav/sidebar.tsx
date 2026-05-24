@@ -68,7 +68,10 @@ export function NavigationSidebar({
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const handleNewChat = () => { onNewConversation(); onMobileClose(); };
+  const handleNewChat = () => {
+    onNewConversation();
+    onMobileClose();
+  };
 
   useEffect(() => {
     if (!menuId) return;
@@ -98,17 +101,21 @@ export function NavigationSidebar({
     setEditValue("");
   }, [editId, editValue, onRefresh]);
 
-  const handleSingleDelete = useCallback(async (id: string) => {
-    setMenuId(null);
-    await deleteConversation(id);
-    onRefresh();
-  }, [onRefresh]);
+  const handleSingleDelete = useCallback(
+    async (id: string) => {
+      setMenuId(null);
+      await deleteConversation(id);
+      onRefresh();
+    },
+    [onRefresh],
+  );
 
   /* ── Bulk actions ───────────────────────── */
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -117,7 +124,10 @@ export function NavigationSidebar({
     setSelected(new Set(conversations.map((c) => c.id)));
   };
 
-  const cancelSelect = () => { setSelectMode(false); setSelected(new Set()); };
+  const cancelSelect = () => {
+    setSelectMode(false);
+    setSelected(new Set());
+  };
 
   const handleBulkDelete = async () => {
     if (selected.size === 0) return;
@@ -168,7 +178,9 @@ export function NavigationSidebar({
           type="button"
         >
           <RiAddLine className="shrink-0" size={20} />
-          <span className={cn("truncate", showLabels ? "opacity-100" : "hidden md:sr-only")}>New chat</span>
+          <span className={cn("truncate", showLabels ? "opacity-100" : "hidden md:sr-only")}>
+            New chat
+          </span>
         </button>
 
         <button
@@ -176,12 +188,17 @@ export function NavigationSidebar({
             "group flex h-11 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-all hover:bg-white/[0.06] hover:text-text-primary active:scale-[0.98]",
             !showLabels && "justify-center px-0 md:justify-center",
           )}
-          onClick={() => { onOpenSearch(); onMobileClose(); }}
+          onClick={() => {
+            onOpenSearch();
+            onMobileClose();
+          }}
           title={showLabels ? undefined : "Search"}
           type="button"
         >
           <RiSearchLine className="shrink-0" size={20} />
-          <span className={cn("truncate", showLabels ? "opacity-100" : "hidden md:sr-only")}>Search</span>
+          <span className={cn("truncate", showLabels ? "opacity-100" : "hidden md:sr-only")}>
+            Search
+          </span>
         </button>
       </nav>
 
@@ -195,7 +212,9 @@ export function NavigationSidebar({
         >
           {/* Recents header with select/cancel */}
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-quaternary">Recents</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-quaternary">
+              Recents
+            </span>
             {conversations.length > 0 ? (
               <button
                 className="text-[11px] font-medium text-text-quaternary transition-colors hover:text-text-secondary"
@@ -255,7 +274,10 @@ export function NavigationSidebar({
                         onChange={(e) => setEditValue(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") commitRename();
-                          if (e.key === "Escape") { setEditId(null); setEditValue(""); }
+                          if (e.key === "Escape") {
+                            setEditId(null);
+                            setEditValue("");
+                          }
                         }}
                         ref={editRef}
                         value={editValue}
@@ -268,7 +290,10 @@ export function NavigationSidebar({
                         selectMode && selected.has(conv.id) && "bg-accent/[0.08] text-accent-soft",
                       )}
                       onClick={() => {
-                        if (selectMode) { toggleSelect(conv.id); return; }
+                        if (selectMode) {
+                          toggleSelect(conv.id);
+                          return;
+                        }
                         onLoadConversation(conv.id);
                         onMobileClose();
                       }}
@@ -276,9 +301,14 @@ export function NavigationSidebar({
                       tabIndex={0}
                     >
                       {selectMode ? (
-                        selected.has(conv.id)
-                          ? <RiCheckboxCircleFill className="shrink-0 text-accent" size={18} />
-                          : <RiCheckboxCircleLine className="shrink-0 text-text-quaternary" size={18} />
+                        selected.has(conv.id) ? (
+                          <RiCheckboxCircleFill className="shrink-0 text-accent" size={18} />
+                        ) : (
+                          <RiCheckboxCircleLine
+                            className="shrink-0 text-text-quaternary"
+                            size={18}
+                          />
+                        )
                       ) : (
                         <RiChat3Line className="shrink-0 text-text-quaternary" size={16} />
                       )}
@@ -287,7 +317,10 @@ export function NavigationSidebar({
                       {!selectMode ? (
                         <span
                           className="grid size-6 shrink-0 place-items-center rounded-lg text-text-quaternary opacity-100 transition-all hover:bg-white/[0.08] hover:text-text-secondary md:opacity-0 md:group-hover:opacity-100"
-                          onClick={(e) => { e.stopPropagation(); setMenuId(menuId === conv.id ? null : conv.id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMenuId(menuId === conv.id ? null : conv.id);
+                          }}
                           role="button"
                           tabIndex={-1}
                         >
@@ -344,7 +377,10 @@ export function NavigationSidebar({
             "flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-colors hover:bg-white/[0.06] hover:text-text-primary active:scale-[0.98]",
             !showLabels && "justify-center px-0 md:justify-center",
           )}
-          onClick={() => { onOpenSettings(); onMobileClose(); }}
+          onClick={() => {
+            onOpenSettings();
+            onMobileClose();
+          }}
           title={showLabels ? undefined : "Settings"}
           type="button"
         >
@@ -365,10 +401,12 @@ export function NavigationSidebar({
           <RiGithubFill size={20} />
           <span className={cn(showLabels ? "opacity-100" : "hidden md:sr-only")}>GitHub</span>
         </a>
-        <div className={cn(
-          "px-3 pt-1 text-xs text-text-quaternary/60 transition-opacity duration-200",
-          showLabels ? "opacity-100" : "hidden",
-        )}>
+        <div
+          className={cn(
+            "px-3 pt-1 text-xs text-text-quaternary/60 transition-opacity duration-200",
+            showLabels ? "opacity-100" : "hidden",
+          )}
+        >
           v{health?.version ?? APP_VERSION}
         </div>
       </div>

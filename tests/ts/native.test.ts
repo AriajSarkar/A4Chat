@@ -107,9 +107,7 @@ describe("ThinkTagParser", () => {
 
   it("handles multiple <think> blocks in one chunk", () => {
     const parser = new ThinkTagParser();
-    const result = parser.process(
-      "<think>r1</think>content1<think>r2</think>content2",
-    );
+    const result = parser.process("<think>r1</think>content1<think>r2</think>content2");
     expect(result.reasoning).toBe("r1r2");
     expect(result.content).toBe("content1content2");
   });
@@ -145,9 +143,7 @@ describe("stripThinkTags", () => {
   });
 
   it("strips multiple think blocks", () => {
-    const result = stripThinkTags(
-      "<think>r1</think>middle<think>r2</think>end",
-    );
+    const result = stripThinkTags("<think>r1</think>middle<think>r2</think>end");
     expect(result).toEqual({ content: "middleend", reasoning: "r1r2" });
   });
 

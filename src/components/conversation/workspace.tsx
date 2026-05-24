@@ -67,8 +67,8 @@ export function ConversationWorkspace() {
   const [selectedProviderId, setSelectedProviderId] = useState(DEFAULT_PROVIDERS[0].id);
   const [selectedModelId, setSelectedModelId] = useState(DEFAULT_PROVIDERS[0].model);
   const [providerModels, setProviderModels] = useState<Map<string, ProviderModel[]>>(new Map());
-  const [providerModelCheckedAt, setProviderModelCheckedAt] = useState<Record<string, number>>(
-    () => loadProviderModelCheckedAt(),
+  const [providerModelCheckedAt, setProviderModelCheckedAt] = useState<Record<string, number>>(() =>
+    loadProviderModelCheckedAt(),
   );
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [conversationId, setConversationId] = useState(createConversationId);
@@ -104,12 +104,16 @@ export function ConversationWorkspace() {
 
   const selectedProvider = findActiveProvider(providers, selectedProviderId);
   const selectedProviderCacheAt = selectedProvider
-    ? providerModelCheckedAt[selectedProvider.id] ?? getLatestModelSyncAt(providerModels.get(selectedProvider.id) ?? [])
+    ? (providerModelCheckedAt[selectedProvider.id] ??
+      getLatestModelSyncAt(providerModels.get(selectedProvider.id) ?? []))
     : 0;
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(PROVIDER_MODEL_CHECKED_AT_KEY, JSON.stringify(providerModelCheckedAt));
+      window.localStorage.setItem(
+        PROVIDER_MODEL_CHECKED_AT_KEY,
+        JSON.stringify(providerModelCheckedAt),
+      );
     } catch {
       /* ignore storage errors */
     }
@@ -123,7 +127,9 @@ export function ConversationWorkspace() {
     if (storedModel) setSelectedModelId(storedModel);
 
     void refreshConvList();
-    void getAppHealth().then(setHealth).catch(() => setHealth(null));
+    void getAppHealth()
+      .then(setHealth)
+      .catch(() => setHealth(null));
     void loadProviders()
       .then(async (p) => {
         if (p?.length) {
@@ -158,8 +164,12 @@ export function ConversationWorkspace() {
             }),
           );
 
-          const modelsByProvider = new Map(entries.map((entry) => [entry.providerId, entry.models]));
-          const checkedAtByProvider = new Map(entries.map((entry) => [entry.providerId, entry.checkedAt]));
+          const modelsByProvider = new Map(
+            entries.map((entry) => [entry.providerId, entry.models]),
+          );
+          const checkedAtByProvider = new Map(
+            entries.map((entry) => [entry.providerId, entry.checkedAt]),
+          );
 
           setProviderModels((prev) => {
             const next = new Map(prev);
@@ -178,7 +188,8 @@ export function ConversationWorkspace() {
           });
 
           for (const provider of p) {
-            const currentCacheAt = checkedAtByProvider.get(provider.id) ?? providerModelCheckedAt[provider.id] ?? 0;
+            const currentCacheAt =
+              checkedAtByProvider.get(provider.id) ?? providerModelCheckedAt[provider.id] ?? 0;
             if (provider.enabled && isModelCacheStale(currentCacheAt)) {
               void syncProviderModels(provider, { force: true, silent: true });
             }
@@ -203,7 +214,9 @@ export function ConversationWorkspace() {
     try {
       const list = await loadConversationList();
       setConversations(list);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   /* ── Model selection ─────────────────────────────── */
@@ -217,7 +230,8 @@ export function ConversationWorkspace() {
   const syncProviderModels = useCallback(
     async (provider: ProviderSettings, options: { force?: boolean; silent?: boolean } = {}) => {
       const currentModels = providerModels.get(provider.id) ?? [];
-      const currentCacheAt = providerModelCheckedAt[provider.id] ?? getLatestModelSyncAt(currentModels);
+      const currentCacheAt =
+        providerModelCheckedAt[provider.id] ?? getLatestModelSyncAt(currentModels);
       const cooldownRemaining = getModelRefreshCooldownRemainingMs(currentCacheAt);
       if (!options.force && cooldownRemaining > 0) {
         return false;
@@ -265,30 +279,40 @@ export function ConversationWorkspace() {
         setRefreshingProviderId((current) => (current === provider.id ? null : current));
       }
     },
-    [providerModelCheckedAt, providerModels, refreshingProviderId, selectModel, selectedModelId, selectedProviderId],
+    [
+      providerModelCheckedAt,
+      providerModels,
+      refreshingProviderId,
+      selectModel,
+      selectedModelId,
+      selectedProviderId,
+    ],
   );
 
-  const handleToggleFavorite = useCallback(async (providerId: string, modelId: string) => {
-    const currentModels = providerModels.get(providerId) ?? [];
-    const nextModels = currentModels.map((m) =>
-      m.modelId === modelId ? { ...m, isFavorite: !m.isFavorite } : m,
-    );
+  const handleToggleFavorite = useCallback(
+    async (providerId: string, modelId: string) => {
+      const currentModels = providerModels.get(providerId) ?? [];
+      const nextModels = currentModels.map((m) =>
+        m.modelId === modelId ? { ...m, isFavorite: !m.isFavorite } : m,
+      );
 
-    setProviderModels((prev) => {
-      const next = new Map(prev);
-      next.set(providerId, nextModels);
-      return next;
-    });
+      setProviderModels((prev) => {
+        const next = new Map(prev);
+        next.set(providerId, nextModels);
+        return next;
+      });
 
-    void saveProviderModelCache(
-      providerId,
-      nextModels,
-      providerModelCheckedAt[providerId] ?? getLatestModelSyncAt(nextModels) ?? Date.now(),
-    );
+      void saveProviderModelCache(
+        providerId,
+        nextModels,
+        providerModelCheckedAt[providerId] ?? getLatestModelSyncAt(nextModels) ?? Date.now(),
+      );
 
-    const current = currentModels.find((m) => m.modelId === modelId);
-    await toggleModelFavorite(providerId, modelId, !(current?.isFavorite ?? false));
-  }, [providerModelCheckedAt, providerModels]);
+      const current = currentModels.find((m) => m.modelId === modelId);
+      await toggleModelFavorite(providerId, modelId, !(current?.isFavorite ?? false));
+    },
+    [providerModelCheckedAt, providerModels],
+  );
 
   /* ── Providers ────────────────────────────────────── */
   const saveProviders = useCallback(
@@ -312,7 +336,11 @@ export function ConversationWorkspace() {
     setMessages((prev) =>
       prev.map((m) =>
         m.id === id
-          ? { ...m, content: streamContentRef.current, reasoning: streamReasoningRef.current || undefined }
+          ? {
+              ...m,
+              content: streamContentRef.current,
+              reasoning: streamReasoningRef.current || undefined,
+            }
           : m,
       ),
     );
@@ -454,13 +482,21 @@ export function ConversationWorkspace() {
             if (activeConvIdRef.current === submitConvId) {
               setMessages((prev) => {
                 const final = buildFinal(prev);
-                void persistConversation(final, { ...submitProvider, model: realModel }, submitConvId).then(refreshConvList);
+                void persistConversation(
+                  final,
+                  { ...submitProvider, model: realModel },
+                  submitConvId,
+                ).then(refreshConvList);
                 return final;
               });
               setStatus("idle");
             } else {
               const finalMsgs = buildFinal(messagesRef.current);
-              void persistConversation(finalMsgs, { ...submitProvider, model: realModel }, submitConvId).then(refreshConvList);
+              void persistConversation(
+                finalMsgs,
+                { ...submitProvider, model: realModel },
+                submitConvId,
+              ).then(refreshConvList);
             }
 
             streamContentRef.current = "";
@@ -511,7 +547,7 @@ export function ConversationWorkspace() {
       const enrichedMsgs = msgs.map((m) =>
         m.role === "assistant" && conv
           ? { ...m, providerId: conv.providerId, model: conv.model }
-          : m
+          : m,
       );
 
       setConversationId(id);
@@ -562,7 +598,9 @@ export function ConversationWorkspace() {
 
   const toggleMobileSidebar = useCallback(() => setMobileSidebarOpen((v) => !v), []);
   const closeMobileSidebar = useCallback(() => setMobileSidebarOpen(false), []);
-  const refreshConversations = useCallback(() => { void refreshConvList(); }, []);
+  const refreshConversations = useCallback(() => {
+    void refreshConvList();
+  }, []);
 
   return (
     <div className="flex h-dvh min-h-dvh overflow-hidden bg-background text-foreground">

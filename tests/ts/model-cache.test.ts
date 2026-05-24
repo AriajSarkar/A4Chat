@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  parseProviderModelCache,
-  serializeProviderModelCache,
-} from "@/lib/model-cache";
+import { parseProviderModelCache, serializeProviderModelCache } from "@/lib/model-cache";
 
 describe("model cache helpers", () => {
   const model = {

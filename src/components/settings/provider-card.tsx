@@ -1,12 +1,7 @@
 "use client";
 
 import { memo, useCallback, useState } from "react";
-import {
-  RiArrowDownSLine,
-  RiDeleteBinLine,
-  RiEyeLine,
-  RiEyeOffLine,
-} from "@remixicon/react";
+import { RiArrowDownSLine, RiDeleteBinLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { Field } from "@/components/settings/field";
@@ -42,9 +37,7 @@ export const ProviderCard = memo(function ProviderCard({
     <div
       className={cn(
         "overflow-hidden rounded-2xl border transition-colors duration-200",
-        provider.enabled
-          ? "border-white/8 bg-surface-0/60"
-          : "border-white/4 bg-surface-0/30",
+        provider.enabled ? "border-white/8 bg-surface-0/60" : "border-white/4 bg-surface-0/30",
       )}
     >
       {/* Header */}

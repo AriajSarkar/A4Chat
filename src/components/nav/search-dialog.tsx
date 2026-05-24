@@ -211,15 +211,21 @@ export function SearchDialog({
             {filtered.length > 0 ? (
               <div className="hidden items-center gap-4 border-t border-white/[0.06] px-4 py-2 text-xs text-text-quaternary md:flex">
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 font-mono text-[10px]">↑↓</kbd>
+                  <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 font-mono text-[10px]">
+                    ↑↓
+                  </kbd>
                   Navigate
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 font-mono text-[10px]">↵</kbd>
+                  <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 font-mono text-[10px]">
+                    ↵
+                  </kbd>
                   Open
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 font-mono text-[10px]">esc</kbd>
+                  <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 font-mono text-[10px]">
+                    esc
+                  </kbd>
                   Close
                 </span>
               </div>

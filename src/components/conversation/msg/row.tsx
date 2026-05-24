@@ -75,7 +75,7 @@ export function MessageRow({ isStreaming, message, status }: MessageRowProps) {
         ) : (
           <div className="space-y-2.5 text-[15px] leading-7 text-text-secondary">
             {/* Model badge */}
-            {(message.model || message.providerLabel || message.providerId) ? (
+            {message.model || message.providerLabel || message.providerId ? (
               <div className="inline-block rounded-full bg-accent/10 px-2.5 py-0.5 font-mono text-xs text-accent-soft">
                 {message.model || message.providerLabel || message.providerId}
               </div>
@@ -102,14 +102,15 @@ export function MessageRow({ isStreaming, message, status }: MessageRowProps) {
                   type="button"
                 >
                   <RiArrowDownSLine
-                    className={cn("shrink-0 transition-transform duration-200", !reasoningOpen && "-rotate-90")}
+                    className={cn(
+                      "shrink-0 transition-transform duration-200",
+                      !reasoningOpen && "-rotate-90",
+                    )}
                     size={18}
                   />
                   <RiBrainLine className="shrink-0 text-accent-soft" size={18} />
                   <span>Thought</span>
-                  {isReasoningStreaming ? (
-                    <span className="streaming-cursor ml-1" />
-                  ) : null}
+                  {isReasoningStreaming ? <span className="streaming-cursor ml-1" /> : null}
                 </button>
                 <AnimatePresence initial={false}>
                   {reasoningOpen ? (

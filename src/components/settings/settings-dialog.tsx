@@ -14,10 +14,7 @@ import { GeneralSettings } from "@/components/settings/general-settings";
 import { ProviderList } from "@/components/settings/provider-list";
 import { QrPairingSection } from "@/components/settings/qr-pairing";
 import { SecuritySettings } from "@/components/settings/security-settings";
-import {
-  normalizeProviders,
-  type ProviderSettings,
-} from "@/components/settings/utils/providers";
+import { normalizeProviders, type ProviderSettings } from "@/components/settings/utils/providers";
 import { cn } from "@/lib/cn";
 
 type SettingsDialogProps = {
@@ -25,7 +22,12 @@ type SettingsDialogProps = {
   providers: ProviderSettings[];
   onClose: () => void;
   onSave: (providers: ProviderSettings[]) => Promise<void>;
-  onProviderScanned?: (data: { id: string; label: string; baseUrl: string; model?: string }) => void;
+  onProviderScanned?: (data: {
+    id: string;
+    label: string;
+    baseUrl: string;
+    model?: string;
+  }) => void;
 };
 
 const sections = [
@@ -95,11 +97,13 @@ export function SettingsDialog({
           className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-0 py-0 backdrop-blur-sm sm:px-3 sm:py-5"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
-          onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
         >
           <motion.form
             animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="safe-top safe-bottom flex h-dvh w-full overflow-hidden border-white/8 bg-surface-1 shadow-2xl shadow-black/40 sm:h-[min(760px,92dvh)] sm:w-[min(960px,96vw)] sm:rounded-2xl sm:border md:rounded-3xl"
+            className="safe-top safe-bottom flex h-dvh w-full overflow-hidden border-white/8 bg-surface-1 shadow-2xl shadow-black/40 sm:h-[min(760px,92dvh)] sm:w-[min(960px,96vw)] sm:rounded-2xl sm:border md:rounded-3xl"
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             initial={{ opacity: 0, scale: 0.97, y: 12 }}
             onSubmit={handleSubmit}

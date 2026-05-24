@@ -8,24 +8,84 @@ import type { ProviderModel } from "@/components/settings/utils/providers";
 
 const OPENROUTER_POPULAR: ProviderModel[] = [
   /* Free tier */
-  { modelId: "openrouter/auto", displayName: "Auto (best available)", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "meta-llama/llama-4-scout", displayName: "Llama 4 Scout", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "meta-llama/llama-4-maverick", displayName: "Llama 4 Maverick", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "google/gemma-3-27b-it:free", displayName: "Gemma 3 27B (free)", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "deepseek/deepseek-chat-v3-0324:free", displayName: "DeepSeek V3 (free)", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "qwen/qwen3-235b-a22b:free", displayName: "Qwen 3 235B (free)", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "mistralai/mistral-small-3.1-24b-instruct:free", displayName: "Mistral Small 3.1 (free)", isFavorite: false, lastSeenAt: 0 },
+  {
+    modelId: "openrouter/auto",
+    displayName: "Auto (best available)",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+  {
+    modelId: "meta-llama/llama-4-scout",
+    displayName: "Llama 4 Scout",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+  {
+    modelId: "meta-llama/llama-4-maverick",
+    displayName: "Llama 4 Maverick",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+  {
+    modelId: "google/gemma-3-27b-it:free",
+    displayName: "Gemma 3 27B (free)",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+  {
+    modelId: "deepseek/deepseek-chat-v3-0324:free",
+    displayName: "DeepSeek V3 (free)",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+  {
+    modelId: "qwen/qwen3-235b-a22b:free",
+    displayName: "Qwen 3 235B (free)",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+  {
+    modelId: "mistralai/mistral-small-3.1-24b-instruct:free",
+    displayName: "Mistral Small 3.1 (free)",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
 
   /* Paid — high quality */
   { modelId: "openai/gpt-4.1", displayName: "GPT-4.1", isFavorite: false, lastSeenAt: 0 },
   { modelId: "openai/gpt-4.1-mini", displayName: "GPT-4.1 Mini", isFavorite: false, lastSeenAt: 0 },
   { modelId: "openai/o4-mini", displayName: "o4 Mini", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "anthropic/claude-sonnet-4", displayName: "Claude Sonnet 4", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "anthropic/claude-3.5-haiku", displayName: "Claude 3.5 Haiku", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "google/gemini-2.5-flash-preview", displayName: "Gemini 2.5 Flash", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "google/gemini-2.5-pro-preview", displayName: "Gemini 2.5 Pro", isFavorite: false, lastSeenAt: 0 },
+  {
+    modelId: "anthropic/claude-sonnet-4",
+    displayName: "Claude Sonnet 4",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+  {
+    modelId: "anthropic/claude-3.5-haiku",
+    displayName: "Claude 3.5 Haiku",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+  {
+    modelId: "google/gemini-2.5-flash-preview",
+    displayName: "Gemini 2.5 Flash",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+  {
+    modelId: "google/gemini-2.5-pro-preview",
+    displayName: "Gemini 2.5 Pro",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
   { modelId: "deepseek/deepseek-r1", displayName: "DeepSeek R1", isFavorite: false, lastSeenAt: 0 },
-  { modelId: "deepseek/deepseek-chat-v3-0324", displayName: "DeepSeek V3", isFavorite: false, lastSeenAt: 0 },
+  {
+    modelId: "deepseek/deepseek-chat-v3-0324",
+    displayName: "DeepSeek V3",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
   { modelId: "qwen/qwen3-235b-a22b", displayName: "Qwen 3 235B", isFavorite: false, lastSeenAt: 0 },
 ];
 
@@ -50,10 +110,7 @@ export function getSeedModels(providerId: string): ProviderModel[] {
  * Merge detected models with seed models.
  * Detected models take priority; seeds fill in any gaps.
  */
-export function mergeWithSeeds(
-  providerId: string,
-  detected: ProviderModel[],
-): ProviderModel[] {
+export function mergeWithSeeds(providerId: string, detected: ProviderModel[]): ProviderModel[] {
   if (detected.length > 0) return detected;
   return getSeedModels(providerId);
 }

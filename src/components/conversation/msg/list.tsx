@@ -81,27 +81,26 @@ export function MessageList({ isStreaming, messages, status }: MessageListProps)
         className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-2 md:px-8"
         style={{ contain: "content" }}
       >
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-        {messages.map((message, index) => {
-          const isLast = index === messages.length - 1;
-          const isStreamingMsg = isLast && (isStreaming || status === "sending");
-          return (
-            <motion.div
-              key={message.id}
-              initial={index >= prevLengthRef.current - 1 ? { opacity: 0, y: 10 } : false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            >
-              <MessageRow
-                isStreaming={isStreamingMsg}
-                message={message}
-                status={isStreamingMsg ? status : "idle"}
-              />
-            </motion.div>
-          );
-        })}
-      </div>
-
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+          {messages.map((message, index) => {
+            const isLast = index === messages.length - 1;
+            const isStreamingMsg = isLast && (isStreaming || status === "sending");
+            return (
+              <motion.div
+                key={message.id}
+                initial={index >= prevLengthRef.current - 1 ? { opacity: 0, y: 10 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              >
+                <MessageRow
+                  isStreaming={isStreamingMsg}
+                  message={message}
+                  status={isStreamingMsg ? status : "idle"}
+                />
+              </motion.div>
+            );
+          })}
+        </div>
       </section>
 
       {/* Scroll-to-bottom FAB */}

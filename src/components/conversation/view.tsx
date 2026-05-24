@@ -21,7 +21,10 @@ type ConversationViewProps = {
   status: "idle" | "sending" | "streaming";
   onDismissError: () => void;
   onModelChange: (providerId: string, modelId: string) => void;
-  onRefreshProviderModels: (provider: ProviderSettings, options?: { force?: boolean; silent?: boolean }) => Promise<boolean>;
+  onRefreshProviderModels: (
+    provider: ProviderSettings,
+    options?: { force?: boolean; silent?: boolean },
+  ) => Promise<boolean>;
   onToggleFavorite: (providerId: string, modelId: string) => void;
   onStopStreaming: () => void;
   onSubmit: (content: string) => Promise<void>;
@@ -35,8 +38,7 @@ function useSwipeToOpenSidebar(onOpen: () => void) {
   const startY = useRef(0);
 
   useEffect(() => {
-    const isTouchDevice = () =>
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const isTouchDevice = () => "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
     if (!isTouchDevice()) return;
 

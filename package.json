@@ -1,7 +1,6 @@
 {
   "name": "a4chat",
   "version": "3.0.0",
-  "packageManager": "pnpm@11.2.2",
   "private": true,
   "scripts": {
     "postinstall": "node scripts/prisma-sync.mjs",
@@ -69,5 +68,6 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.7"
-  }
+  },
+  "packageManager": "pnpm@11.2.2"
 }

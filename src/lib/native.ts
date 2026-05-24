@@ -5,7 +5,11 @@ import type {
   CompletionResponse,
   ConversationMessage,
 } from "@/components/conversation/utils/conversation";
-import { normalizeProviders, type ProviderModel, type ProviderSettings } from "@/components/settings/utils/providers";
+import {
+  normalizeProviders,
+  type ProviderModel,
+  type ProviderSettings,
+} from "@/components/settings/utils/providers";
 
 export type AppHealth = {
   platform: string;
@@ -38,7 +42,9 @@ export function chatCompletionsEndpoint(baseUrl: string) {
   try {
     const url = new URL(trimmed);
     if (url.pathname === "" || url.pathname === "/") return `${trimmed}/v1/chat/completions`;
-  } catch { /* fall through */ }
+  } catch {
+    /* fall through */
+  }
   return `${trimmed}/chat/completions`;
 }
 
@@ -56,7 +62,7 @@ type ProviderErrorOptions = {
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === "object" && value !== null ? value as Record<string, unknown> : null;
+  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
 }
 
 function asString(value: unknown): string | null {
@@ -103,11 +109,14 @@ export function formatProviderError(payload: unknown, options: ProviderErrorOpti
     asRetryAfterSeconds(record?.retry_after_seconds) ??
     asRetryAfterSeconds(options.retryAfter);
 
-  const fallback = options.fallback ?? (options.status ? `Provider error (HTTP ${options.status})` : "Provider request failed");
+  const fallback =
+    options.fallback ??
+    (options.status ? `Provider error (HTTP ${options.status})` : "Provider request failed");
   const baseMessage = message ?? fallback;
-  const providerPrefix = providerName && !baseMessage.toLowerCase().includes(providerName.toLowerCase())
-    ? `${providerName}: `
-    : "";
+  const providerPrefix =
+    providerName && !baseMessage.toLowerCase().includes(providerName.toLowerCase())
+      ? `${providerName}: `
+      : "";
   const retrySuffix = retryAfterSeconds ? ` (retry after ${retryAfterSeconds}s)` : "";
 
   return `${providerPrefix}${baseMessage}${retrySuffix}`;
@@ -192,8 +201,12 @@ export function extractContentText(content: unknown): string {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     return content
-      .filter((block): block is { type: string; text: string } =>
-        typeof block === "object" && block !== null && block.type === "text" && typeof block.text === "string",
+      .filter(
+        (block): block is { type: string; text: string } =>
+          typeof block === "object" &&
+          block !== null &&
+          block.type === "text" &&
+          typeof block.text === "string",
       )
       .map((block) => block.text)
       .join("");
@@ -218,7 +231,12 @@ export async function persistProviders(providers: ProviderSettings[]) {
   if (!isTauriRuntime()) return;
   await invoke("save_provider_settings", {
     providers: providers.map(({ id, label, baseUrl, apiKey, model, enabled }) => ({
-      id, label, baseUrl, apiKey: apiKey || null, model, enabled,
+      id,
+      label,
+      baseUrl,
+      apiKey: apiKey || null,
+      model,
+      enabled,
     })),
   });
 }
@@ -231,11 +249,18 @@ export async function detectProviderModels(
   apiKey: string,
 ): Promise<ProviderModel[]> {
   if (isTauriRuntime()) {
-    const rows = await invoke<Array<{
-      providerId: string; modelId: string; displayName: string;
-      isFavorite: boolean; lastSeenAt: number;
-    }>>("detect_provider_models", {
-      providerId, baseUrl, apiKey: apiKey || null,
+    const rows = await invoke<
+      Array<{
+        providerId: string;
+        modelId: string;
+        displayName: string;
+        isFavorite: boolean;
+        lastSeenAt: number;
+      }>
+    >("detect_provider_models", {
+      providerId,
+      baseUrl,
+      apiKey: apiKey || null,
     });
     return rows.map((r) => ({
       modelId: r.modelId,
@@ -283,10 +308,15 @@ export async function detectProviderModels(
 
 export async function loadProviderModels(providerId: string): Promise<ProviderModel[]> {
   if (!isTauriRuntime()) return [];
-  const rows = await invoke<Array<{
-    providerId: string; modelId: string; displayName: string;
-    isFavorite: boolean; lastSeenAt: number;
-  }>>("list_provider_models", { providerId });
+  const rows = await invoke<
+    Array<{
+      providerId: string;
+      modelId: string;
+      displayName: string;
+      isFavorite: boolean;
+      lastSeenAt: number;
+    }>
+  >("list_provider_models", { providerId });
   return rows.map((r) => ({
     modelId: r.modelId,
     displayName: r.displayName || r.modelId,
@@ -319,8 +349,10 @@ export async function sendChatCompletion(input: {
     return invoke<CompletionResponse>("send_chat_completion", {
       request: {
         provider: {
-          id: input.provider.id, label: input.provider.label,
-          baseUrl: input.provider.baseUrl, apiKey: input.provider.apiKey || null,
+          id: input.provider.id,
+          label: input.provider.label,
+          baseUrl: input.provider.baseUrl,
+          apiKey: input.provider.apiKey || null,
           model: input.provider.model,
         },
         messages: input.messages,
@@ -365,7 +397,7 @@ export async function sendChatCompletion(input: {
 
   return {
     content: parsed.content,
-    reasoning: (rawReasoning + parsed.reasoning) || null,
+    reasoning: rawReasoning + parsed.reasoning || null,
     model: payload?.model ?? input.provider.model,
     inputTokens: payload?.usage?.prompt_tokens ?? payload?.usage?.input_tokens ?? null,
     outputTokens: payload?.usage?.completion_tokens ?? payload?.usage?.output_tokens ?? null,
@@ -406,12 +438,16 @@ export async function streamChatCompletion(
     } catch {
       payload = rawBody ? { error: { message: rawBody } } : {};
     }
-    callbacks.onError(new Error(formatProviderError(payload, {
-      fallback: "Provider rejected the request.",
-      providerLabel: input.provider.label,
-      retryAfter: response.headers.get("retry-after"),
-      status: response.status,
-    })));
+    callbacks.onError(
+      new Error(
+        formatProviderError(payload, {
+          fallback: "Provider rejected the request.",
+          providerLabel: input.provider.label,
+          retryAfter: response.headers.get("retry-after"),
+          status: response.status,
+        }),
+      ),
+    );
     return;
   }
 
@@ -422,11 +458,12 @@ export async function streamChatCompletion(
     const rawContent = extractContentText(msg?.content);
     const rawReasoning = msg?.reasoning ?? msg?.reasoning_content ?? "";
     const parsed = stripThinkTags(rawContent);
-    const finalReasoning = (rawReasoning + parsed.reasoning) || null;
+    const finalReasoning = rawReasoning + parsed.reasoning || null;
     if (finalReasoning) callbacks.onReasoning(finalReasoning);
     if (parsed.content) callbacks.onToken(parsed.content);
     callbacks.onComplete({
-      content: parsed.content, reasoning: finalReasoning,
+      content: parsed.content,
+      reasoning: finalReasoning,
       model: payload?.model ?? input.provider.model,
       inputTokens: payload?.usage?.prompt_tokens ?? null,
       outputTokens: payload?.usage?.completion_tokens ?? null,
@@ -464,10 +501,14 @@ export async function streamChatCompletion(
 
           /* Handle inline SSE errors (provider sends error in stream data) */
           if (chunk.error) {
-            callbacks.onError(new Error(formatProviderError(chunk.error, {
-              fallback: "Provider returned error",
-              providerLabel: input.provider.label,
-            })));
+            callbacks.onError(
+              new Error(
+                formatProviderError(chunk.error, {
+                  fallback: "Provider returned error",
+                  providerLabel: input.provider.label,
+                }),
+              ),
+            );
             return;
           }
 
@@ -483,18 +524,29 @@ export async function streamChatCompletion(
           const rawDelta = extractContentText(delta.content);
           if (rawDelta) {
             const { content, reasoning } = thinkParser.process(rawDelta);
-            if (content) { fullContent += content; callbacks.onToken(content); }
-            if (reasoning) { fullReasoning += reasoning; callbacks.onReasoning(reasoning); }
+            if (content) {
+              fullContent += content;
+              callbacks.onToken(content);
+            }
+            if (reasoning) {
+              fullReasoning += reasoning;
+              callbacks.onReasoning(reasoning);
+            }
           }
 
           const reasoningDelta = delta.reasoning ?? delta.reasoning_content;
-          if (reasoningDelta) { fullReasoning += reasoningDelta; callbacks.onReasoning(reasoningDelta); }
+          if (reasoningDelta) {
+            fullReasoning += reasoningDelta;
+            callbacks.onReasoning(reasoningDelta);
+          }
           if (chunk.model) model = chunk.model;
           if (chunk.usage) {
             inputTokens = chunk.usage.prompt_tokens ?? chunk.usage.input_tokens ?? null;
             outputTokens = chunk.usage.completion_tokens ?? chunk.usage.output_tokens ?? null;
           }
-        } catch { /* partial JSON, skip */ }
+        } catch {
+          /* partial JSON, skip */
+        }
       }
     }
   } catch (err) {
@@ -506,12 +558,21 @@ export async function streamChatCompletion(
   }
 
   const remaining = thinkParser.flush();
-  if (remaining.content) { fullContent += remaining.content; callbacks.onToken(remaining.content); }
-  if (remaining.reasoning) { fullReasoning += remaining.reasoning; callbacks.onReasoning(remaining.reasoning); }
+  if (remaining.content) {
+    fullContent += remaining.content;
+    callbacks.onToken(remaining.content);
+  }
+  if (remaining.reasoning) {
+    fullReasoning += remaining.reasoning;
+    callbacks.onReasoning(remaining.reasoning);
+  }
 
   callbacks.onComplete({
-    content: fullContent, reasoning: fullReasoning || null,
-    model, inputTokens, outputTokens,
+    content: fullContent,
+    reasoning: fullReasoning || null,
+    model,
+    inputTokens,
+    outputTokens,
   });
 }
 
@@ -536,7 +597,9 @@ export async function persistConversation(
         providerId: provider.id,
         model: provider.model,
         messages: messages.map((m) => ({
-          id: m.id, role: m.role, content: m.content,
+          id: m.id,
+          role: m.role,
+          content: m.content,
           reasoning: m.reasoning ?? null,
           tokenCount: typeof m.outputTokens === "number" ? m.outputTokens : null,
         })),
@@ -552,7 +615,9 @@ export async function persistConversation(
         providerId: provider.id,
         model: provider.model,
         messages: messages.map((m) => ({
-          id: m.id, role: m.role, content: m.content,
+          id: m.id,
+          role: m.role,
+          content: m.content,
           reasoning: m.reasoning ?? null,
           tokenCount: typeof m.outputTokens === "number" ? m.outputTokens : null,
         })),
@@ -569,12 +634,19 @@ export async function loadConversationList(): Promise<SavedConversation[]> {
   return res.json();
 }
 
-export async function loadConversationMessages(conversationId: string): Promise<ConversationMessage[]> {
+export async function loadConversationMessages(
+  conversationId: string,
+): Promise<ConversationMessage[]> {
   if (isTauriRuntime()) {
-    const msgs = await invoke<Array<{
-      id: string; role: string; content: string;
-      reasoning: string | null; tokenCount: number | null;
-    }>>("load_conversation_messages", { conversationId });
+    const msgs = await invoke<
+      Array<{
+        id: string;
+        role: string;
+        content: string;
+        reasoning: string | null;
+        tokenCount: number | null;
+      }>
+    >("load_conversation_messages", { conversationId });
     return msgs.map((m, i) => ({
       id: m.id,
       role: m.role as "user" | "assistant",
@@ -586,14 +658,23 @@ export async function loadConversationMessages(conversationId: string): Promise<
   }
   const res = await fetch(`/api/conversations/${conversationId}`);
   const msgs = await res.json();
-  return msgs.map((m: { id: string; role: string; content: string; reasoning?: string; outputTokens?: number; createdAt: number }) => ({
-    id: m.id,
-    role: m.role as "user" | "assistant",
-    content: m.content,
-    reasoning: m.reasoning ?? undefined,
-    outputTokens: m.outputTokens ?? undefined,
-    createdAt: m.createdAt,
-  }));
+  return msgs.map(
+    (m: {
+      id: string;
+      role: string;
+      content: string;
+      reasoning?: string;
+      outputTokens?: number;
+      createdAt: number;
+    }) => ({
+      id: m.id,
+      role: m.role as "user" | "assistant",
+      content: m.content,
+      reasoning: m.reasoning ?? undefined,
+      outputTokens: m.outputTokens ?? undefined,
+      createdAt: m.createdAt,
+    }),
+  );
 }
 
 export async function deleteConversation(conversationId: string) {

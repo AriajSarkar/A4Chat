@@ -288,7 +288,10 @@ pub async fn detect_provider_models(
 
     let mut headers = HeaderMap::new();
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-    headers.insert("HTTP-Referer", HeaderValue::from_static("https://github.com/AriajSarkar/A4Chat"));
+    headers.insert(
+        "HTTP-Referer",
+        HeaderValue::from_static("https://github.com/AriajSarkar/A4Chat"),
+    );
     headers.insert("X-Title", HeaderValue::from_static("A4Chat"));
 
     if let Some(key) = api_key.as_deref().filter(|k| !k.is_empty()) {

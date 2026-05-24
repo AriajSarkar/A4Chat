@@ -3,14 +3,14 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
   RUSTC_WRAPPER: sccache
-  SCCACHE_GHA_ENABLED: 'true'
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  SCCACHE_GHA_ENABLED: "true"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   # ============================================
@@ -37,7 +37,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -62,7 +62,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
           cache: pnpm
 
       - name: Setup Rust
@@ -120,7 +120,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -145,7 +145,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
           cache: pnpm
 
       - name: Setup Rust
@@ -217,7 +217,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
           cache: pnpm
 
       - name: Setup Rust
@@ -285,7 +285,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
           cache: pnpm
 
       - name: Setup Rust
@@ -307,7 +307,7 @@ jobs:
       - name: Build Linux bundle (${{ matrix.bundle }})
         run: bash scripts/build-linux.sh "${{ matrix.bundle }}"
         env:
-          RUSTFLAGS: '-C link-arg=-fuse-ld=mold'
+          RUSTFLAGS: "-C link-arg=-fuse-ld=mold"
 
       - name: sccache stats
         run: sccache --show-stats || true
@@ -336,7 +336,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
           cache: pnpm
 
       - name: Setup Rust
@@ -374,7 +374,8 @@ jobs:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: [build-android-arch, build-android-universal, build-windows-arch, build-linux, build-macos]
+    needs:
+      [build-android-arch, build-android-universal, build-windows-arch, build-linux, build-macos]
 
     permissions:
       contents: write

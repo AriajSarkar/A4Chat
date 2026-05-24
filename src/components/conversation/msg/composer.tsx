@@ -1,11 +1,7 @@
 "use client";
 
 import { FormEvent, memo, useEffect, useRef, useState } from "react";
-import {
-  RiAddLine,
-  RiSendPlane2Fill,
-  RiStopCircleFill,
-} from "@remixicon/react";
+import { RiAddLine, RiSendPlane2Fill, RiStopCircleFill } from "@remixicon/react";
 
 import { ModelSelector } from "@/components/conversation/msg/model-selector";
 import type { ProviderModel, ProviderSettings } from "@/components/settings/utils/providers";
@@ -20,7 +16,10 @@ type MessageComposerProps = {
   selectedModelId: string;
   status: "idle" | "sending" | "streaming";
   onModelChange: (providerId: string, modelId: string) => void;
-  onRefreshProviderModels: (provider: ProviderSettings, options?: { force?: boolean; silent?: boolean }) => Promise<boolean>;
+  onRefreshProviderModels: (
+    provider: ProviderSettings,
+    options?: { force?: boolean; silent?: boolean },
+  ) => Promise<boolean>;
   onToggleFavorite: (providerId: string, modelId: string) => void;
   onStopStreaming: () => void;
   onSubmit: (content: string) => Promise<void>;
@@ -64,7 +63,7 @@ export const MessageComposer = memo(function MessageComposer({
 
   return (
     <form
-      className="composer-glow relative mx-auto flex w-full max-w-4xl flex-col rounded-2xl border border-white/8 bg-white/3 shadow-lg shadow-black/20 backdrop-blur-xl transition-colors duration-200 focus-within:border-accent/40 md:rounded-3xl"
+      className="relative mx-auto flex w-full max-w-4xl flex-col rounded-2xl border border-white/8 bg-white/3 shadow-lg shadow-black/20 backdrop-blur-xl transition-colors duration-200 focus-within:border-accent/40 md:rounded-3xl"
       onSubmit={handleSubmit}
     >
       {/* Textarea row */}

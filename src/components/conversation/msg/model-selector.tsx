@@ -43,7 +43,10 @@ type ModelSelectorProps = {
   selectedModelId: string;
   isActive: boolean;
   onSelect: (providerId: string, modelId: string) => void;
-  onRefreshProviderModels: (provider: ProviderSettings, options?: { force?: boolean; silent?: boolean }) => Promise<boolean>;
+  onRefreshProviderModels: (
+    provider: ProviderSettings,
+    options?: { force?: boolean; silent?: boolean },
+  ) => Promise<boolean>;
   onToggleFavorite: (providerId: string, modelId: string) => void;
   refreshingProviderId: string | null;
 };
@@ -81,10 +84,7 @@ export const ModelSelector = memo(function ModelSelector({
   const searchRef = useRef<HTMLInputElement>(null);
   const autoRefreshKeyRef = useRef<string>("");
 
-  const enabledProviders = useMemo(
-    () => providers.filter((p) => p.enabled),
-    [providers],
-  );
+  const enabledProviders = useMemo(() => providers.filter((p) => p.enabled), [providers]);
 
   /* Build flat model list across all providers */
   const allModels = useMemo<FlatModel[]>(() => {
@@ -124,7 +124,9 @@ export const ModelSelector = memo(function ModelSelector({
   const refreshCooldownRemainingMs = getModelRefreshCooldownRemainingMs(cacheAt, clock);
   const isRefreshInProgress = refreshingProviderId === selectedProviderId;
   const isRefreshCoolingDown = refreshCooldownRemainingMs > 0;
-  const canRefreshModels = Boolean(selectedProvider && !isRefreshInProgress && !isRefreshCoolingDown);
+  const canRefreshModels = Boolean(
+    selectedProvider && !isRefreshInProgress && !isRefreshCoolingDown,
+  );
   const refreshLabel = isRefreshInProgress
     ? "Refreshing…"
     : isRefreshCoolingDown
@@ -165,17 +167,12 @@ export const ModelSelector = memo(function ModelSelector({
 
   const renderedModelList = useMemo(() => {
     if (filteredModels.length === 0) {
-      return (
-        <p className="px-4 py-6 text-center text-sm text-text-quaternary">
-          No models found
-        </p>
-      );
+      return <p className="px-4 py-6 text-center text-sm text-text-quaternary">No models found</p>;
     }
 
     return filteredModels.map((model) => {
       const isSelected =
-        model.providerId === selectedProviderId &&
-        model.modelId === selectedModelId;
+        model.providerId === selectedProviderId && model.modelId === selectedModelId;
       return (
         <div
           className={cn(
@@ -186,8 +183,8 @@ export const ModelSelector = memo(function ModelSelector({
           )}
           key={`${model.providerId}:${model.modelId}`}
           onClick={() => {
-             onSelect(model.providerId, model.modelId);
-             setOpen(false);
+            onSelect(model.providerId, model.modelId);
+            setOpen(false);
           }}
           role="button"
           tabIndex={0}
@@ -195,13 +192,9 @@ export const ModelSelector = memo(function ModelSelector({
           <ProviderIcon providerId={model.providerId} size={20} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{model.displayName}</p>
-            <p className="truncate text-[11px] text-text-quaternary">
-              {model.providerLabel}
-            </p>
+            <p className="truncate text-[11px] text-text-quaternary">{model.providerLabel}</p>
           </div>
-          {isSelected ? (
-            <RiCheckLine className="shrink-0 text-accent" size={16} />
-          ) : null}
+          {isSelected ? <RiCheckLine className="shrink-0 text-accent" size={16} /> : null}
           <button
             aria-label={model.isFavorite ? "Remove from favorites" : "Add to favorites"}
             className={cn(
@@ -216,11 +209,7 @@ export const ModelSelector = memo(function ModelSelector({
             }}
             type="button"
           >
-            {model.isFavorite ? (
-              <RiStarFill size={14} />
-            ) : (
-              <RiStarLine size={14} />
-            )}
+            {model.isFavorite ? <RiStarFill size={14} /> : <RiStarLine size={14} />}
           </button>
         </div>
       );
@@ -231,9 +220,10 @@ export const ModelSelector = memo(function ModelSelector({
   useEffect(() => {
     if (!open) return;
     function handleClick(e: PointerEvent) {
-      const isOutsideTrigger = dropdownRef.current && !dropdownRef.current.contains(e.target as Node);
+      const isOutsideTrigger =
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node);
       const isOutsidePanel = !panelRef.current || !panelRef.current.contains(e.target as Node);
-      
+
       if (isOutsideTrigger && isOutsidePanel) {
         setOpen(false);
       }
@@ -261,8 +251,8 @@ export const ModelSelector = memo(function ModelSelector({
       const usePopup = isAndroid || isCompactViewport;
 
       if (usePopup) {
-        setPanelMode((prev) => prev === "popup" ? prev : "popup");
-        setPanelStyle((prev) => prev === undefined ? prev : undefined);
+        setPanelMode((prev) => (prev === "popup" ? prev : "popup"));
+        setPanelStyle((prev) => (prev === undefined ? prev : undefined));
         return;
       }
 
@@ -271,19 +261,19 @@ export const ModelSelector = memo(function ModelSelector({
 
       const maxPanelWidth = Math.min(480, window.innerWidth - 16);
       const preferredPanelHeight = Math.min(window.innerHeight * 0.72, 576);
-      
+
       // Calculate available space using viewport height
       const spaceBelow = window.innerHeight - trigger.bottom - 12;
       const spaceAbove = trigger.top - 12;
       const shouldOpenBelow = spaceBelow >= preferredPanelHeight || spaceBelow >= spaceAbove;
 
-      setPanelMode((prev) => prev === "desktop" ? prev : "desktop");
+      setPanelMode((prev) => (prev === "desktop" ? prev : "desktop"));
 
       const left = Math.max(8, Math.min(trigger.left, window.innerWidth - maxPanelWidth - 8));
 
       const newStyle = shouldOpenBelow
-          ? { left, top: trigger.bottom + 8, width: maxPanelWidth }
-          : { left, bottom: window.innerHeight - trigger.top + 8, width: maxPanelWidth };
+        ? { left, top: trigger.bottom + 8, width: maxPanelWidth }
+        : { left, bottom: window.innerHeight - trigger.top + 8, width: maxPanelWidth };
 
       setPanelStyle((prev) => {
         if (
@@ -347,9 +337,7 @@ export const ModelSelector = memo(function ModelSelector({
 
   /* Tabs for sidebar */
   const tabs = useMemo(() => {
-    const t: { id: string; label: string }[] = [
-      { id: "all", label: "All" },
-    ];
+    const t: { id: string; label: string }[] = [{ id: "all", label: "All" }];
     const hasFavorites = allModels.some((m) => m.isFavorite);
     if (hasFavorites) {
       t.push({ id: "favorites", label: "Favorites" });
@@ -391,140 +379,148 @@ export const ModelSelector = memo(function ModelSelector({
                 <>
                   {panelMode === "popup" ? (
                     <motion.button
-                aria-label="Close model picker"
-                animate={{ opacity: 1 }}
-                className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px]"
-                exit={{ opacity: 0 }}
-                initial={{ opacity: 0 }}
-                onClick={() => setOpen(false)}
-                type="button"
-              />
-            ) : null}
-            <motion.div
-              ref={panelRef}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              className={cn(
-                "model-selector-panel fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-white/8 bg-neutral-900/95 shadow-2xl shadow-black/50 backdrop-blur-md",
-                panelMode === "popup"
-                  ? "inset-3 max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)]"
-                  : "max-h-[min(72dvh,36rem)] w-[min(30rem,calc(100vw-1rem))]",
-              )}
-              style={panelMode === "popup" ? undefined : panelStyle}
-              exit={{ opacity: 0, y: 8, scale: 0.96 }}
-              initial={{ opacity: 0, y: 8, scale: 0.96 }}
-              transition={{ type: "spring", damping: 24, stiffness: 340 }}
-            >
-            {/* Search header */}
-            <div className="flex items-center gap-2 border-b border-white/6 px-3 py-2.5">
-              <RiSearchLine className="shrink-0 text-text-quaternary" size={16} />
-              <input
-                className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-quaternary"
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search models..."
-                ref={searchRef}
-                type="text"
-                value={search}
-              />
-              <button
-                className={cn(
-                  "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors",
-                  canRefreshModels
-                    ? "bg-white/6 text-text-secondary hover:bg-white/8 hover:text-text-primary"
-                    : "bg-white/4 text-text-quaternary",
-                )}
-                disabled={!canRefreshModels}
-                onClick={() => {
-                  if (!selectedProvider) return;
-                  void onRefreshProviderModels(selectedProvider, { force: false, silent: false });
-                }}
-                title={refreshTooltip}
-                type="button"
-              >
-                <RiRefreshLine
-                  className={cn("shrink-0 transition-transform", isRefreshInProgress && "animate-spin")}
-                  size={14}
-                />
-                <span className="hidden sm:inline">{refreshLabel}</span>
-              </button>
-              <button
-                className="grid size-6 shrink-0 place-items-center rounded-md text-text-quaternary transition-colors hover:bg-white/8 hover:text-text-secondary"
-                onClick={() => setOpen(false)}
-                type="button"
-              >
-                <RiCloseLine size={16} />
-              </button>
-            </div>
-
-            {/* Mobile tabs */}
-            <div className="flex gap-1 overflow-x-auto border-b border-white/6 px-2 py-1.5 md:hidden">
-              {tabs.map((tab) => (
-                <button
-                  className={cn(
-                    "shrink-0 rounded-full px-2.5 py-1 text-xs transition-colors",
-                    activeTab === tab.id
-                      ? "bg-white/10 text-text-primary"
-                      : "text-text-quaternary",
-                  )}
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  type="button"
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Desktop: sidebar + list side-by-side */}
-            <div className={cn("flex min-h-0 flex-1", panelMode === "popup" && "flex-col") }>
-              {/* Provider tabs sidebar — desktop only */}
-              <div className="hidden w-10 shrink-0 flex-col items-center gap-1 border-r border-white/6 py-2 md:flex">
-                {tabs.map((tab) => (
-                  <button
+                      aria-label="Close model picker"
+                      animate={{ opacity: 1 }}
+                      className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px]"
+                      exit={{ opacity: 0 }}
+                      initial={{ opacity: 0 }}
+                      onClick={() => setOpen(false)}
+                      type="button"
+                    />
+                  ) : null}
+                  <motion.div
+                    ref={panelRef}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
                     className={cn(
-                      "grid size-8 place-items-center rounded-lg transition-colors",
-                      activeTab === tab.id
-                        ? "bg-white/10 text-text-primary"
-                        : "text-text-quaternary hover:bg-white/6 hover:text-text-secondary",
+                      "model-selector-panel fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-white/8 bg-neutral-900/95 shadow-2xl shadow-black/50 backdrop-blur-md",
+                      panelMode === "popup"
+                        ? "inset-3 max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)]"
+                        : "max-h-[min(72dvh,36rem)] w-[min(30rem,calc(100vw-1rem))]",
                     )}
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    title={tab.label}
-                    type="button"
+                    style={panelMode === "popup" ? undefined : panelStyle}
+                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                    transition={{ type: "spring", damping: 24, stiffness: 340 }}
                   >
-                    {tab.id === "all" ? (
-                      <span className="text-xs font-bold">All</span>
-                    ) : tab.id === "favorites" ? (
-                      <RiStarFill size={16} />
-                    ) : (
-                      <ProviderIcon providerId={tab.id} size={18} />
-                    )}
-                  </button>
-                ))}
-              </div>
+                    {/* Search header */}
+                    <div className="flex items-center gap-2 border-b border-white/6 px-3 py-2.5">
+                      <RiSearchLine className="shrink-0 text-text-quaternary" size={16} />
+                      <input
+                        className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-quaternary"
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search models..."
+                        ref={searchRef}
+                        type="text"
+                        value={search}
+                      />
+                      <button
+                        className={cn(
+                          "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors",
+                          canRefreshModels
+                            ? "bg-white/6 text-text-secondary hover:bg-white/8 hover:text-text-primary"
+                            : "bg-white/4 text-text-quaternary",
+                        )}
+                        disabled={!canRefreshModels}
+                        onClick={() => {
+                          if (!selectedProvider) return;
+                          void onRefreshProviderModels(selectedProvider, {
+                            force: false,
+                            silent: false,
+                          });
+                        }}
+                        title={refreshTooltip}
+                        type="button"
+                      >
+                        <RiRefreshLine
+                          className={cn(
+                            "shrink-0 transition-transform",
+                            isRefreshInProgress && "animate-spin",
+                          )}
+                          size={14}
+                        />
+                        <span className="hidden sm:inline">{refreshLabel}</span>
+                      </button>
+                      <button
+                        className="grid size-6 shrink-0 place-items-center rounded-md text-text-quaternary transition-colors hover:bg-white/8 hover:text-text-secondary"
+                        onClick={() => setOpen(false)}
+                        type="button"
+                      >
+                        <RiCloseLine size={16} />
+                      </button>
+                    </div>
 
-              {/* Model list */}
-              <div className="max-h-[min(340px,48dvh)] min-w-0 flex-1 overflow-y-auto py-1">
-                {renderedModelList}
-              </div>
-            </div>
+                    {/* Mobile tabs */}
+                    <div className="flex gap-1 overflow-x-auto border-b border-white/6 px-2 py-1.5 md:hidden">
+                      {tabs.map((tab) => (
+                        <button
+                          className={cn(
+                            "shrink-0 rounded-full px-2.5 py-1 text-xs transition-colors",
+                            activeTab === tab.id
+                              ? "bg-white/10 text-text-primary"
+                              : "text-text-quaternary",
+                          )}
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          type="button"
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
 
-            {/* Footer — current selection */}
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/6 px-3 py-2">
-              <ProviderIcon providerId={selectedProviderId} size={16} />
-              <span className="truncate text-xs font-medium text-text-secondary">
-                {displayLabel}
-              </span>
-              <span className="text-xs text-text-quaternary">•</span>
-              <span className="truncate text-xs text-text-quaternary">{displayProvider}</span>
-              <span className="ml-auto truncate text-[11px] text-text-quaternary">
-                {cacheAgeLabel}
-              </span>
-            </div>
-          </motion.div>
+                    {/* Desktop: sidebar + list side-by-side */}
+                    <div className={cn("flex min-h-0 flex-1", panelMode === "popup" && "flex-col")}>
+                      {/* Provider tabs sidebar — desktop only */}
+                      <div className="hidden w-10 shrink-0 flex-col items-center gap-1 border-r border-white/6 py-2 md:flex">
+                        {tabs.map((tab) => (
+                          <button
+                            className={cn(
+                              "grid size-8 place-items-center rounded-lg transition-colors",
+                              activeTab === tab.id
+                                ? "bg-white/10 text-text-primary"
+                                : "text-text-quaternary hover:bg-white/6 hover:text-text-secondary",
+                            )}
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            title={tab.label}
+                            type="button"
+                          >
+                            {tab.id === "all" ? (
+                              <span className="text-xs font-bold">All</span>
+                            ) : tab.id === "favorites" ? (
+                              <RiStarFill size={16} />
+                            ) : (
+                              <ProviderIcon providerId={tab.id} size={18} />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Model list */}
+                      <div className="max-h-[min(340px,48dvh)] min-w-0 flex-1 overflow-y-auto py-1">
+                        {renderedModelList}
+                      </div>
+                    </div>
+
+                    {/* Footer — current selection */}
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/6 px-3 py-2">
+                      <ProviderIcon providerId={selectedProviderId} size={16} />
+                      <span className="truncate text-xs font-medium text-text-secondary">
+                        {displayLabel}
+                      </span>
+                      <span className="text-xs text-text-quaternary">•</span>
+                      <span className="truncate text-xs text-text-quaternary">
+                        {displayProvider}
+                      </span>
+                      <span className="ml-auto truncate text-[11px] text-text-quaternary">
+                        {cacheAgeLabel}
+                      </span>
+                    </div>
+                  </motion.div>
                 </>
               ) : null}
             </AnimatePresence>,
-            document.body
+            document.body,
           )
         : null}
     </div>

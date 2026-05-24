@@ -58,9 +58,7 @@ export function normalizeProviders(value: unknown): ProviderSettings[] {
 
   /* Merge user-saved providers with defaults; append any custom providers */
   const merged = DEFAULT_PROVIDERS.map((fallback) => byId.get(fallback.id) ?? fallback);
-  const customProviders = parsed.data.filter(
-    (p) => !DEFAULT_PROVIDERS.some((d) => d.id === p.id),
-  );
+  const customProviders = parsed.data.filter((p) => !DEFAULT_PROVIDERS.some((d) => d.id === p.id));
 
   return [...merged, ...customProviders];
 }
@@ -84,10 +82,7 @@ export function getLatestModelSyncAt(source: ModelCacheSource) {
   return source?.reduce((latest, model) => Math.max(latest, model.lastSeenAt), 0) ?? 0;
 }
 
-export function getModelRefreshCooldownRemainingMs(
-  source: ModelCacheSource,
-  now = Date.now(),
-) {
+export function getModelRefreshCooldownRemainingMs(source: ModelCacheSource, now = Date.now()) {
   const lastSeenAt = getLatestModelSyncAt(source);
   if (!lastSeenAt) return 0;
   return Math.max(0, MODEL_REFRESH_COOLDOWN_MS - (now - lastSeenAt));
@@ -121,11 +116,12 @@ export function formatModelCacheAge(source: ModelCacheSource, now = Date.now()) 
 
 /** Generate a slugified provider ID from a label */
 export function generateProviderId(label: string): string {
-  return label
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    || `provider-${Date.now()}`;
+  return (
+    label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || `provider-${Date.now()}`
+  );
 }
 
 /** Create a blank provider template for "Add Provider" */
