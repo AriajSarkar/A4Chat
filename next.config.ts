@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 
-const isProd = process.env.NODE_ENV === "production";
 const internalHost = process.env.TAURI_DEV_HOST || "localhost";
 
 const nextConfig: NextConfig = {
@@ -10,8 +9,8 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   reactCompiler: true,
-  // Point assets at the dev server's network IP so the Android WebView can reach them.
-  assetPrefix: isProd ? undefined : `http://${internalHost}:3000`,
+  // Removed assetPrefix: Using relative paths works perfectly for Tauri Android DEV
+  // whether on localhost or LAN IP, avoiding missing CSS on wireless debugging.
   allowedDevOrigins: [
     "127.0.0.1",
     "localhost",

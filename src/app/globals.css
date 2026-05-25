@@ -53,7 +53,8 @@
   --color-text-secondary: var(--text-secondary);
   --color-text-tertiary: var(--text-tertiary);
   --color-text-quaternary: var(--text-quaternary);
-  --font-sans: var(--font-geist-sans), "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans:
+    var(--font-geist-sans), "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: var(--font-geist-mono), "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
@@ -71,6 +72,12 @@ body {
   font-family: var(--font-sans);
   min-width: 320px;
   overflow: hidden;
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 button,
@@ -80,18 +87,41 @@ select {
   font: inherit;
 }
 
-button {
-  -webkit-tap-highlight-color: transparent;
-}
-
 textarea {
   scrollbar-width: thin;
   scrollbar-color: var(--panel-strong) transparent;
 }
 
-/* Android / iOS safe area bottom padding */
+/* Android / iOS safe area padding — notch, camera, navigation bar */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 .safe-bottom {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
+}
+
+.safe-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.safe-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* ─────────────────────────────────────────────────────────
+   Model selector panel — warm glassmorphic dropdown
+   ───────────────────────────────────────────────────────── */
+
+.model-selector-panel {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 20, 35, 0.95) 0%,
+    rgba(20, 16, 30, 0.97) 50%,
+    rgba(15, 12, 24, 0.98) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -185,48 +215,26 @@ textarea {
   }
 }
 
-/* Composer animated gradient border */
-@keyframes rotate {
-  from {
-    --composer-angle: 0deg;
-  }
-  to {
-    --composer-angle: 360deg;
-  }
-}
-
-@property --composer-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
-.composer-glow:focus-within::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(
-    from var(--composer-angle),
-    var(--accent),
-    var(--accent-soft),
-    transparent,
-    var(--accent)
-  );
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-  animation: rotate 4s linear infinite;
-  opacity: 0.5;
-}
+/* Removed unwanted rotating composer-glow animation to improve performance and save battery */
 
 /* Typing indicator dots */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @keyframes typing-dot {
-  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
-  30% { opacity: 1; transform: translateY(-4px); }
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
 }
 
 .typing-dot {
@@ -238,13 +246,22 @@ textarea {
   animation: typing-dot 1.4s ease-in-out infinite;
 }
 
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 /* Streaming cursor — blinking caret at end of streaming content */
 @keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .streaming-cursor::after {
@@ -263,6 +280,23 @@ textarea {
   animation: cursor-blink 1s step-end infinite;
   margin-left: 1px;
   font-size: 0.85em;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Image generation indicator shimmer
+   ───────────────────────────────────────────────────────── */
+
+@keyframes imagegen-shimmer-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.imagegen-shimmer {
+  animation: imagegen-shimmer-sweep 2s ease-in-out infinite;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -544,28 +578,54 @@ textarea {
 }
 
 /* Tables */
+/* Wrap tables in a responsive container */
+.prose-chat .table-wrapper,
 .prose-chat table {
   width: 100%;
+}
+
+.prose-chat table {
   border-collapse: collapse;
   margin: 0.75rem 0;
   font-size: 0.875rem;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border-style: hidden;
+  box-shadow: 0 0 0 1px var(--border); /* Better border radius hack for tables */
 }
 
 .prose-chat thead th {
   text-align: left;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   border-bottom: 2px solid var(--panel-strong);
+  background: var(--surface-1);
   color: var(--text-primary);
   font-weight: 600;
   font-size: 0.8125rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.prose-chat thead th:first-child {
+  border-radius: 7px 0 0 0;
+}
+
+.prose-chat thead th:last-child {
+  border-radius: 0 7px 0 0;
 }
 
 .prose-chat tbody td {
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   border-bottom: 1px solid var(--border);
   color: var(--text-secondary);
+  min-width: 120px;
 }
 
 .prose-chat tbody tr:last-child td {
@@ -573,5 +633,9 @@ textarea {
 }
 
 .prose-chat tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.prose-chat tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.01);
 }

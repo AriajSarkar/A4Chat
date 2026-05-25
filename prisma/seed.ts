@@ -1,4 +1,4 @@
-import { PrismaClient } from "../public/generated/prisma/client";
+import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import path from "node:path";
 
@@ -27,6 +27,18 @@ async function seed() {
       baseUrl: "https://openrouter.ai/api/v1",
       model: "openrouter/auto",
       enabled: true,
+    },
+    update: {},
+  });
+
+  await prisma.providerSetting.upsert({
+    where: { id: "google-gemini" },
+    create: {
+      id: "google-gemini",
+      label: "Google Gemini",
+      baseUrl: "https://generativelanguage.googleapis.com",
+      model: "gemini-2.5-flash",
+      enabled: false,
     },
     update: {},
   });

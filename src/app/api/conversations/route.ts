@@ -52,24 +52,31 @@ export async function POST(request: Request) {
   /* Upsert all messages in a transaction for speed */
   if (messages?.length) {
     await prisma.$transaction(
-      messages.map((m: { id: string; role: string; content: string; reasoning?: string; tokenCount?: number }) =>
-        prisma.message.upsert({
-          where: { id: m.id },
-          create: {
-            id: m.id,
-            conversationId: id,
-            role: m.role,
-            content: m.content,
-            reasoning: m.reasoning ?? null,
-            tokenCount: m.tokenCount ?? null,
-          },
-          update: {
-            role: m.role,
-            content: m.content,
-            reasoning: m.reasoning ?? null,
-            tokenCount: m.tokenCount ?? null,
-          },
-        }),
+      messages.map(
+        (m: {
+          id: string;
+          role: string;
+          content: string;
+          reasoning?: string;
+          tokenCount?: number;
+        }) =>
+          prisma.message.upsert({
+            where: { id: m.id },
+            create: {
+              id: m.id,
+              conversationId: id,
+              role: m.role,
+              content: m.content,
+              reasoning: m.reasoning ?? null,
+              tokenCount: m.tokenCount ?? null,
+            },
+            update: {
+              role: m.role,
+              content: m.content,
+              reasoning: m.reasoning ?? null,
+              tokenCount: m.tokenCount ?? null,
+            },
+          }),
       ),
     );
   }

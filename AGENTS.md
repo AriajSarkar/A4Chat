@@ -10,7 +10,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - Use Tailwind utilities for component styling; keep manual CSS limited to global tokens and browser defaults.
 - Do not add mock assistant responses, fixture conversations, or demo chat data.
-- Keep provider calls and local persistence behind Rust/Tauri commands for cross-platform runtime support.
+- Generally keep provider calls behind Rust/Tauri commands for cross-platform support. However, official frontend SDKs (e.g., `@google/genai`) are permitted if a provider warrants native integration.
 - Keep React files focused and below 400 lines; split repeated behavior into shared utilities.
 - Prefer scripts in `scripts/*.sh` and call them from package scripts when a workflow grows beyond one command.
 - Follow the responsive-design skill (`~/.claude/skills/responsive-design/SKILL.md`) for all UI work — mobile-first, dvh, safe areas, custom dropdowns over native `<select>`.

@@ -11,7 +11,7 @@ use serde_json::json;
 // in the external test folder so the inline #[cfg(test)] block can be
 // removed in the future without losing coverage.
 
-use a4chat_lib::commands::chat_completions_endpoint;
+use a4chat_lib::commands::{chat_completions_endpoint, resolve_pairing_base_url};
 
 #[test]
 fn infers_v1_for_bare_host() {
@@ -56,6 +56,14 @@ fn appends_chat_completions_for_custom_path() {
     assert_eq!(
         chat_completions_endpoint("http://myhost.com/custom/api"),
         "http://myhost.com/custom/api/chat/completions"
+    );
+}
+
+#[test]
+fn pairing_base_url_leaves_remote_hosts_untouched() {
+    assert_eq!(
+        resolve_pairing_base_url("https://example.com:1234/v1".to_owned()).unwrap(),
+        "https://example.com:1234/v1"
     );
 }
 

@@ -5,6 +5,7 @@ import {
   partialTagMatch,
   stripThinkTags,
   extractContentText,
+  formatProviderError,
 } from "@/lib/native";
 
 // ── Endpoint builder ────────────────────────────────────────
@@ -106,9 +107,7 @@ describe("ThinkTagParser", () => {
 
   it("handles multiple <think> blocks in one chunk", () => {
     const parser = new ThinkTagParser();
-    const result = parser.process(
-      "<think>r1</think>content1<think>r2</think>content2",
-    );
+    const result = parser.process("<think>r1</think>content1<think>r2</think>content2");
     expect(result.reasoning).toBe("r1r2");
     expect(result.content).toBe("content1content2");
   });
@@ -144,9 +143,7 @@ describe("stripThinkTags", () => {
   });
 
   it("strips multiple think blocks", () => {
-    const result = stripThinkTags(
-      "<think>r1</think>middle<think>r2</think>end",
-    );
+    const result = stripThinkTags("<think>r1</think>middle<think>r2</think>end");
     expect(result).toEqual({ content: "middleend", reasoning: "r1r2" });
   });
 
@@ -203,5 +200,38 @@ describe("extractContentText", () => {
 
   it("returns empty string for an empty array", () => {
     expect(extractContentText([])).toBe("");
+  });
+});
+
+// ── formatProviderError ────────────────────────────────────
+
+describe("formatProviderError", () => {
+  it("surfaces raw upstream error details and retry hints", () => {
+    const payload = {
+      error: {
+        message: "Provider returned error",
+        code: 429,
+        metadata: {
+          raw: "qwen/qwen3-next-80b-a3b-instruct:free is temporarily rate-limited upstream. Please retry shortly.",
+          provider_name: "Venice",
+          retry_after_seconds: 10,
+        },
+      },
+    };
+
+    const message = formatProviderError(payload, {
+      fallback: "Provider rejected the request.",
+      providerLabel: "Venice",
+      retryAfter: "10",
+      status: 429,
+    });
+
+    expect(message).toContain("Venice");
+    expect(message).toContain("rate-limited upstream");
+    expect(message).toContain("retry after 10s");
+  });
+
+  it("falls back to a generic message when no detail is present", () => {
+    expect(formatProviderError({}, { status: 500 })).toContain("Provider error (HTTP 500)");
   });
 });

@@ -1,0 +1,7 @@
+### Description
+This PR significantly improves the ComfyUI integration in A4Chat by addressing several model discovery and connectivity issues:
+
+- **Robust ComfyUI Launcher:** Added `pnpm comfy:start` (backed by a Node.js script) that reliably activates the ComfyUI server with the correct `--base-directory` and `--enable-cors-header *` flags, automatically handling paths correctly across Docker, WSL, and native Windows.
+- **ComfyUI Model Discovery:** Updated the Rust backend to correctly query ComfyUI's `/object_info` endpoint and parse `ckpt_name` properties, allowing A4Chat to fetch and save local ComfyUI checkpoints seamlessly.
+- **QR Code LAN Sharing:** Added `comfyui` support to the QR pairing generator. A4Chat now automatically converts ComfyUI's `localhost` to the machine's LAN IPv4 address so phones can scan the QR code and connect instantly.
+- **Dependency Fixes:** Resolved TypeScript type errors related to the latest `@google/genai` SDK in `native.ts`.
