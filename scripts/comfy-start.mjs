@@ -4,7 +4,8 @@ import path from "path";
 
 // Dynamically resolve the LocalAppData directory without hardcoding the username.
 // This works perfectly on Windows regardless of Docker, WSL, or Git Bash.
-const localAppData = process.env.LOCALAPPDATA || path.join(process.env.USERPROFILE || "", "AppData", "Local");
+const localAppData =
+  process.env.LOCALAPPDATA || path.join(process.env.USERPROFILE || "", "AppData", "Local");
 
 const pythonExe = path.join(localAppData, "ComfyUI", ".venv", "Scripts", "python.exe");
 const mainPy = path.join(localAppData, "Programs", "ComfyUI", "resources", "ComfyUI", "main.py");
@@ -22,7 +23,7 @@ console.log("Starting ComfyUI Server...");
 const child = spawn(
   pythonExe,
   [mainPy, "--listen", "0.0.0.0", "--base-directory", baseDir, "--enable-cors-header", "*"],
-  { stdio: "inherit" }
+  { stdio: "inherit" },
 );
 
 child.on("error", (err) => {

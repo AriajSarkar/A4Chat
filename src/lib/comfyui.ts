@@ -128,7 +128,9 @@ export async function queuePrompt(
         const firstError = Object.values(parsed.node_errors)[0] as any;
         errorMessage = firstError?.errors?.[0]?.message ?? "Workflow validation failed";
       }
-    } catch { /* use default */ }
+    } catch {
+      /* use default */
+    }
     throw new Error(errorMessage);
   }
 
@@ -224,7 +226,11 @@ export function executeWorkflow(
     let resolved = false;
 
     function cleanup() {
-      try { ws?.close(); } catch { /* ignore */ }
+      try {
+        ws?.close();
+      } catch {
+        /* ignore */
+      }
     }
 
     function finish(images: ComfyUIImageRef[]) {

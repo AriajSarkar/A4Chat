@@ -35,7 +35,10 @@ export const QrPairingSection = memo(function QrPairingSection({
   const [qrValue, setQrValue] = useState<string | null>(null);
 
   const enabledProviders = useMemo(
-    () => providers.filter((p) => p.enabled && (p.baseUrl || p.id === "lmstudio" || p.id === "comfyui")),
+    () =>
+      providers.filter(
+        (p) => p.enabled && (p.baseUrl || p.id === "lmstudio" || p.id === "comfyui"),
+      ),
     [providers],
   );
 

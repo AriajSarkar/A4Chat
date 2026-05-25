@@ -13,7 +13,8 @@ pub fn run() {
         builder = builder.plugin(tauri_plugin_dialog::init());
     }
 
-    builder.invoke_handler(tauri::generate_handler![
+    builder
+        .invoke_handler(tauri::generate_handler![
             commands::app_health,
             commands::list_provider_settings,
             commands::save_provider_settings,

@@ -366,130 +366,126 @@ export const ModelSelector = memo(function ModelSelector({
         ? createPortal(
             <AnimatePresence>
               {open ? (
-                  <motion.div
-                    ref={panelRef}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    className="model-selector-panel fixed z-50 flex max-h-[min(72dvh,36rem)] w-[min(30rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-white/8 bg-neutral-900/95 shadow-2xl shadow-black/50 backdrop-blur-md"
-                    style={panelStyle}
-                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                    transition={{ type: "spring", damping: 25, stiffness: 350 }}
-                  >
-                    {/* Search header */}
-                    <div className="flex shrink-0 items-center gap-2 border-b border-white/6 px-3 py-2.5">
-                      <RiSearchLine className="shrink-0 text-text-quaternary" size={16} />
-                      <input
-                        className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-quaternary"
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search models..."
-                        ref={searchRef}
-                        type="text"
-                        value={search}
+                <motion.div
+                  ref={panelRef}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className="model-selector-panel fixed z-50 flex max-h-[min(72dvh,36rem)] w-[min(30rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-white/8 bg-neutral-900/95 shadow-2xl shadow-black/50 backdrop-blur-md"
+                  style={panelStyle}
+                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                >
+                  {/* Search header */}
+                  <div className="flex shrink-0 items-center gap-2 border-b border-white/6 px-3 py-2.5">
+                    <RiSearchLine className="shrink-0 text-text-quaternary" size={16} />
+                    <input
+                      className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-quaternary"
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search models..."
+                      ref={searchRef}
+                      type="text"
+                      value={search}
+                    />
+                    <button
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors",
+                        canRefreshModels
+                          ? "bg-white/6 text-text-secondary hover:bg-white/8 hover:text-text-primary"
+                          : "bg-white/4 text-text-quaternary",
+                      )}
+                      disabled={!canRefreshModels}
+                      onClick={() => {
+                        if (!selectedProvider) return;
+                        void onRefreshProviderModels(selectedProvider, {
+                          force: false,
+                          silent: false,
+                        });
+                      }}
+                      title={refreshTooltip}
+                      type="button"
+                    >
+                      <RiRefreshLine
+                        className={cn(
+                          "shrink-0 transition-transform",
+                          isRefreshInProgress && "animate-spin",
+                        )}
+                        size={14}
                       />
+                      <span className="hidden sm:inline">{refreshLabel}</span>
+                    </button>
+                    <button
+                      className="grid size-6 shrink-0 place-items-center rounded-md text-text-quaternary transition-colors hover:bg-white/8 hover:text-text-secondary"
+                      onClick={() => setOpen(false)}
+                      type="button"
+                    >
+                      <RiCloseLine size={16} />
+                    </button>
+                  </div>
+
+                  {/* Mobile tabs */}
+                  <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/6 px-2 py-1.5 md:hidden">
+                    {tabs.map((tab) => (
                       <button
                         className={cn(
-                          "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors",
-                          canRefreshModels
-                            ? "bg-white/6 text-text-secondary hover:bg-white/8 hover:text-text-primary"
-                            : "bg-white/4 text-text-quaternary",
+                          "shrink-0 rounded-full px-2.5 py-1 text-xs transition-colors",
+                          activeTab === tab.id
+                            ? "bg-white/10 text-text-primary"
+                            : "text-text-quaternary",
                         )}
-                        disabled={!canRefreshModels}
-                        onClick={() => {
-                          if (!selectedProvider) return;
-                          void onRefreshProviderModels(selectedProvider, {
-                            force: false,
-                            silent: false,
-                          });
-                        }}
-                        title={refreshTooltip}
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
                         type="button"
                       >
-                        <RiRefreshLine
-                          className={cn(
-                            "shrink-0 transition-transform",
-                            isRefreshInProgress && "animate-spin",
-                          )}
-                          size={14}
-                        />
-                        <span className="hidden sm:inline">{refreshLabel}</span>
+                        {tab.label}
                       </button>
-                      <button
-                        className="grid size-6 shrink-0 place-items-center rounded-md text-text-quaternary transition-colors hover:bg-white/8 hover:text-text-secondary"
-                        onClick={() => setOpen(false)}
-                        type="button"
-                      >
-                        <RiCloseLine size={16} />
-                      </button>
-                    </div>
+                    ))}
+                  </div>
 
-                    {/* Mobile tabs */}
-                    <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/6 px-2 py-1.5 md:hidden">
+                  {/* Desktop: sidebar + list side-by-side */}
+                  <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+                    {/* Provider tabs sidebar — desktop only */}
+                    <div className="hidden w-10 shrink-0 flex-col items-center gap-1 border-r border-white/6 py-2 md:flex">
                       {tabs.map((tab) => (
                         <button
                           className={cn(
-                            "shrink-0 rounded-full px-2.5 py-1 text-xs transition-colors",
+                            "grid size-8 place-items-center rounded-lg transition-colors",
                             activeTab === tab.id
                               ? "bg-white/10 text-text-primary"
-                              : "text-text-quaternary",
+                              : "text-text-quaternary hover:bg-white/6 hover:text-text-secondary",
                           )}
                           key={tab.id}
                           onClick={() => setActiveTab(tab.id)}
+                          title={tab.label}
                           type="button"
                         >
-                          {tab.label}
+                          {tab.id === "all" ? (
+                            <span className="text-xs font-bold">All</span>
+                          ) : tab.id === "favorites" ? (
+                            <RiStarFill size={16} />
+                          ) : (
+                            <ProviderIcon providerId={tab.id} size={18} />
+                          )}
                         </button>
                       ))}
                     </div>
 
-                    {/* Desktop: sidebar + list side-by-side */}
-                    <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-                      {/* Provider tabs sidebar — desktop only */}
-                      <div className="hidden w-10 shrink-0 flex-col items-center gap-1 border-r border-white/6 py-2 md:flex">
-                        {tabs.map((tab) => (
-                          <button
-                            className={cn(
-                              "grid size-8 place-items-center rounded-lg transition-colors",
-                              activeTab === tab.id
-                                ? "bg-white/10 text-text-primary"
-                                : "text-text-quaternary hover:bg-white/6 hover:text-text-secondary",
-                            )}
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            title={tab.label}
-                            type="button"
-                          >
-                            {tab.id === "all" ? (
-                              <span className="text-xs font-bold">All</span>
-                            ) : tab.id === "favorites" ? (
-                              <RiStarFill size={16} />
-                            ) : (
-                              <ProviderIcon providerId={tab.id} size={18} />
-                            )}
-                          </button>
-                        ))}
-                      </div>
+                    {/* Model list */}
+                    <div className="min-w-0 flex-1 overflow-y-auto py-1">{renderedModelList}</div>
+                  </div>
 
-                      {/* Model list */}
-                      <div className="min-w-0 flex-1 overflow-y-auto py-1">
-                        {renderedModelList}
-                      </div>
-                    </div>
-
-                    {/* Footer — current selection */}
-                    <div className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/6 px-3 py-2">
-                      <ProviderIcon providerId={selectedProviderId} size={16} />
-                      <span className="truncate text-xs font-medium text-text-secondary">
-                        {displayLabel}
-                      </span>
-                      <span className="text-xs text-text-quaternary">•</span>
-                      <span className="truncate text-xs text-text-quaternary">
-                        {displayProvider}
-                      </span>
-                      <span className="ml-auto truncate text-[11px] text-text-quaternary">
-                        {cacheAgeLabel}
-                      </span>
-                    </div>
-                  </motion.div>
+                  {/* Footer — current selection */}
+                  <div className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/6 px-3 py-2">
+                    <ProviderIcon providerId={selectedProviderId} size={16} />
+                    <span className="truncate text-xs font-medium text-text-secondary">
+                      {displayLabel}
+                    </span>
+                    <span className="text-xs text-text-quaternary">•</span>
+                    <span className="truncate text-xs text-text-quaternary">{displayProvider}</span>
+                    <span className="ml-auto truncate text-[11px] text-text-quaternary">
+                      {cacheAgeLabel}
+                    </span>
+                  </div>
+                </motion.div>
               ) : null}
             </AnimatePresence>,
             document.body,

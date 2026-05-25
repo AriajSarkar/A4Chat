@@ -111,7 +111,10 @@ export const MessageComposer = memo(function MessageComposer({
       {images.length > 0 && (
         <div className="flex flex-wrap gap-2 px-2 pt-2 md:px-3 md:pt-3">
           {images.map((src, idx) => (
-            <div key={idx} className="relative group rounded-lg overflow-hidden border border-white/10 w-16 h-16 md:w-20 md:h-20 shrink-0">
+            <div
+              key={idx}
+              className="relative group rounded-lg overflow-hidden border border-white/10 w-16 h-16 md:w-20 md:h-20 shrink-0"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="attachment" className="w-full h-full object-cover" />
               <button
@@ -136,7 +139,11 @@ export const MessageComposer = memo(function MessageComposer({
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-              const isMobile = typeof navigator !== "undefined" && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+              const isMobile =
+                typeof navigator !== "undefined" &&
+                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                  navigator.userAgent,
+                );
               if (!isMobile) {
                 e.preventDefault();
                 e.currentTarget.form?.requestSubmit();
@@ -216,7 +223,12 @@ export const MessageComposer = memo(function MessageComposer({
   );
 });
 
-function compressImage(file: File, maxWidth = 1024, maxHeight = 1024, quality = 0.8): Promise<string> {
+function compressImage(
+  file: File,
+  maxWidth = 1024,
+  maxHeight = 1024,
+  quality = 0.8,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);

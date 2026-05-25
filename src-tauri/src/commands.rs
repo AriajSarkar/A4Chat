@@ -358,7 +358,7 @@ pub async fn detect_provider_models(
         .map_err(to_command_error)?;
 
     let now = storage::unix_timestamp();
-    
+
     let models: Vec<ProviderModelRow> = if provider_id == "google-gemini" {
         payload
             .get("models")
@@ -396,7 +396,8 @@ pub async fn detect_provider_models(
                 arr.iter()
                     .filter_map(|entry| {
                         let id = entry.as_str()?;
-                        let display_name = id.split('.').next().unwrap_or(id).replace(['_', '-'], " ");
+                        let display_name =
+                            id.split('.').next().unwrap_or(id).replace(['_', '-'], " ");
                         Some(ProviderModelRow {
                             provider_id: provider_id.clone(),
                             model_id: id.to_owned(),
@@ -712,7 +713,7 @@ pub fn get_default_save_dir(app: tauri::AppHandle) -> String {
     {
         return "/storage/emulated/0/DCIM/A4chat".to_string();
     }
-    
+
     #[cfg(not(target_os = "android"))]
     {
         use tauri::Manager;
@@ -727,14 +728,14 @@ pub fn get_default_save_dir(app: tauri::AppHandle) -> String {
 pub fn save_file_to_disk(path: String, bytes: Vec<u8>) -> Result<(), String> {
     use std::fs;
     use std::path::Path;
-    
+
     let p = Path::new(&path);
     if let Some(parent) = p.parent() {
         if !parent.exists() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
     }
-    
+
     fs::write(&path, bytes).map_err(|e| e.to_string())?;
     Ok(())
 }

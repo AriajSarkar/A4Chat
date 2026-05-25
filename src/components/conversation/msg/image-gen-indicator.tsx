@@ -28,11 +28,11 @@ export function ImageGenIndicator() {
     ctx.scale(2, 2);
 
     const palette = [
-      [61, 139, 255],  // accent
+      [61, 139, 255], // accent
       [114, 215, 255], // accent-soft
-      [94, 163, 255],  // accent-glow
+      [94, 163, 255], // accent-glow
       [196, 160, 255], // violet
-      [92, 229, 197],  // teal
+      [92, 229, 197], // teal
       [255, 138, 107], // coral
     ];
 
@@ -97,7 +97,8 @@ export function ImageGenIndicator() {
       const sk = Math.sin(rot * 1.2) * 0.025;
       ctx.transform(sx, sk, -sk * 0.4, 1, 0, 0);
 
-      const fw = 96, fh = 68;
+      const fw = 96,
+        fh = 68;
       ctx.strokeStyle = `rgba(61,139,255,${0.14 + Math.sin(t * 0.03) * 0.06})`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -119,14 +120,21 @@ export function ImageGenIndicator() {
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.life++;
-        if (p.life >= p.maxLife) { particles[i] = spawn(); continue; }
+        if (p.life >= p.maxLife) {
+          particles[i] = spawn();
+          continue;
+        }
 
         p.x += p.vx + Math.sin(t * 0.018 + p.phase) * 0.25;
         p.y += p.vy + Math.cos(t * 0.014 + p.phase) * 0.18;
 
-        const dx = W / 2 - p.x, dy = H / 2 - p.y;
+        const dx = W / 2 - p.x,
+          dy = H / 2 - p.y;
         const d = Math.sqrt(dx * dx + dy * dy);
-        if (d > 4) { p.vx += (dx / d) * 0.012; p.vy += (dy / d) * 0.012; }
+        if (d > 4) {
+          p.vx += (dx / d) * 0.012;
+          p.vy += (dy / d) * 0.012;
+        }
         p.vx *= 0.994;
         p.vy *= 0.994;
 
@@ -157,7 +165,8 @@ export function ImageGenIndicator() {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
-      const iw = 14, ih = 10;
+      const iw = 14,
+        ih = 10;
       ctx.beginPath();
       rr(ctx, -iw, -ih, iw * 2, ih * 2, 2.5);
       ctx.stroke();
@@ -197,11 +206,7 @@ export function ImageGenIndicator() {
         className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]"
         style={{ perspective: "600px" }}
       >
-        <canvas
-          ref={canvasRef}
-          className="block"
-          style={{ width: 280, height: 200 }}
-        />
+        <canvas ref={canvasRef} className="block" style={{ width: 280, height: 200 }} />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent imagegen-shimmer" />
       </div>
       <div className="flex items-center gap-2 text-xs text-text-quaternary">

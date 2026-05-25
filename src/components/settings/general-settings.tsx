@@ -10,15 +10,17 @@ export function GeneralSettings() {
 
   useEffect(() => {
     if (!isTauriRuntime()) return;
-    
+
     const loc = localStorage.getItem("a4chat_save_location");
     if (loc) {
       setSaveLocation(loc);
     } else if (!isAndroid()) {
-      invoke<string>("get_default_save_dir").then((dir) => {
-        setSaveLocation(dir);
-        localStorage.setItem("a4chat_save_location", dir);
-      }).catch(console.error);
+      invoke<string>("get_default_save_dir")
+        .then((dir) => {
+          setSaveLocation(dir);
+          localStorage.setItem("a4chat_save_location", dir);
+        })
+        .catch(console.error);
     }
   }, []);
 
@@ -44,7 +46,7 @@ export function GeneralSettings() {
       <SettingRow label="Appearance" value="Dark" />
       <SettingRow label="Accent color" value="Blue" dot />
       <SettingRow label="Local data" value="SQLite" />
-      
+
       {isTauriRuntime() ? (
         isAndroid() ? (
           <div className="flex items-center justify-between border-b border-white/6 py-4">
@@ -62,7 +64,9 @@ export function GeneralSettings() {
               }}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${saveLocation ? "bg-accent" : "bg-white/20"}`}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${saveLocation ? "translate-x-6" : "translate-x-1"}`} />
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${saveLocation ? "translate-x-6" : "translate-x-1"}`}
+              />
             </button>
           </div>
         ) : (

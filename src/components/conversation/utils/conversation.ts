@@ -28,7 +28,7 @@ export type CompletionResponse = {
   outputTokens?: number | null;
 };
 
-export type CompletionRequestMessageContentPart = 
+export type CompletionRequestMessageContentPart =
   | { type: "text"; text: string }
   | { type: "image_url"; image_url: { url: string } };
 
@@ -67,7 +67,10 @@ export function createAssistantMessage(
 
 export function toCompletionMessages(messages: ConversationMessage[]) {
   return messages
-    .filter((message) => message.content.trim().length > 0 || (message.images && message.images.length > 0))
+    .filter(
+      (message) =>
+        message.content.trim().length > 0 || (message.images && message.images.length > 0),
+    )
     .map<CompletionRequestMessage>((message) => {
       if (message.images && message.images.length > 0) {
         const contentParts: CompletionRequestMessageContentPart[] = [];
@@ -82,7 +85,7 @@ export function toCompletionMessages(messages: ConversationMessage[]) {
           content: contentParts,
         };
       }
-      
+
       return {
         role: message.role,
         content: message.content,

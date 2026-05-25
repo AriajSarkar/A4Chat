@@ -93,8 +93,12 @@ pub fn save_provider_settings(
     }
 
     let existing_ids: Vec<String> = {
-        let mut stmt = transaction.prepare("SELECT id FROM provider_settings").context("unable to prepare id query")?;
-        let rows = stmt.query_map([], |row| row.get(0)).context("unable to query existing provider ids")?;
+        let mut stmt = transaction
+            .prepare("SELECT id FROM provider_settings")
+            .context("unable to prepare id query")?;
+        let rows = stmt
+            .query_map([], |row| row.get(0))
+            .context("unable to query existing provider ids")?;
         rows.filter_map(Result::ok).collect()
     };
 

@@ -37,9 +37,9 @@ export function PendingIndicator() {
               className="text-accent/60"
               animate={{
                 d: [
-                  "M4 2 L14 8 L4 14 Z",     // play triangle
-                  "M12 2 L2 8 L12 14 Z",     // reversed triangle
-                  "M4 2 L14 8 L4 14 Z",      // back to play
+                  "M4 2 L14 8 L4 14 Z", // play triangle
+                  "M12 2 L2 8 L12 14 Z", // reversed triangle
+                  "M4 2 L14 8 L4 14 Z", // back to play
                 ],
               }}
               transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}

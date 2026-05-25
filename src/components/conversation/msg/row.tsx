@@ -29,7 +29,11 @@ type MessageRowProps = {
   status: "idle" | "sending" | "streaming";
 };
 
-export const MessageRow = memo(function MessageRow({ isStreaming, message, status }: MessageRowProps) {
+export const MessageRow = memo(function MessageRow({
+  isStreaming,
+  message,
+  status,
+}: MessageRowProps) {
   const [reasoningOpen, setReasoningOpen] = useState(false);
   const reasoningScrollRef = useRef<HTMLDivElement>(null);
   const wasReasoningStreamingRef = useRef(false);
@@ -38,15 +42,15 @@ export const MessageRow = memo(function MessageRow({ isStreaming, message, statu
   const hasReasoning = Boolean(message.reasoning);
   const isReasoningStreaming = isStreaming && !message.content && hasReasoning;
 
-  // Extract base64 images before passing to ReactMarkdown. 
-  // This is a massive "DSA level" optimization to prevent the O(N^2) markdown 
+  // Extract base64 images before passing to ReactMarkdown.
+  // This is a massive "DSA level" optimization to prevent the O(N^2) markdown
   // parser from choking on 10-50MB base64 strings and freezing the UI!
   const { textContent, embeddedImages } = useMemo(() => {
     if (!message.content) return { textContent: "", embeddedImages: [] };
-    
+
     const images: { alt: string; src: string; key: string }[] = [];
     const dataUriRegex = /!\[([^\]]*)\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
-    
+
     // Fast O(N) regex replace natively in V8 engine
     const textContent = message.content.replace(dataUriRegex, (match, alt, src) => {
       images.push({ alt, src, key: src.substring(0, 100) });
@@ -97,7 +101,12 @@ export const MessageRow = memo(function MessageRow({ isStreaming, message, statu
               <div className="flex flex-wrap gap-2 justify-end">
                 {message.images.map((img, idx) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={idx} src={img} alt="attachment" className="max-w-[240px] max-h-[240px] object-cover rounded-2xl border border-white/10 shadow-md shadow-black/20" />
+                  <img
+                    key={idx}
+                    src={img}
+                    alt="attachment"
+                    className="max-w-[240px] max-h-[240px] object-cover rounded-2xl border border-white/10 shadow-md shadow-black/20"
+                  />
                 ))}
               </div>
             )}
@@ -300,16 +309,18 @@ function ActionButton({ icon: Icon, label }: { icon: typeof RiThumbUpLine; label
 
 function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img">) {
   const [open, setOpen] = useState(false);
-  const [downloadStatus, setDownloadStatus] = useState<"idle" | "downloading" | "success" | "error">("idle");
+  const [downloadStatus, setDownloadStatus] = useState<
+    "idle" | "downloading" | "success" | "error"
+  >("idle");
 
   const downloadName = alt && alt.trim().length > 0 ? alt : "generated_image.png";
 
   const handleDownload = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (downloadStatus !== "idle") return;
-    
+
     setDownloadStatus("downloading");
-    
+
     try {
       const dataStr = src as string;
       const b64Data = dataStr.includes(",") ? dataStr.split(",")[1] : dataStr;
@@ -321,19 +332,19 @@ function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img"
 
       // Check if user has an auto-save location configured in Settings
       const autoSaveLoc = localStorage.getItem("a4chat_save_location");
-      
+
       if (autoSaveLoc) {
         // Native silent auto-save to the configured directory!
         const sep = autoSaveLoc.includes("\\") ? "\\" : "/";
         const cleanLoc = autoSaveLoc.endsWith(sep) ? autoSaveLoc.slice(0, -1) : autoSaveLoc;
         const fullPath = `${cleanLoc}${sep}${downloadName}`;
-        
+
         try {
           const { writeFile, mkdir } = await import("@tauri-apps/plugin-fs");
-          
+
           // Ensure directory exists first (recursive)
           await mkdir(cleanLoc, { recursive: true }).catch(() => {});
-          
+
           // Write the file - this automatically triggers Android permission dialog if needed!
           await writeFile(fullPath, bytes);
         } catch (fsError) {
@@ -346,9 +357,14 @@ function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img"
         // 1. Show native save dialog so user knows EXACTLY where it saves
         const handle = await (window as any).showSaveFilePicker({
           suggestedName: downloadName,
-          types: [{ description: "Images", accept: { "image/png": [".png"], "image/jpeg": [".jpeg", ".jpg"] } }],
+          types: [
+            {
+              description: "Images",
+              accept: { "image/png": [".png"], "image/jpeg": [".jpeg", ".jpg"] },
+            },
+          ],
         });
-        
+
         // 2. Write directly to disk
         const writable = await handle.createWritable();
         await writable.write(bytes);
@@ -362,7 +378,7 @@ function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img"
         a.click();
         a.remove();
       }
-      
+
       setDownloadStatus("success");
       setTimeout(() => setDownloadStatus("idle"), 2500);
     } catch (error: any) {
@@ -379,18 +395,18 @@ function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img"
 
   return (
     <div style={{ perspective: "1000px" }} className="inline-block">
-      <motion.span 
+      <motion.span
         initial={{ opacity: 0, scale: 0.8, rotateY: -15, rotateX: 10, y: 20 }}
         animate={{ opacity: 1, scale: 1, rotateY: 0, rotateX: 0, y: 0 }}
         transition={{ type: "spring", stiffness: 180, damping: 15 }}
         className="my-5 inline-block cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black/20 shadow-xl shadow-black/20 transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
         onClick={() => setOpen(true)}
       >
-        <img 
-          src={src} 
-          alt={alt} 
-          className="max-h-[320px] w-auto max-w-full object-contain" 
-          {...props} 
+        <img
+          src={src}
+          alt={alt}
+          className="max-h-[320px] w-auto max-w-full object-contain"
+          {...props}
         />
       </motion.span>
 
@@ -410,24 +426,26 @@ function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img"
                 >
                   <RiCloseLine size={24} />
                 </button>
-                
-                <img 
-                  src={src} 
-                  alt={alt} 
-                  className="max-h-[80vh] max-w-full rounded-lg object-contain shadow-2xl" 
-                  onClick={(e) => e.stopPropagation()} 
+
+                <img
+                  src={src}
+                  alt={alt}
+                  className="max-h-[80vh] max-w-full rounded-lg object-contain shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
                 />
-                
+
                 <div className="mt-6 flex gap-4" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={handleDownload}
                     disabled={downloadStatus === "downloading"}
                     className={cn(
                       "flex min-w-[160px] items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform",
-                      downloadStatus === "success" && "bg-green-600 hover:scale-105 active:scale-95",
+                      downloadStatus === "success" &&
+                        "bg-green-600 hover:scale-105 active:scale-95",
                       downloadStatus === "error" && "bg-red-600 hover:scale-105 active:scale-95",
                       downloadStatus === "idle" && "bg-accent hover:scale-105 active:scale-95",
-                      downloadStatus === "downloading" && "bg-accent/70 cursor-not-allowed opacity-80"
+                      downloadStatus === "downloading" &&
+                        "bg-accent/70 cursor-not-allowed opacity-80",
                     )}
                   >
                     {downloadStatus === "success" ? (

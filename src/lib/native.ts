@@ -294,12 +294,14 @@ export async function detectProviderModels(
       const checkpoints = await listCheckpoints(baseUrl);
       const now = Date.now();
       if (checkpoints.length === 0) {
-        return [{
-          modelId: "default-workflow",
-          displayName: "Default Text-to-Image",
-          isFavorite: false,
-          lastSeenAt: now,
-        }];
+        return [
+          {
+            modelId: "default-workflow",
+            displayName: "Default Text-to-Image",
+            isFavorite: false,
+            lastSeenAt: now,
+          },
+        ];
       }
       return checkpoints.map((ckpt) => ({
         modelId: ckpt,
@@ -308,9 +310,7 @@ export async function detectProviderModels(
         lastSeenAt: now,
       }));
     } catch (err) {
-      throw new Error(
-        `Could not connect to ComfyUI at ${baseUrl}. Is the server running?`,
-      );
+      throw new Error(`Could not connect to ComfyUI at ${baseUrl}. Is the server running?`);
     }
   }
 
@@ -409,25 +409,32 @@ function sanitizeMessages(messages: CompletionRequestMessage[]) {
       const dataUriRegex = /!\[([^\]]*)\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
       return {
         ...msg,
-        content: msg.content.replace(dataUriRegex, "\n\n*[Generated Image omitted for context size]*"),
+        content: msg.content.replace(
+          dataUriRegex,
+          "\n\n*[Generated Image omitted for context size]*",
+        ),
       };
     }
     return msg;
   });
 }
 
-function buildPayload(provider: ProviderSettings, messages: CompletionRequestMessage[], stream: boolean) {
+function buildPayload(
+  provider: ProviderSettings,
+  messages: CompletionRequestMessage[],
+  stream: boolean,
+) {
   const payload: any = {
     model: provider.model,
     messages: sanitizeMessages(messages),
     stream,
   };
-  
+
   // OpenRouter context-compression plugin natively drops middle messages if context limit is exceeded
   if (provider.baseUrl.includes("openrouter.ai")) {
     payload.plugins = [{ id: "context-compression" }];
   }
-  
+
   return payload;
 }
 
@@ -440,13 +447,13 @@ export async function sendChatCompletion(input: {
   if (input.provider.id === "google-gemini") {
     const { GoogleGenAI } = await import("@google/genai");
     const ai = new GoogleGenAI({ apiKey: input.provider.apiKey });
-    
+
     if (input.provider.model.toLowerCase().includes("imagen")) {
       const prompt = input.messages[input.messages.length - 1]?.content || "A picture";
       const response = await ai.models.generateImages({
         model: input.provider.model,
         prompt: typeof prompt === "string" ? prompt : "A picture",
-        config: { numberOfImages: 1, outputMimeType: "image/jpeg" }
+        config: { numberOfImages: 1, outputMimeType: "image/jpeg" },
       });
       const base64 = response.generatedImages?.[0]?.image?.imageBytes;
       if (!base64) throw new Error("No image generated");
@@ -460,10 +467,10 @@ export async function sendChatCompletion(input: {
     }
 
     const sanitized = sanitizeMessages(input.messages);
-    const systemMessage = sanitized.find(m => (m.role as string) === "system");
-    const chatMessages = sanitized.filter(m => (m.role as string) !== "system");
+    const systemMessage = sanitized.find((m) => (m.role as string) === "system");
+    const chatMessages = sanitized.filter((m) => (m.role as string) !== "system");
 
-    const geminiContents: { role: string, parts: { text: string }[] }[] = [];
+    const geminiContents: { role: string; parts: { text: string }[] }[] = [];
     for (const m of chatMessages) {
       const role = m.role === "assistant" ? "model" : "user";
       const text = typeof m.content === "string" ? m.content : "";
@@ -478,10 +485,13 @@ export async function sendChatCompletion(input: {
       model: input.provider.model,
       contents: geminiContents,
       config: {
-        systemInstruction: systemMessage && typeof systemMessage.content === "string" ? systemMessage.content : undefined,
-      }
+        systemInstruction:
+          systemMessage && typeof systemMessage.content === "string"
+            ? systemMessage.content
+            : undefined,
+      },
     });
-    
+
     return {
       content: response.text || "",
       reasoning: null,
@@ -506,11 +516,7 @@ export async function sendChatCompletion(input: {
     const workflow = buildTextToImageWorkflow(prompt, checkpoint);
 
     try {
-      const images = await executeWorkflow(
-        input.provider.baseUrl,
-        workflow,
-        {},
-      );
+      const images = await executeWorkflow(input.provider.baseUrl, workflow, {});
 
       if (images.length === 0) throw new Error("No images generated");
 
@@ -526,7 +532,6 @@ export async function sendChatCompletion(input: {
       throw err instanceof Error ? err : new Error(String(err));
     }
   }
-
 
   if (isTauriRuntime()) {
     return invoke<CompletionResponse>("send_chat_completion", {
@@ -614,9 +619,7 @@ export async function streamChatCompletion(
 
     if (!checkpoint || checkpoint === "default-workflow") {
       callbacks.onError(
-        new Error(
-          "No checkpoint model selected. Go to Settings → ComfyUI and pick a checkpoint.",
-        ),
+        new Error("No checkpoint model selected. Go to Settings → ComfyUI and pick a checkpoint."),
       );
       return;
     }
@@ -663,38 +666,38 @@ export async function streamChatCompletion(
     const ai = new GoogleGenAI({ apiKey: input.provider.apiKey });
 
     if (input.provider.model.toLowerCase().includes("imagen")) {
-       callbacks.onResponseType?.("image");
-       const prompt = input.messages[input.messages.length - 1]?.content || "A picture";
-       try {
-         const response = await ai.models.generateImages({
-           model: input.provider.model,
-           prompt: typeof prompt === "string" ? prompt : "A picture",
-           config: { numberOfImages: 1, outputMimeType: "image/jpeg" }
-         });
-         const base64 = response.generatedImages?.[0]?.image?.imageBytes;
-         if (!base64) throw new Error("No image generated");
-         const tag = `\n\n![Generated Image](data:image/jpeg;base64,${base64})`;
-         callbacks.onToken(tag);
-         callbacks.onComplete({
-           content: tag,
-           reasoning: null,
-           model: input.provider.model,
-           inputTokens: null,
-           outputTokens: null,
-         });
-       } catch (e) {
-         callbacks.onError(e instanceof Error ? e : new Error(String(e)));
-       }
-       return;
+      callbacks.onResponseType?.("image");
+      const prompt = input.messages[input.messages.length - 1]?.content || "A picture";
+      try {
+        const response = await ai.models.generateImages({
+          model: input.provider.model,
+          prompt: typeof prompt === "string" ? prompt : "A picture",
+          config: { numberOfImages: 1, outputMimeType: "image/jpeg" },
+        });
+        const base64 = response.generatedImages?.[0]?.image?.imageBytes;
+        if (!base64) throw new Error("No image generated");
+        const tag = `\n\n![Generated Image](data:image/jpeg;base64,${base64})`;
+        callbacks.onToken(tag);
+        callbacks.onComplete({
+          content: tag,
+          reasoning: null,
+          model: input.provider.model,
+          inputTokens: null,
+          outputTokens: null,
+        });
+      } catch (e) {
+        callbacks.onError(e instanceof Error ? e : new Error(String(e)));
+      }
+      return;
     }
 
     try {
       callbacks.onResponseType?.("text");
       const sanitized = sanitizeMessages(input.messages);
-      const systemMessage = sanitized.find(m => (m.role as string) === "system");
-      const chatMessages = sanitized.filter(m => (m.role as string) !== "system");
+      const systemMessage = sanitized.find((m) => (m.role as string) === "system");
+      const chatMessages = sanitized.filter((m) => (m.role as string) !== "system");
 
-      const geminiContents: { role: string, parts: { text: string }[] }[] = [];
+      const geminiContents: { role: string; parts: { text: string }[] }[] = [];
       for (const m of chatMessages) {
         const role = m.role === "assistant" ? "model" : "user";
         const text = typeof m.content === "string" ? m.content : "";
@@ -709,8 +712,11 @@ export async function streamChatCompletion(
         model: input.provider.model,
         contents: geminiContents,
         config: {
-          systemInstruction: systemMessage && typeof systemMessage.content === "string" ? systemMessage.content : undefined,
-        }
+          systemInstruction:
+            systemMessage && typeof systemMessage.content === "string"
+              ? systemMessage.content
+              : undefined,
+        },
       });
 
       let fullContent = "";
@@ -734,7 +740,6 @@ export async function streamChatCompletion(
     }
     return;
   }
-
 
   const endpoint = chatCompletionsEndpoint(input.provider.baseUrl);
 
@@ -879,7 +884,7 @@ export async function streamChatCompletion(
               callbacks.onReasoning(reasoning);
             }
           }
-          
+
           const deltaImages = delta.images as Array<{ image_url?: { url: string } }> | undefined;
           if (deltaImages && deltaImages.length > 0) {
             if (!responseTypeSignaled) {
