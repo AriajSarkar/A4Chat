@@ -218,6 +218,12 @@ textarea {
 /* Removed unwanted rotating composer-glow animation to improve performance and save battery */
 
 /* Typing indicator dots */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @keyframes typing-dot {
   0%,
   60%,
@@ -274,6 +280,23 @@ textarea {
   animation: cursor-blink 1s step-end infinite;
   margin-left: 1px;
   font-size: 0.85em;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Image generation indicator shimmer
+   ───────────────────────────────────────────────────────── */
+
+@keyframes imagegen-shimmer-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.imagegen-shimmer {
+  animation: imagegen-shimmer-sweep 2s ease-in-out infinite;
 }
 
 /* ─────────────────────────────────────────────────────────

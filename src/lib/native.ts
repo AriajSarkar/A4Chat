@@ -10,6 +10,13 @@ import {
   type ProviderModel,
   type ProviderSettings,
 } from "@/components/settings/utils/providers";
+import {
+  executeWorkflow,
+  buildTextToImageWorkflow,
+  listCheckpoints,
+  fetchImageAsBase64,
+  type ComfyUIImageRef,
+} from "@/lib/comfyui";
 
 export type AppHealth = {
   platform: string;
@@ -30,10 +37,16 @@ export type StreamCallbacks = {
   onReasoning: (token: string) => void;
   onComplete: (response: CompletionResponse) => void;
   onError: (error: Error) => void;
+  /** Fires early to signal what kind of response the API is producing */
+  onResponseType?: (type: "text" | "image") => void;
 };
 
 export function isTauriRuntime() {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+export function isAndroid() {
+  return typeof window !== "undefined" && /android/i.test(navigator.userAgent);
 }
 
 export function chatCompletionsEndpoint(baseUrl: string) {
@@ -260,7 +273,7 @@ export async function detectProviderModels(
     >("detect_provider_models", {
       providerId,
       baseUrl,
-      apiKey: apiKey || null,
+      apiKey,
     });
     return rows.map((r) => ({
       modelId: r.modelId,
@@ -270,10 +283,46 @@ export async function detectProviderModels(
     }));
   }
 
-  /* Browser fallback — call /models directly */
-  const endpoint = modelsEndpoint(baseUrl);
+  /* Browser fallback */
+  let endpoint = baseUrl.replace(/\/+$/, "");
+  if (!endpoint.endsWith("/models")) {
+    endpoint += "/models";
+  }
+
+  if (providerId === "comfyui") {
+    try {
+      const checkpoints = await listCheckpoints(baseUrl);
+      const now = Date.now();
+      if (checkpoints.length === 0) {
+        return [{
+          modelId: "default-workflow",
+          displayName: "Default Text-to-Image",
+          isFavorite: false,
+          lastSeenAt: now,
+        }];
+      }
+      return checkpoints.map((ckpt) => ({
+        modelId: ckpt,
+        displayName: ckpt.replace(/\.[^.]+$/, "").replace(/[_-]/g, " "),
+        isFavorite: false,
+        lastSeenAt: now,
+      }));
+    } catch (err) {
+      throw new Error(
+        `Could not connect to ComfyUI at ${baseUrl}. Is the server running?`,
+      );
+    }
+  }
+
+  if (providerId === "google-gemini" && apiKey) {
+    endpoint = endpoint.replace("/openai/models", "/models");
+    endpoint += `?key=${apiKey}`;
+  }
+
   const headers: Record<string, string> = { "content-type": "application/json" };
-  if (apiKey) headers.authorization = `Bearer ${apiKey}`;
+  if (providerId !== "google-gemini" && apiKey) {
+    headers.authorization = `Bearer ${apiKey}`;
+  }
 
   const response = await fetch(endpoint, { headers });
   if (!response.ok) {
@@ -295,9 +344,23 @@ export async function detectProviderModels(
   }
 
   const payload = await response.json();
-  const data = payload?.data ?? payload ?? [];
   const now = Date.now();
 
+  if (providerId === "google-gemini") {
+    const models = [];
+    for (const model of payload.models || []) {
+      const id = model.name?.replace("models/", "") ?? "unknown";
+      models.push({
+        modelId: id,
+        displayName: model.displayName || id,
+        isFavorite: false,
+        lastSeenAt: now,
+      });
+    }
+    return models;
+  }
+
+  const data = payload?.data ?? payload ?? [];
   return (Array.isArray(data) ? data : []).map((m: { id?: string; name?: string }) => ({
     modelId: m.id ?? m.name ?? "unknown",
     displayName: m.id ?? m.name ?? "unknown",
@@ -339,12 +402,132 @@ export async function resolvePairingBaseUrl(baseUrl: string): Promise<string> {
   return invoke<string>("resolve_pairing_base_url", { baseUrl });
 }
 
+function sanitizeMessages(messages: CompletionRequestMessage[]) {
+  // Strip massive base64 image strings from assistant history so we don't blow up the LLM token context window!
+  return messages.map((msg) => {
+    if (msg.role === "assistant" && typeof msg.content === "string") {
+      const dataUriRegex = /!\[([^\]]*)\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
+      return {
+        ...msg,
+        content: msg.content.replace(dataUriRegex, "\n\n*[Generated Image omitted for context size]*"),
+      };
+    }
+    return msg;
+  });
+}
+
+function buildPayload(provider: ProviderSettings, messages: CompletionRequestMessage[], stream: boolean) {
+  const payload: any = {
+    model: provider.model,
+    messages: sanitizeMessages(messages),
+    stream,
+  };
+  
+  // OpenRouter context-compression plugin natively drops middle messages if context limit is exceeded
+  if (provider.baseUrl.includes("openrouter.ai")) {
+    payload.plugins = [{ id: "context-compression" }];
+  }
+  
+  return payload;
+}
+
 /* ── Non-streaming ──────────────────────────────────── */
 
 export async function sendChatCompletion(input: {
   provider: ProviderSettings;
   messages: CompletionRequestMessage[];
 }) {
+  if (input.provider.id === "google-gemini") {
+    const { GoogleGenAI } = await import("@google/genai");
+    const ai = new GoogleGenAI({ apiKey: input.provider.apiKey });
+    
+    if (input.provider.model.toLowerCase().includes("imagen")) {
+      const prompt = input.messages[input.messages.length - 1]?.content || "A picture";
+      const response = await ai.models.generateImages({
+        model: input.provider.model,
+        prompt: typeof prompt === "string" ? prompt : "A picture",
+        config: { numberOfImages: 1, outputMimeType: "image/jpeg" }
+      });
+      const base64 = response.generatedImages?.[0]?.image?.imageBytes;
+      if (!base64) throw new Error("No image generated");
+      return {
+        content: `\n\n![Generated Image](data:image/jpeg;base64,${base64})`,
+        reasoning: null,
+        model: input.provider.model,
+        inputTokens: null,
+        outputTokens: null,
+      };
+    }
+
+    const sanitized = sanitizeMessages(input.messages);
+    const systemMessage = sanitized.find(m => (m.role as string) === "system");
+    const chatMessages = sanitized.filter(m => (m.role as string) !== "system");
+
+    const geminiContents: { role: string, parts: { text: string }[] }[] = [];
+    for (const m of chatMessages) {
+      const role = m.role === "assistant" ? "model" : "user";
+      const text = typeof m.content === "string" ? m.content : "";
+      if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === role) {
+        geminiContents[geminiContents.length - 1].parts[0].text += "\n\n" + text;
+      } else {
+        geminiContents.push({ role, parts: [{ text }] });
+      }
+    }
+
+    const response = await ai.models.generateContent({
+      model: input.provider.model,
+      contents: geminiContents,
+      config: {
+        systemInstruction: systemMessage && typeof systemMessage.content === "string" ? systemMessage.content : undefined,
+      }
+    });
+    
+    return {
+      content: response.text || "",
+      reasoning: null,
+      model: input.provider.model,
+      inputTokens: response.usageMetadata?.promptTokenCount ?? null,
+      outputTokens: response.usageMetadata?.candidatesTokenCount ?? null,
+    };
+  }
+
+  /* ── ComfyUI — workflow-based image generation ────── */
+  if (input.provider.id === "comfyui") {
+    const lastMsg = input.messages[input.messages.length - 1];
+    const prompt = typeof lastMsg?.content === "string" ? lastMsg.content : "A beautiful landscape";
+    const checkpoint = input.provider.model || "";
+
+    if (!checkpoint || checkpoint === "default-workflow") {
+      throw new Error(
+        "No checkpoint model selected. Go to Settings → ComfyUI and pick a checkpoint, or let model discovery detect your installed checkpoints.",
+      );
+    }
+
+    const workflow = buildTextToImageWorkflow(prompt, checkpoint);
+
+    try {
+      const images = await executeWorkflow(
+        input.provider.baseUrl,
+        workflow,
+        {},
+      );
+
+      if (images.length === 0) throw new Error("No images generated");
+
+      const base64 = await fetchImageAsBase64(input.provider.baseUrl, images[0]);
+      return {
+        content: `\n\n![Generated Image](${base64})`,
+        reasoning: null,
+        model: checkpoint,
+        inputTokens: null,
+        outputTokens: null,
+      };
+    } catch (err) {
+      throw err instanceof Error ? err : new Error(String(err));
+    }
+  }
+
+
   if (isTauriRuntime()) {
     return invoke<CompletionResponse>("send_chat_completion", {
       request: {
@@ -355,7 +538,7 @@ export async function sendChatCompletion(input: {
           apiKey: input.provider.apiKey || null,
           model: input.provider.model,
         },
-        messages: input.messages,
+        messages: sanitizeMessages(input.messages),
       },
     });
   }
@@ -366,9 +549,9 @@ export async function sendChatCompletion(input: {
     headers: {
       "content-type": "application/json",
       ...(input.provider.apiKey ? { authorization: `Bearer ${input.provider.apiKey}` } : {}),
-      "x-title": "A4Chat",
+      ...(input.provider.baseUrl.includes("openrouter.ai") ? { "x-title": "A4Chat" } : {}),
     },
-    body: JSON.stringify({ model: input.provider.model, messages: input.messages, stream: false }),
+    body: JSON.stringify(buildPayload(input.provider, input.messages, false)),
   });
   if (!response.ok) {
     const rawBody = await response.text().catch(() => "");
@@ -395,8 +578,19 @@ export async function sendChatCompletion(input: {
   const rawReasoning = message?.reasoning ?? message?.reasoning_content ?? "";
   const parsed = stripThinkTags(rawContent);
 
+  const msgImages = message?.images as Array<{ image_url?: { url: string } }> | undefined;
+  let finalContent = parsed.content;
+
+  if (msgImages && msgImages.length > 0) {
+    for (const img of msgImages) {
+      if (img.image_url?.url) {
+        finalContent += `\n\n![Generated Image](${img.image_url.url})`;
+      }
+    }
+  }
+
   return {
-    content: parsed.content,
+    content: finalContent,
     reasoning: rawReasoning + parsed.reasoning || null,
     model: payload?.model ?? input.provider.model,
     inputTokens: payload?.usage?.prompt_tokens ?? payload?.usage?.input_tokens ?? null,
@@ -410,6 +604,138 @@ export async function streamChatCompletion(
   input: { provider: ProviderSettings; messages: CompletionRequestMessage[]; signal?: AbortSignal },
   callbacks: StreamCallbacks,
 ) {
+  /* ── ComfyUI — workflow-based image generation with progress ─── */
+  if (input.provider.id === "comfyui") {
+    callbacks.onResponseType?.("image");
+
+    const lastMsg = input.messages[input.messages.length - 1];
+    const prompt = typeof lastMsg?.content === "string" ? lastMsg.content : "A beautiful landscape";
+    const checkpoint = input.provider.model || "";
+
+    if (!checkpoint || checkpoint === "default-workflow") {
+      callbacks.onError(
+        new Error(
+          "No checkpoint model selected. Go to Settings → ComfyUI and pick a checkpoint.",
+        ),
+      );
+      return;
+    }
+
+    const workflow = buildTextToImageWorkflow(prompt, checkpoint);
+
+    try {
+      const images = await executeWorkflow(
+        input.provider.baseUrl,
+        workflow,
+        {
+          onProgress: (value, max) => {
+            const pct = Math.round((value / max) * 100);
+            callbacks.onToken(`\n\n_Generating… ${pct}%_`);
+          },
+        },
+        input.signal,
+      );
+
+      if (images.length === 0) {
+        callbacks.onError(new Error("No images generated"));
+        return;
+      }
+
+      const base64 = await fetchImageAsBase64(input.provider.baseUrl, images[0]);
+      const tag = `\n\n![Generated Image](${base64})`;
+      callbacks.onToken(tag);
+      callbacks.onComplete({
+        content: tag,
+        reasoning: null,
+        model: checkpoint,
+        inputTokens: null,
+        outputTokens: null,
+      });
+    } catch (err) {
+      if ((err as Error).message === "Aborted") return;
+      callbacks.onError(err instanceof Error ? err : new Error(String(err)));
+    }
+    return;
+  }
+
+  if (input.provider.id === "google-gemini") {
+    const { GoogleGenAI } = await import("@google/genai");
+    const ai = new GoogleGenAI({ apiKey: input.provider.apiKey });
+
+    if (input.provider.model.toLowerCase().includes("imagen")) {
+       callbacks.onResponseType?.("image");
+       const prompt = input.messages[input.messages.length - 1]?.content || "A picture";
+       try {
+         const response = await ai.models.generateImages({
+           model: input.provider.model,
+           prompt: typeof prompt === "string" ? prompt : "A picture",
+           config: { numberOfImages: 1, outputMimeType: "image/jpeg" }
+         });
+         const base64 = response.generatedImages?.[0]?.image?.imageBytes;
+         if (!base64) throw new Error("No image generated");
+         const tag = `\n\n![Generated Image](data:image/jpeg;base64,${base64})`;
+         callbacks.onToken(tag);
+         callbacks.onComplete({
+           content: tag,
+           reasoning: null,
+           model: input.provider.model,
+           inputTokens: null,
+           outputTokens: null,
+         });
+       } catch (e) {
+         callbacks.onError(e instanceof Error ? e : new Error(String(e)));
+       }
+       return;
+    }
+
+    try {
+      callbacks.onResponseType?.("text");
+      const sanitized = sanitizeMessages(input.messages);
+      const systemMessage = sanitized.find(m => (m.role as string) === "system");
+      const chatMessages = sanitized.filter(m => (m.role as string) !== "system");
+
+      const geminiContents: { role: string, parts: { text: string }[] }[] = [];
+      for (const m of chatMessages) {
+        const role = m.role === "assistant" ? "model" : "user";
+        const text = typeof m.content === "string" ? m.content : "";
+        if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === role) {
+          geminiContents[geminiContents.length - 1].parts[0].text += "\n\n" + text;
+        } else {
+          geminiContents.push({ role, parts: [{ text }] });
+        }
+      }
+
+      const responseStream = await ai.models.generateContentStream({
+        model: input.provider.model,
+        contents: geminiContents,
+        config: {
+          systemInstruction: systemMessage && typeof systemMessage.content === "string" ? systemMessage.content : undefined,
+        }
+      });
+
+      let fullContent = "";
+      for await (const chunk of responseStream) {
+        if (input.signal?.aborted) return;
+        const text = chunk.text;
+        if (text) {
+          fullContent += text;
+          callbacks.onToken(text);
+        }
+      }
+      callbacks.onComplete({
+        content: fullContent,
+        reasoning: null,
+        model: input.provider.model,
+        inputTokens: null,
+        outputTokens: null,
+      });
+    } catch (e) {
+      callbacks.onError(e instanceof Error ? e : new Error(String(e)));
+    }
+    return;
+  }
+
+
   const endpoint = chatCompletionsEndpoint(input.provider.baseUrl);
 
   let response: Response;
@@ -419,9 +745,9 @@ export async function streamChatCompletion(
       headers: {
         "content-type": "application/json",
         ...(input.provider.apiKey ? { authorization: `Bearer ${input.provider.apiKey}` } : {}),
-        "x-title": "A4Chat",
+        ...(input.provider.baseUrl.includes("openrouter.ai") ? { "x-title": "A4Chat" } : {}),
       },
-      body: JSON.stringify({ model: input.provider.model, messages: input.messages, stream: true }),
+      body: JSON.stringify(buildPayload(input.provider, input.messages, true)),
       signal: input.signal,
     });
   } catch (err) {
@@ -461,8 +787,23 @@ export async function streamChatCompletion(
     const finalReasoning = rawReasoning + parsed.reasoning || null;
     if (finalReasoning) callbacks.onReasoning(finalReasoning);
     if (parsed.content) callbacks.onToken(parsed.content);
+    const msgImages = msg?.images as Array<{ image_url?: { url: string } }> | undefined;
+    const hasImages = msgImages && msgImages.length > 0;
+    callbacks.onResponseType?.(hasImages && !parsed.content ? "image" : "text");
+    let finalContent = parsed.content;
+
+    if (hasImages) {
+      for (const img of msgImages) {
+        if (img.image_url?.url) {
+          const imgTag = `\n\n![Generated Image](${img.image_url.url})`;
+          finalContent += imgTag;
+          callbacks.onToken(imgTag);
+        }
+      }
+    }
+
     callbacks.onComplete({
-      content: parsed.content,
+      content: finalContent,
       reasoning: finalReasoning,
       model: payload?.model ?? input.provider.model,
       inputTokens: payload?.usage?.prompt_tokens ?? null,
@@ -480,6 +821,7 @@ export async function streamChatCompletion(
   let model = input.provider.model;
   let inputTokens: number | null = null;
   let outputTokens: number | null = null;
+  let responseTypeSignaled = false;
 
   try {
     while (true) {
@@ -525,12 +867,31 @@ export async function streamChatCompletion(
           if (rawDelta) {
             const { content, reasoning } = thinkParser.process(rawDelta);
             if (content) {
+              if (!responseTypeSignaled) {
+                responseTypeSignaled = true;
+                callbacks.onResponseType?.("text");
+              }
               fullContent += content;
               callbacks.onToken(content);
             }
             if (reasoning) {
               fullReasoning += reasoning;
               callbacks.onReasoning(reasoning);
+            }
+          }
+          
+          const deltaImages = delta.images as Array<{ image_url?: { url: string } }> | undefined;
+          if (deltaImages && deltaImages.length > 0) {
+            if (!responseTypeSignaled) {
+              responseTypeSignaled = true;
+              callbacks.onResponseType?.("image");
+            }
+            for (const img of deltaImages) {
+              if (img.image_url?.url) {
+                const imgTag = `\n\n![Generated Image](${img.image_url.url})`;
+                fullContent += imgTag;
+                callbacks.onToken(imgTag);
+              }
             }
           }
 

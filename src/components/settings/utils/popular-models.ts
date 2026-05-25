@@ -93,9 +93,19 @@ const LM_STUDIO_POPULAR: ProviderModel[] = [
   { modelId: "local-model", displayName: "Default local model", isFavorite: false, lastSeenAt: 0 },
 ];
 
+const COMFYUI_POPULAR: ProviderModel[] = [
+  {
+    modelId: "default-workflow",
+    displayName: "Default Text-to-Image",
+    isFavorite: false,
+    lastSeenAt: 0,
+  },
+];
+
 const SEED_MAP: Record<string, ProviderModel[]> = {
   openrouter: OPENROUTER_POPULAR,
   lmstudio: LM_STUDIO_POPULAR,
+  comfyui: COMFYUI_POPULAR,
 };
 
 /**

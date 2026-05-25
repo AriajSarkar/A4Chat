@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, memo, useCallback, useEffect, useRef, useState } from "react";
-import { RiAddLine, RiSendPlane2Fill, RiStopCircleFill } from "@remixicon/react";
+import { RiAddLine, RiCloseLine, RiSendPlane2Fill, RiStopCircleFill } from "@remixicon/react";
 
 import { ModelSelector } from "@/components/conversation/msg/model-selector";
 import type { ProviderModel, ProviderSettings } from "@/components/settings/utils/providers";
@@ -22,7 +22,7 @@ type MessageComposerProps = {
   ) => Promise<boolean>;
   onToggleFavorite: (providerId: string, modelId: string) => void;
   onStopStreaming: () => void;
-  onSubmit: (content: string) => Promise<void>;
+  onSubmit: (content: string, images?: string[]) => Promise<void>;
   refreshingProviderId: string | null;
 };
 
@@ -42,8 +42,10 @@ export const MessageComposer = memo(function MessageComposer({
   refreshingProviderId,
 }: MessageComposerProps) {
   const [value, setValue] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const canSubmit = value.trim().length > 0 && !disabled;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canSubmit = (value.trim().length > 0 || images.length > 0) && !disabled;
   const isActive = status === "sending" || status === "streaming";
 
   useEffect(() => {
@@ -57,9 +59,38 @@ export const MessageComposer = memo(function MessageComposer({
     event.preventDefault();
     if (!canSubmit) return;
     const nextValue = value.trim();
+    const currentImages = [...images];
     setValue("");
-    await onSubmit(nextValue);
+    setImages([]);
+    textareaRef.current!.style.height = "auto";
+    await onSubmit(nextValue, currentImages);
   }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    // Run all image compressions in parallel (blazingly fast for multiple files)
+    const newImages = (
+      await Promise.all(
+        Array.from(files)
+          .filter((file) => file.type.startsWith("image/"))
+          .map((file) =>
+            compressImage(file, 1024, 1024, 0.8).catch((err) => {
+              console.error("Failed to compress image:", err);
+              return null;
+            }),
+          ),
+      )
+    ).filter(Boolean) as string[];
+
+    setImages((prev) => [...prev, ...newImages]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleModelSelect = useCallback(
     (providerId: string, modelId: string) => {
@@ -76,6 +107,25 @@ export const MessageComposer = memo(function MessageComposer({
       className="relative mx-auto flex w-full max-w-4xl flex-col rounded-2xl border border-white/8 bg-white/3 shadow-lg shadow-black/20 backdrop-blur-xl transition-colors duration-200 focus-within:border-accent/40 md:rounded-3xl"
       onSubmit={handleSubmit}
     >
+      {/* Images Row */}
+      {images.length > 0 && (
+        <div className="flex flex-wrap gap-2 px-2 pt-2 md:px-3 md:pt-3">
+          {images.map((src, idx) => (
+            <div key={idx} className="relative group rounded-lg overflow-hidden border border-white/10 w-16 h-16 md:w-20 md:h-20 shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="attachment" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => removeImage(idx)}
+                className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <RiCloseLine size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Textarea row */}
       <div className="flex items-end gap-1 px-2 pt-2 md:gap-2 md:px-3 md:pt-3">
         <textarea
@@ -102,10 +152,19 @@ export const MessageComposer = memo(function MessageComposer({
 
       {/* Action bar: attach + model selector + send */}
       <div className="flex items-center gap-1 px-1.5 pb-1.5 md:gap-2 md:px-2 md:pb-2">
+        <input
+          type="file"
+          accept="image/jpeg, image/png, image/webp, image/gif, image/svg+xml"
+          multiple
+          className="hidden"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+        />
         <button
           aria-label="Add attachment"
           className="grid size-9 shrink-0 place-items-center rounded-xl text-text-tertiary transition-colors hover:bg-white/6 md:size-10"
           type="button"
+          onClick={() => fileInputRef.current?.click()}
         >
           <RiAddLine size={20} />
         </button>
@@ -156,3 +215,41 @@ export const MessageComposer = memo(function MessageComposer({
     </form>
   );
 });
+
+function compressImage(file: File, maxWidth = 1024, maxHeight = 1024, quality = 0.8): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } else {
+          resolve(event.target?.result as string); // fallback to original if canvas fails
+        }
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+}

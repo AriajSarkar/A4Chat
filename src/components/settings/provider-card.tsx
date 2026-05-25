@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useState } from "react";
+import { memo, useState } from "react";
 import { RiArrowDownSLine, RiDeleteBinLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 

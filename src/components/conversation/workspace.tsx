@@ -6,6 +6,7 @@ import {
   createUserMessage,
   toCompletionMessages,
   type ConversationMessage,
+  type ResponseType,
 } from "@/components/conversation/utils/conversation";
 import { ConversationView } from "@/components/conversation/view";
 import { NavigationSidebar } from "@/components/nav/sidebar";
@@ -85,6 +86,7 @@ export function ConversationWorkspace() {
   /* Streaming refs */
   const streamContentRef = useRef("");
   const streamReasoningRef = useRef("");
+  const streamResponseTypeRef = useRef<ResponseType>("pending");
   const streamMsgIdRef = useRef<string | null>(null);
   const rafRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
@@ -340,6 +342,7 @@ export function ConversationWorkspace() {
               ...m,
               content: streamContentRef.current,
               reasoning: streamReasoningRef.current || undefined,
+              responseType: streamResponseTypeRef.current,
             }
           : m,
       ),
@@ -376,6 +379,7 @@ export function ConversationWorkspace() {
     streamMsgIdRef.current = null;
     streamContentRef.current = "";
     streamReasoningRef.current = "";
+    streamResponseTypeRef.current = "pending";
     hasStartedStreamingRef.current = false;
     submittingRef.current = false;
     setStatus("idle");
@@ -389,7 +393,7 @@ export function ConversationWorkspace() {
 
   /* ── Submit (streaming) ───────────────────────────── */
   const submitMessage = useCallback(
-    async (content: string) => {
+    async (content: string, images?: string[]) => {
       if (!selectedProvider || status !== "idle" || submittingRef.current) return;
       const activeModel = selectedModelId || selectedProvider.model;
       if (!activeModel) {
@@ -401,7 +405,7 @@ export function ConversationWorkspace() {
       /* Use the selected model, falling back to provider default */
       const providerForSubmit = { ...selectedProvider, model: activeModel };
 
-      const userMessage = createUserMessage(content);
+      const userMessage = createUserMessage(content, images);
       const nextMessages = [...messagesRef.current, userMessage];
 
       const pendingId = crypto.randomUUID();
@@ -413,10 +417,12 @@ export function ConversationWorkspace() {
         providerId: providerForSubmit.id,
         providerLabel: providerForSubmit.label,
         model: activeModel,
+        responseType: "pending",
       };
 
       streamContentRef.current = "";
       streamReasoningRef.current = "";
+      streamResponseTypeRef.current = "pending";
       streamMsgIdRef.current = pendingId;
       hasStartedStreamingRef.current = false;
 
@@ -437,6 +443,10 @@ export function ConversationWorkspace() {
           signal: abort.signal,
         },
         {
+          onResponseType: (type) => {
+            streamResponseTypeRef.current = type;
+            scheduleFlush();
+          },
           onToken: (token) => {
             streamContentRef.current += token;
             if (!hasStartedStreamingRef.current) {
@@ -501,6 +511,7 @@ export function ConversationWorkspace() {
 
             streamContentRef.current = "";
             streamReasoningRef.current = "";
+            streamResponseTypeRef.current = "pending";
           },
           onError: (err) => {
             cancelAnimationFrame(rafRef.current);
@@ -518,6 +529,7 @@ export function ConversationWorkspace() {
             streamMsgIdRef.current = null;
             streamContentRef.current = "";
             streamReasoningRef.current = "";
+            streamResponseTypeRef.current = "pending";
             setError(err.message);
             setStatus("idle");
           },

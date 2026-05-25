@@ -43,6 +43,22 @@ export const DEFAULT_PROVIDERS: ProviderSettings[] = [
     model: "openrouter/auto",
     enabled: true,
   },
+  {
+    id: "google-gemini",
+    label: "Google Gemini",
+    baseUrl: "https://generativelanguage.googleapis.com",
+    apiKey: "",
+    model: "gemini-2.5-flash",
+    enabled: false,
+  },
+  {
+    id: "comfyui",
+    label: "ComfyUI",
+    baseUrl: "http://127.0.0.1:8188",
+    apiKey: "",
+    model: "",
+    enabled: false,
+  },
 ];
 
 /* ── Helpers ────────────────────────────────────────────── */

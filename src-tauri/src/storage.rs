@@ -92,6 +92,20 @@ pub fn save_provider_settings(
             .with_context(|| format!("unable to persist provider {}", provider.id))?;
     }
 
+    let existing_ids: Vec<String> = {
+        let mut stmt = transaction.prepare("SELECT id FROM provider_settings").context("unable to prepare id query")?;
+        let rows = stmt.query_map([], |row| row.get(0)).context("unable to query existing provider ids")?;
+        rows.filter_map(Result::ok).collect()
+    };
+
+    for id in existing_ids {
+        if !providers.iter().any(|p| p.id == id) {
+            transaction
+                .execute("DELETE FROM provider_settings WHERE id = ?1", params![id])
+                .with_context(|| format!("unable to delete removed provider {id}. Note: Providers with existing conversations cannot be deleted."))?;
+        }
+    }
+
     transaction
         .commit()
         .context("unable to commit provider settings")

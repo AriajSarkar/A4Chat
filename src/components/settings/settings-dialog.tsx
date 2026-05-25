@@ -70,6 +70,8 @@ export function SettingsDialog({
     try {
       await onSave(normalizeProviders(draftProviders));
       onClose();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }

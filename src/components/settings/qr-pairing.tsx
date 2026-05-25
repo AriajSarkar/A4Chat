@@ -3,7 +3,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   RiCameraLine,
-  RiCheckLine,
   RiCloseLine,
   RiErrorWarningLine,
   RiQrCodeLine,
@@ -36,7 +35,7 @@ export const QrPairingSection = memo(function QrPairingSection({
   const [qrValue, setQrValue] = useState<string | null>(null);
 
   const enabledProviders = useMemo(
-    () => providers.filter((p) => p.enabled && (p.baseUrl || p.id === "lmstudio")),
+    () => providers.filter((p) => p.enabled && (p.baseUrl || p.id === "lmstudio" || p.id === "comfyui")),
     [providers],
   );
 
@@ -49,6 +48,9 @@ export const QrPairingSection = memo(function QrPairingSection({
       if (provider.id === "lmstudio") {
         // Force the default LM Studio endpoint so the backend replaces 'localhost' with the LAN IPv4
         rawBaseUrl = "http://localhost:1234/v1";
+      } else if (provider.id === "comfyui") {
+        // Force the default ComfyUI endpoint
+        rawBaseUrl = "http://localhost:8188";
       }
 
       let baseUrl = rawBaseUrl;

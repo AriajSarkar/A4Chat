@@ -31,6 +31,13 @@ function restoreApi() {
 console.log("⏳ Stashing API routes for static export…");
 stashApi();
 
+// Clear the Next.js cache to avoid type errors about missing API routes
+const nextDir = join(root, ".next");
+if (existsSync(nextDir)) {
+  console.log("🧹 Clearing .next cache…");
+  rmSync(nextDir, { recursive: true, force: true });
+}
+
 let exitCode = 0;
 try {
   // 2. Build with static export

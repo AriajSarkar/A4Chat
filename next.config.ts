@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
-const isProd = process.env.NODE_ENV === "production";
 const internalHost = process.env.TAURI_DEV_HOST || "localhost";
-const internalPort = process.env.TAURI_DEV_PORT || "3000";
 
 const nextConfig: NextConfig = {
   // Static export required for Tauri (desktop + mobile).

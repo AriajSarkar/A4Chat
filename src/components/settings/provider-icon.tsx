@@ -1,25 +1,10 @@
 "use client";
 
 import { memo, type ComponentType, type SVGProps } from "react";
-import { RiServerLine } from "@remixicon/react";
 
 /* ── Known provider icon mapping ────────────────────────── */
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
-
-/**
- * Lazy-loaded provider icon resolver.
- * Uses @lobehub/icons when available, falls back to generic icon.
- *
- * We import only what we need to keep the bundle tree-shaken.
- */
-const ICON_CACHE = new Map<string, IconComponent | null>();
-
-function getLobeIcon(providerId: string): IconComponent | null {
-  if (ICON_CACHE.has(providerId)) return ICON_CACHE.get(providerId) ?? null;
-  /* we don't async-import here; instead we match known IDs to static imports */
-  return null;
-}
 
 /**
  * Renders a provider-specific icon or a generic server icon.
@@ -55,6 +40,7 @@ export const ProviderIcon = memo(function ProviderIcon({
     mistral: "#ff7000",
     cohere: "#39594d",
     perplexity: "#20808d",
+    comfyui: "#a855f7",
   };
 
   const color = colorMap[id] ?? "#8892a6";

@@ -43,7 +43,7 @@ pub struct CompletionProvider {
 #[serde(rename_all = "camelCase")]
 pub struct CompletionMessage {
     role: String,
-    content: String,
+    content: serde_json::Value,
 }
 
 #[derive(Debug, Deserialize)]
@@ -284,7 +284,16 @@ pub async fn detect_provider_models(
     base_url: String,
     api_key: Option<String>,
 ) -> Result<Vec<ProviderModelRow>, String> {
-    let endpoint = models_endpoint(&base_url);
+    let mut endpoint = models_endpoint(&base_url);
+    if provider_id == "google-gemini" {
+        endpoint = endpoint.replace("/openai/models", "/models");
+        if let Some(key) = &api_key {
+            endpoint.push_str(&format!("?key={}", key));
+        }
+    } else if provider_id == "comfyui" {
+        let trimmed = base_url.trim().trim_end_matches('/');
+        endpoint = format!("{trimmed}/object_info/CheckpointLoaderSimple");
+    }
 
     let mut headers = HeaderMap::new();
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
@@ -294,11 +303,13 @@ pub async fn detect_provider_models(
     );
     headers.insert("X-Title", HeaderValue::from_static("A4Chat"));
 
-    if let Some(key) = api_key.as_deref().filter(|k| !k.is_empty()) {
-        let value = HeaderValue::from_str(&format!("Bearer {key}"))
-            .context("API key contains invalid header characters")
-            .map_err(to_command_error)?;
-        headers.insert(AUTHORIZATION, value);
+    if provider_id != "google-gemini" {
+        if let Some(key) = api_key.as_deref().filter(|k| !k.is_empty()) {
+            let value = HeaderValue::from_str(&format!("Bearer {key}"))
+                .context("API key contains invalid header characters")
+                .map_err(to_command_error)?;
+            headers.insert(AUTHORIZATION, value);
+        }
     }
 
     let client = reqwest::Client::builder()
@@ -347,27 +358,87 @@ pub async fn detect_provider_models(
         .map_err(to_command_error)?;
 
     let now = storage::unix_timestamp();
-    let data_array = payload
-        .get("data")
-        .and_then(Value::as_array)
-        .or_else(|| payload.as_array());
-
-    let models: Vec<ProviderModelRow> = data_array
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|entry| {
-                    let id = entry.get("id").and_then(Value::as_str)?;
-                    Some(ProviderModelRow {
-                        provider_id: provider_id.clone(),
-                        model_id: id.to_owned(),
-                        display_name: id.to_owned(),
-                        is_favorite: false,
-                        last_seen_at: now,
+    
+    let models: Vec<ProviderModelRow> = if provider_id == "google-gemini" {
+        payload
+            .get("models")
+            .and_then(Value::as_array)
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|entry| {
+                        let name = entry.get("name").and_then(Value::as_str)?;
+                        let id = name.trim_start_matches("models/");
+                        let display_name = entry
+                            .get("displayName")
+                            .and_then(Value::as_str)
+                            .unwrap_or(id);
+                        Some(ProviderModelRow {
+                            provider_id: provider_id.clone(),
+                            model_id: id.to_owned(),
+                            display_name: display_name.to_owned(),
+                            is_favorite: false,
+                            last_seen_at: now,
+                        })
                     })
-                })
-                .collect()
-        })
-        .unwrap_or_default();
+                    .collect()
+            })
+            .unwrap_or_default()
+    } else if provider_id == "comfyui" {
+        payload
+            .get("CheckpointLoaderSimple")
+            .and_then(|v| v.get("input"))
+            .and_then(|v| v.get("required"))
+            .and_then(|v| v.get("ckpt_name"))
+            .and_then(Value::as_array)
+            .and_then(|arr| arr.first())
+            .and_then(Value::as_array)
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|entry| {
+                        let id = entry.as_str()?;
+                        let display_name = id.split('.').next().unwrap_or(id).replace(['_', '-'], " ");
+                        Some(ProviderModelRow {
+                            provider_id: provider_id.clone(),
+                            model_id: id.to_owned(),
+                            display_name,
+                            is_favorite: false,
+                            last_seen_at: now,
+                        })
+                    })
+                    .collect()
+            })
+            .unwrap_or_else(|| {
+                vec![ProviderModelRow {
+                    provider_id: provider_id.clone(),
+                    model_id: "default-workflow".to_string(),
+                    display_name: "Default Text-to-Image".to_string(),
+                    is_favorite: false,
+                    last_seen_at: now,
+                }]
+            })
+    } else {
+        let data_array = payload
+            .get("data")
+            .and_then(Value::as_array)
+            .or_else(|| payload.as_array());
+
+        data_array
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|entry| {
+                        let id = entry.get("id").and_then(Value::as_str)?;
+                        Some(ProviderModelRow {
+                            provider_id: provider_id.clone(),
+                            model_id: id.to_owned(),
+                            display_name: id.to_owned(),
+                            is_favorite: false,
+                            last_seen_at: now,
+                        })
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
 
     let mut connection = storage::connect(&app).map_err(to_command_error)?;
     storage::save_provider_models(&mut connection, &provider_id, &models)
@@ -509,11 +580,15 @@ impl CompletionRequest {
             return Err(anyhow!("at least one message is required"));
         }
 
-        if self
-            .messages
-            .iter()
-            .any(|message| message.content.trim().is_empty())
-        {
+        if self.messages.iter().any(|message| {
+            if let Some(s) = message.content.as_str() {
+                s.trim().is_empty()
+            } else if let Some(arr) = message.content.as_array() {
+                arr.is_empty()
+            } else {
+                true
+            }
+        }) {
             return Err(anyhow!("message content cannot be empty"));
         }
 
@@ -628,4 +703,38 @@ pub fn parse_completion_response(payload: Value) -> anyhow::Result<CompletionRes
             .and_then(Value::as_i64)
             .or_else(|| usage.get("output_tokens").and_then(Value::as_i64)),
     })
+}
+
+#[tauri::command]
+#[allow(unused_variables)]
+pub fn get_default_save_dir(app: tauri::AppHandle) -> String {
+    #[cfg(target_os = "android")]
+    {
+        return "/storage/emulated/0/DCIM/A4chat".to_string();
+    }
+    
+    #[cfg(not(target_os = "android"))]
+    {
+        use tauri::Manager;
+        if let Ok(path) = app.path().download_dir() {
+            return path.to_string_lossy().to_string();
+        }
+        return "".to_string();
+    }
+}
+
+#[tauri::command]
+pub fn save_file_to_disk(path: String, bytes: Vec<u8>) -> Result<(), String> {
+    use std::fs;
+    use std::path::Path;
+    
+    let p = Path::new(&path);
+    if let Some(parent) = p.parent() {
+        if !parent.exists() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+    }
+    
+    fs::write(&path, bytes).map_err(|e| e.to_string())?;
+    Ok(())
 }

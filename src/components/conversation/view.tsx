@@ -27,7 +27,7 @@ type ConversationViewProps = {
   ) => Promise<boolean>;
   onToggleFavorite: (providerId: string, modelId: string) => void;
   onStopStreaming: () => void;
-  onSubmit: (content: string) => Promise<void>;
+  onSubmit: (content: string, images?: string[]) => Promise<void>;
   onToggleSidebar: () => void;
   refreshingProviderId: string | null;
 };
