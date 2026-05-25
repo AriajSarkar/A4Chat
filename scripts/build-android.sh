@@ -68,9 +68,9 @@ esac
 
 echo "==> Building Android APK(s) for: $ARCH"
 if [ "$ARCH" = "all" ]; then
-  pnpm tauri android build --apk true
+  pnpm tauri android build --apk
 else
-  pnpm tauri android build --apk true --target "$ARCH"
+  pnpm tauri android build --apk --target "$ARCH"
 fi
 
 mkdir -p "$RELEASE_DIR"

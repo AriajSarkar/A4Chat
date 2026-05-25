@@ -226,7 +226,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Android (debug, ARM64)
-        run: NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973" pnpm tauri android build --apk true --target aarch64 --debug
+        run: NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973" pnpm tauri android build --apk --target aarch64 --debug
 
       - name: sccache stats
         run: sccache --show-stats || true
