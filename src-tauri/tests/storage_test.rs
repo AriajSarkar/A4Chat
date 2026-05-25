@@ -128,7 +128,7 @@ fn providers_listed_alphabetically() {
     let all = storage::list_provider_settings(&conn).unwrap();
     let labels: Vec<&str> = all.iter().map(|p| p.label.as_str()).collect();
     let mut sorted = labels.clone();
-    sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+    sorted.sort_by_key(|a| a.to_lowercase());
     assert_eq!(labels, sorted);
 }
 

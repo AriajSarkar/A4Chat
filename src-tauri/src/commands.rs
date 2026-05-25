@@ -720,7 +720,7 @@ pub fn get_default_save_dir(app: tauri::AppHandle) -> String {
         if let Ok(path) = app.path().download_dir() {
             return path.to_string_lossy().to_string();
         }
-        return "".to_string();
+        "".to_string()
     }
 }
 
