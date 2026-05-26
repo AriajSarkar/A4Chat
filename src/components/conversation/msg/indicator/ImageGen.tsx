@@ -203,11 +203,11 @@ export function ImageGenIndicator() {
       className="flex flex-col items-center gap-3 py-4"
     >
       <div
-        className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]"
+        className="relative overflow-hidden rounded-2xl border border-white/6 bg-white/2"
         style={{ perspective: "600px" }}
       >
         <canvas ref={canvasRef} className="block" style={{ width: 280, height: 200 }} />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent imagegen-shimmer" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-transparent via-white/3 to-transparent imagegen-shimmer" />
       </div>
       <div className="flex items-center gap-2 text-xs text-text-quaternary">
         <span className="relative flex size-2">

@@ -3,7 +3,7 @@
 import { memo, useCallback } from "react";
 import { RiAddLine } from "@remixicon/react";
 
-import { ProviderCard } from "@/components/settings/provider-card";
+import { ProviderCard } from "@/components/settings/provider/card";
 import type { ProviderSettings } from "@/components/settings/utils/providers";
 import { createBlankProvider, DEFAULT_PROVIDERS } from "@/components/settings/utils/providers";
 

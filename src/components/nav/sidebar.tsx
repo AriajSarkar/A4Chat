@@ -18,7 +18,7 @@ import {
 } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { APP_VERSION, GITHUB_URL } from "@/lib/app-meta";
+import { APP_VERSION, GITHUB_URL } from "@/lib/AppMeta";
 import {
   bulkDeleteConversations,
   deleteConversation,

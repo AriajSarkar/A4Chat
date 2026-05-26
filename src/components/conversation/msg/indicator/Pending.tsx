@@ -13,7 +13,7 @@ import { motion } from "motion/react";
 export function PendingIndicator() {
   return (
     <div className="flex items-center py-4">
-      <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.05] shadow-sm">
+      <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/4 border border-white/5 shadow-sm">
         {/* Animated play triangle */}
         <motion.div
           className="relative flex items-center justify-center size-6"

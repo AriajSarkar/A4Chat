@@ -19,8 +19,8 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 
 import type { ConversationMessage } from "@/components/conversation/utils/conversation";
-import { ImageGenIndicator } from "@/components/conversation/msg/indicator/image-gen-indicator";
-import { PendingIndicator } from "@/components/conversation/msg/indicator/pending-indicator";
+import { ImageGenIndicator } from "@/components/conversation/msg/indicator/ImageGen";
+import { PendingIndicator } from "@/components/conversation/msg/indicator/Pending";
 import { cn } from "@/lib/cn";
 
 type MessageRowProps = {

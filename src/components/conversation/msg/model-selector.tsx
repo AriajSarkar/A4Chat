@@ -21,7 +21,7 @@ import {
 } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { ProviderIcon } from "@/components/settings/provider-icon";
+import { ProviderIcon } from "@/components/settings/provider/icon";
 import {
   MODEL_AUTO_REFRESH_MS,
   formatCompactDuration,

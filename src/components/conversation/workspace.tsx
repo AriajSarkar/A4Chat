@@ -11,7 +11,7 @@ import {
 import { ConversationView } from "@/components/conversation/view";
 import { NavigationSidebar } from "@/components/nav/sidebar";
 import { SearchDialog } from "@/components/nav/search-dialog";
-import { SettingsDialog } from "@/components/settings/settings-dialog";
+import { SettingsDialog } from "@/components/settings/dialog";
 import { mergeWithSeeds } from "@/components/settings/utils/popular-models";
 import {
   DEFAULT_PROVIDERS,

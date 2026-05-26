@@ -5,7 +5,7 @@ import { RiArrowDownSLine, RiDeleteBinLine, RiEyeLine, RiEyeOffLine } from "@rem
 import { AnimatePresence, motion } from "motion/react";
 
 import { Field } from "@/components/settings/field";
-import { ProviderIcon } from "@/components/settings/provider-icon";
+import { ProviderIcon } from "@/components/settings/provider/icon";
 import type { ProviderSettings } from "@/components/settings/utils/providers";
 import { cn } from "@/lib/cn";
 
