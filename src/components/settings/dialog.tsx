@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import {
   RiCloseLine,
   RiDatabase2Line,
+  RiDownloadCloud2Line,
   RiQrCodeLine,
   RiSettings3Line,
   RiShieldUserLine,
@@ -14,6 +15,7 @@ import { GeneralSettings } from "@/components/Settings/General";
 import { ProviderList } from "@/components/Settings/Provider/List";
 import { QrPairingSection } from "@/components/Settings/Pairing";
 import { SecuritySettings } from "@/components/Settings/Security";
+import { UpdatePanel } from "@/components/Settings/Update/Panel";
 import { normalizeProviders, type ProviderSettings } from "@/lib/Providers";
 import { cn } from "@/lib/cn";
 
@@ -33,6 +35,7 @@ type SettingsDialogProps = {
 const sections = [
   { id: "general", label: "General", icon: RiSettings3Line },
   { id: "providers", label: "Providers", icon: RiDatabase2Line },
+  { id: "updates", label: "Updates", icon: RiDownloadCloud2Line },
   { id: "connect", label: "Connect", icon: RiQrCodeLine },
   { id: "security", label: "Security", icon: RiShieldUserLine },
 ] as const;
@@ -186,6 +189,7 @@ export function SettingsDialog({
                     providers={draftProviders}
                   />
                 ) : null}
+                {activeSection === "updates" ? <UpdatePanel /> : null}
                 {activeSection === "connect" ? (
                   <QrPairingSection
                     providers={draftProviders}

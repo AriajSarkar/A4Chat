@@ -13,6 +13,7 @@ BUNDLES="${1:-appimage,deb}"
 cd "$ROOT_DIR"
 
 bash scripts/sync-version.sh
+source scripts/updater-signing-env.sh
 
 echo "==> Building Linux bundles: $BUNDLES"
 pnpm tauri build --bundles "$BUNDLES"
@@ -20,6 +21,7 @@ pnpm tauri build --bundles "$BUNDLES"
 mkdir -p "$RELEASE_DIR"
 find "$ROOT_DIR/src-tauri/target/release/bundle" -type f -name "*.AppImage" -exec cp {} "$RELEASE_DIR/" \;
 find "$ROOT_DIR/src-tauri/target/release/bundle" -type f -name "*.deb" -exec cp {} "$RELEASE_DIR/" \;
+find "$ROOT_DIR/src-tauri/target/release/bundle" -type f -name "*.sig" -exec cp {} "$RELEASE_DIR/" \;
 
 if ! compgen -G "$RELEASE_DIR/*.AppImage" > /dev/null && ! compgen -G "$RELEASE_DIR/*.deb" > /dev/null; then
   echo "❌ No Linux artifacts found"

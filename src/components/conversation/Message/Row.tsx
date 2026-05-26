@@ -402,12 +402,7 @@ function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img"
         className="my-5 inline-block cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black/20 shadow-xl shadow-black/20 transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
         onClick={() => setOpen(true)}
       >
-        <img
-          src={src}
-          alt={alt}
-          className="max-h-80 w-auto max-w-full object-contain"
-          {...props}
-        />
+        <img src={src} alt={alt} className="max-h-80 w-auto max-w-full object-contain" {...props} />
       </motion.span>
 
       {typeof document !== "undefined" && open

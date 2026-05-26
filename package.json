@@ -12,7 +12,7 @@
     "comfy:start": "node scripts/comfy-start.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
-    "format": "cd src && oxfmt . && cd src-tauri && cargo fmt --all",
+    "format": "oxfmt src tests && cd src-tauri && cargo fmt --all",
     "check": "pnpm lint:rust && pnpm test",
     "test": "pnpm test:ts && pnpm test:rust",
     "test:ts": "vitest run",
@@ -31,6 +31,10 @@
     "android:init": "tauri android init",
     "android:dev": "tauri android dev --config src-tauri/tauri.android.conf.json",
     "android:build:aarch64": "tauri android build --apk --target aarch64",
+    "release:win": "node scripts/build-windows.mjs",
+    "release:and": "node scripts/build-android.mjs aarch64",
+    "release:android": "node scripts/build-android.mjs aarch64",
+    "release:android:universal": "node scripts/build-android.mjs all",
     "CC": "npx @tailwindcss/upgrade --force"
   },
   "dependencies": {

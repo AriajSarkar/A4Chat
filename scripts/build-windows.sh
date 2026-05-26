@@ -14,6 +14,7 @@ TARGET="${1:-}"
 cd "$ROOT_DIR"
 
 bash scripts/sync-version.sh
+source scripts/updater-signing-env.sh
 
 echo "==> Building Windows NSIS..."
 if [ -n "$TARGET" ]; then
@@ -25,6 +26,7 @@ fi
 
 mkdir -p "$RELEASE_DIR"
 find "$ROOT_DIR/src-tauri/target" -type f -path "*/release/bundle/nsis/*.exe" -exec cp {} "$RELEASE_DIR/" \;
+find "$ROOT_DIR/src-tauri/target" -type f -path "*/release/bundle/nsis/*.sig" -exec cp {} "$RELEASE_DIR/" \;
 
 if ! compgen -G "$RELEASE_DIR/*.exe" > /dev/null; then
   echo "❌ No Windows NSIS installer found"

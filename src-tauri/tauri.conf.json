@@ -28,10 +28,22 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "category": "Productivity",
     "icon": ["icons/icon.png", "icons/icon.ico"],
     "shortDescription": "Cross-provider AI chat client",
     "longDescription": "A4Chat is a cross-platform AI chat client for OpenRouter, LM Studio, and compatible APIs."
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE0OEQ5QkIwQkFGN0U1OApSV1JZZnE4THU5bElBVE9HTWxBUndZcXloVDg4TWF2VXNNMy9odGNYaDN1aGZMcDl0Y3gwTmJ5cQo=",
+      "endpoints": [
+        "https://github.com/AriajSarkar/A4Chat/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
