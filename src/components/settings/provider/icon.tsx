@@ -1,10 +1,6 @@
 "use client";
 
-import { memo, type ComponentType, type SVGProps } from "react";
-
-/* ── Known provider icon mapping ────────────────────────── */
-
-type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
+import { memo } from "react";
 
 /**
  * Renders a provider-specific icon or a generic server icon.

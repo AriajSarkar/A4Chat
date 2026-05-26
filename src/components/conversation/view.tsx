@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef } from "react";
 import { RiCloseLine, RiMenuLine } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { MessageComposer } from "./msg/composer";
-import { MessageList } from "@/components/conversation/msg/list";
-import type { ConversationMessage } from "@/components/conversation/utils/conversation";
-import type { ProviderModel, ProviderSettings } from "@/components/settings/utils/providers";
+import { MessageComposer } from "@/components/Conversation/Message/Composer";
+import { MessageList } from "@/components/Conversation/Message/List";
+import type { ConversationMessage } from "@/lib/Conversation";
+import type { ProviderModel, ProviderSettings } from "@/lib/Providers";
 
 type ConversationViewProps = {
   error: string | null;

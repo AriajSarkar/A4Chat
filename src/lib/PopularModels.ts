@@ -1,4 +1,4 @@
-import type { ProviderModel } from "@/components/settings/utils/providers";
+import type { ProviderModel } from "@/lib/Providers";
 
 /**
  * Well-known models for popular providers.

@@ -4,18 +4,17 @@ import type {
   CompletionRequestMessage,
   CompletionResponse,
   ConversationMessage,
-} from "@/components/conversation/utils/conversation";
+} from "@/lib/Conversation";
 import {
   normalizeProviders,
   type ProviderModel,
   type ProviderSettings,
-} from "@/components/settings/utils/providers";
+} from "@/lib/Providers";
 import {
   executeWorkflow,
   buildTextToImageWorkflow,
   listCheckpoints,
   fetchImageAsBase64,
-  type ComfyUIImageRef,
 } from "@/lib/comfyui";
 
 export type AppHealth = {
@@ -309,7 +308,7 @@ export async function detectProviderModels(
         isFavorite: false,
         lastSeenAt: now,
       }));
-    } catch (err) {
+    } catch {
       throw new Error(`Could not connect to ComfyUI at ${baseUrl}. Is the server running?`);
     }
   }

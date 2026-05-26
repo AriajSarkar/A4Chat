@@ -18,9 +18,9 @@ import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 
-import type { ConversationMessage } from "@/components/conversation/utils/conversation";
-import { ImageGenIndicator } from "@/components/conversation/msg/indicator/ImageGen";
-import { PendingIndicator } from "@/components/conversation/msg/indicator/Pending";
+import type { ConversationMessage } from "@/lib/Conversation";
+import { ImageGenIndicator } from "@/components/Conversation/Message/Indicator/ImageGen";
+import { PendingIndicator } from "@/components/Conversation/Message/Indicator/Pending";
 import { cn } from "@/lib/cn";
 
 type MessageRowProps = {

@@ -4,9 +4,9 @@ import { memo, useState } from "react";
 import { RiArrowDownSLine, RiDeleteBinLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { Field } from "@/components/settings/field";
-import { ProviderIcon } from "@/components/settings/provider/icon";
-import type { ProviderSettings } from "@/components/settings/utils/providers";
+import { Field } from "@/components/Settings/Field";
+import { ProviderIcon } from "@/components/Settings/Provider/Icon";
+import type { ProviderSettings } from "@/lib/Providers";
 import { cn } from "@/lib/cn";
 
 type ProviderCardProps = {

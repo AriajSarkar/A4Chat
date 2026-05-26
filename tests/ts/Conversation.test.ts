@@ -5,8 +5,8 @@ import {
   toCompletionMessages,
   type ConversationMessage,
   type CompletionResponse,
-} from "@/components/conversation/utils/conversation";
-import type { ProviderSettings } from "@/components/settings/utils/providers";
+} from "@/lib/Conversation";
+import type { ProviderSettings } from "@/lib/Providers";
 
 const MOCK_PROVIDER: ProviderSettings = {
   id: "test-provider",

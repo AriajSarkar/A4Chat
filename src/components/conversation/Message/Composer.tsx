@@ -3,8 +3,8 @@
 import { FormEvent, memo, useCallback, useEffect, useRef, useState } from "react";
 import { RiAddLine, RiCloseLine, RiSendPlane2Fill, RiStopCircleFill } from "@remixicon/react";
 
-import { ModelSelector } from "@/components/conversation/msg/model-selector";
-import type { ProviderModel, ProviderSettings } from "@/components/settings/utils/providers";
+import { ModelSelector } from "@/components/Conversation/Message/ModelSelector";
+import type { ProviderModel, ProviderSettings } from "@/lib/Providers";
 import { cn } from "@/lib/cn";
 
 type MessageComposerProps = {

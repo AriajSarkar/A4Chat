@@ -4,7 +4,7 @@
   "version": "3.0.0",
   "identifier": "com.ariajsarkar.a4chat",
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "node scripts/dev-server.mjs",
     "beforeBuildCommand": "bash scripts/sync-version.sh && node scripts/tauri-build.mjs",
     "devUrl": "http://localhost:3000",
     "frontendDist": "../out"

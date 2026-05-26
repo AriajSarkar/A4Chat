@@ -12,7 +12,7 @@ import {
   getModelRefreshCooldownRemainingMs,
   isModelCacheStale,
   type ProviderSettings,
-} from "@/components/settings/utils/providers";
+} from "@/lib/Providers";
 
 // ── providerSchema ──────────────────────────────────────────
 

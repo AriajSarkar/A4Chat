@@ -7,12 +7,12 @@ import {
   toCompletionMessages,
   type ConversationMessage,
   type ResponseType,
-} from "@/components/conversation/utils/conversation";
-import { ConversationView } from "@/components/conversation/view";
-import { NavigationSidebar } from "@/components/nav/sidebar";
-import { SearchDialog } from "@/components/nav/search-dialog";
-import { SettingsDialog } from "@/components/settings/dialog";
-import { mergeWithSeeds } from "@/components/settings/utils/popular-models";
+} from "@/lib/Conversation";
+import { ConversationView } from "@/components/Conversation/View";
+import { NavigationSidebar } from "@/components/Nav/Sidebar";
+import { SearchDialog } from "@/components/Nav/SearchDialog";
+import { SettingsDialog } from "@/components/Settings/Dialog";
+import { mergeWithSeeds } from "@/lib/PopularModels";
 import {
   DEFAULT_PROVIDERS,
   findActiveProvider,
@@ -22,7 +22,7 @@ import {
   normalizeProviders,
   type ProviderModel,
   type ProviderSettings,
-} from "@/components/settings/utils/providers";
+} from "@/lib/Providers";
 import {
   detectProviderModels,
   getAppHealth,
@@ -37,7 +37,7 @@ import {
   type AppHealth,
   type SavedConversation,
 } from "@/lib/native";
-import { loadProviderModelCache, saveProviderModelCache } from "@/lib/model-cache";
+import { loadProviderModelCache, saveProviderModelCache } from "@/lib/ModelCache";
 
 const SELECTED_PROVIDER_KEY = "a4chat.selectedProvider";
 const SELECTED_MODEL_KEY = "a4chat.selectedModel";

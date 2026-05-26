@@ -1,4 +1,4 @@
-import type { ProviderSettings } from "@/components/settings/utils/providers";
+import type { ProviderSettings } from "@/lib/Providers";
 
 export type ConversationRole = "user" | "assistant";
 

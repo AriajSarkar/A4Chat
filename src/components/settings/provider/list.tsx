@@ -3,9 +3,12 @@
 import { memo, useCallback } from "react";
 import { RiAddLine } from "@remixicon/react";
 
-import { ProviderCard } from "@/components/settings/provider/card";
-import type { ProviderSettings } from "@/components/settings/utils/providers";
-import { createBlankProvider, DEFAULT_PROVIDERS } from "@/components/settings/utils/providers";
+import { ProviderCard } from "@/components/Settings/Provider/Card";
+import {
+  createBlankProvider,
+  DEFAULT_PROVIDERS,
+  type ProviderSettings,
+} from "@/lib/Providers";
 
 type ProviderListProps = {
   providers: ProviderSettings[];

@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { RiArrowDownLine } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { MessageRow } from "@/components/conversation/msg/row";
-import type { ConversationMessage } from "@/components/conversation/utils/conversation";
+import { MessageRow } from "@/components/Conversation/Message/Row";
+import type { ConversationMessage } from "@/lib/Conversation";
 
 type MessageListProps = {
   isStreaming: boolean;

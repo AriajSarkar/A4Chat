@@ -21,7 +21,7 @@ import {
 } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { ProviderIcon } from "@/components/settings/provider/icon";
+import { ProviderIcon } from "@/components/Settings/Provider/Icon";
 import {
   MODEL_AUTO_REFRESH_MS,
   formatCompactDuration,
@@ -31,7 +31,7 @@ import {
   isModelCacheStale,
   type ProviderModel,
   type ProviderSettings,
-} from "@/components/settings/utils/providers";
+} from "@/lib/Providers";
 import { cn } from "@/lib/cn";
 
 type ModelSelectorProps = {

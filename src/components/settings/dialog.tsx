@@ -10,11 +10,11 @@ import {
 } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { GeneralSettings } from "@/components/settings/general";
-import { ProviderList } from "@/components/settings/provider/list";
-import { QrPairingSection } from "@/components/settings/pairing";
-import { SecuritySettings } from "@/components/settings/security";
-import { normalizeProviders, type ProviderSettings } from "@/components/settings/utils/providers";
+import { GeneralSettings } from "@/components/Settings/General";
+import { ProviderList } from "@/components/Settings/Provider/List";
+import { QrPairingSection } from "@/components/Settings/Pairing";
+import { SecuritySettings } from "@/components/Settings/Security";
+import { normalizeProviders, type ProviderSettings } from "@/lib/Providers";
 import { cn } from "@/lib/cn";
 
 type SettingsDialogProps = {

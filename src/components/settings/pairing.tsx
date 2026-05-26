@@ -12,7 +12,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 
-import type { ProviderSettings } from "@/components/settings/utils/providers";
+import type { ProviderSettings } from "@/lib/Providers";
 import { resolvePairingBaseUrl } from "@/lib/native";
 import { cn } from "@/lib/cn";
 

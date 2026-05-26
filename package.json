@@ -12,7 +12,7 @@
     "comfy:start": "node scripts/comfy-start.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
-    "format": "oxfmt . && cd src-tauri && cargo fmt --all",
+    "format": "cd src && oxfmt . && cd src-tauri && cargo fmt --all",
     "check": "pnpm lint:rust && pnpm test",
     "test": "pnpm test:ts && pnpm test:rust",
     "test:ts": "vitest run",
@@ -30,10 +30,8 @@
     "tauri:build": "tauri build --config src-tauri/tauri.conf.json",
     "android:init": "tauri android init",
     "android:dev": "tauri android dev --config src-tauri/tauri.android.conf.json",
-    "android:dev:dual": "tauri android dev --config src-tauri/tauri.android.conf.json",
-    "dev:android": "next dev --hostname 0.0.0.0 --port 3000",
     "android:build:aarch64": "tauri android build --apk --target aarch64",
-    "CC": "npx tailwind-lint --auto --fix"
+    "CC": "npx @tailwindcss/upgrade --force"
   },
   "dependencies": {
     "@google/genai": "^2.6.0",
