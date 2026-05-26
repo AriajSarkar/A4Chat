@@ -9,7 +9,7 @@ import {
   type ResponseType,
 } from "@/lib/Conversation";
 import { ConversationView } from "@/components/Conversation/View";
-import { NavigationSidebar } from "@/components/Nav/sidebar";
+import { NavigationSidebar } from "@/components/Nav/Sidebar";
 import { SearchDialog } from "@/components/Nav/SearchDialog";
 import { SettingsDialog } from "@/components/Settings/Dialog";
 import { mergeWithSeeds } from "@/lib/PopularModels";
