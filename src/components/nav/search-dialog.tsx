@@ -110,7 +110,7 @@ export function SearchDialog({
           {/* Backdrop */}
           <motion.div
             animate={{ opacity: 1 }}
-            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-60 bg-black/50 backdrop-blur-sm"
             exit={{ opacity: 0 }}
             initial={{ opacity: 0 }}
             onClick={onClose}
@@ -119,14 +119,14 @@ export function SearchDialog({
           {/* Dialog */}
           <motion.div
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="fixed inset-x-4 top-[15%] z-[61] mx-auto max-w-xl overflow-hidden rounded-2xl border border-white/[0.08] bg-surface-1 shadow-2xl shadow-black/40 backdrop-blur-xl md:inset-x-auto md:w-full"
+            className="fixed inset-x-4 top-[15%] z-61 mx-auto max-w-xl overflow-hidden rounded-2xl border border-white/8 bg-surface-1 shadow-2xl shadow-black/40 backdrop-blur-xl md:inset-x-auto md:w-full"
             exit={{ opacity: 0, scale: 0.96, y: -8 }}
             initial={{ opacity: 0, scale: 0.96, y: -8 }}
             onKeyDown={handleKeyDown}
             transition={{ type: "spring", damping: 28, stiffness: 380 }}
           >
             {/* Search input */}
-            <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3">
+            <div className="flex items-center gap-3 border-b border-white/6 px-4 py-3">
               <RiSearchLine className="shrink-0 text-text-tertiary" size={20} />
               <input
                 className="min-w-0 flex-1 bg-transparent text-[15px] text-text-primary outline-none placeholder:text-text-quaternary"
@@ -141,14 +141,14 @@ export function SearchDialog({
               />
               {query ? (
                 <button
-                  className="grid size-7 place-items-center rounded-lg text-text-quaternary transition-colors hover:bg-white/[0.08] hover:text-text-secondary"
+                  className="grid size-7 place-items-center rounded-lg text-text-quaternary transition-colors hover:bg-white/8 hover:text-text-secondary"
                   onClick={() => setQuery("")}
                   type="button"
                 >
                   <RiCloseLine size={18} />
                 </button>
               ) : (
-                <kbd className="hidden rounded-md border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 font-mono text-xs text-text-quaternary md:inline-block">
+                <kbd className="hidden rounded-md border border-white/8 bg-white/4 px-1.5 py-0.5 font-mono text-xs text-text-quaternary md:inline-block">
                   esc
                 </kbd>
               )}
@@ -163,7 +163,7 @@ export function SearchDialog({
                       "group flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
                       index === selectedIndex
                         ? "bg-accent/10 text-text-primary"
-                        : "text-text-secondary hover:bg-white/[0.04]",
+                        : "text-text-secondary hover:bg-white/4",
                     )}
                     key={conv.id}
                     onClick={() => {
@@ -209,21 +209,21 @@ export function SearchDialog({
 
             {/* Footer hints — desktop only */}
             {filtered.length > 0 ? (
-              <div className="hidden items-center gap-4 border-t border-white/[0.06] px-4 py-2 text-xs text-text-quaternary md:flex">
+              <div className="hidden items-center gap-4 border-t border-white/6 px-4 py-2 text-xs text-text-quaternary md:flex">
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 font-mono text-[10px]">
+                  <kbd className="rounded border border-white/8 bg-white/4 px-1 font-mono text-[10px]">
                     ↑↓
                   </kbd>
                   Navigate
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 font-mono text-[10px]">
+                  <kbd className="rounded border border-white/8 bg-white/4 px-1 font-mono text-[10px]">
                     ↵
                   </kbd>
                   Open
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 font-mono text-[10px]">
+                  <kbd className="rounded border border-white/8 bg-white/4 px-1 font-mono text-[10px]">
                     esc
                   </kbd>
                   Close

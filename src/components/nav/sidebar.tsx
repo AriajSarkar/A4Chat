@@ -170,7 +170,7 @@ export function NavigationSidebar({
       <nav className="flex flex-col gap-1">
         <button
           className={cn(
-            "group flex h-11 items-center gap-3 rounded-xl bg-gradient-to-r from-accent/20 to-accent/10 px-3 text-sm font-medium text-accent-soft transition-all hover:from-accent/30 hover:to-accent/15 active:scale-[0.98]",
+            "group flex h-11 items-center gap-3 rounded-xl bg-linear-to-r from-accent/20 to-accent/10 px-3 text-sm font-medium text-accent-soft transition-all hover:from-accent/30 hover:to-accent/15 active:scale-[0.98]",
             !showLabels && "justify-center px-0 lg:justify-center",
           )}
           onClick={handleNewChat}
@@ -185,7 +185,7 @@ export function NavigationSidebar({
 
         <button
           className={cn(
-            "group flex h-11 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-all hover:bg-white/[0.06] hover:text-text-primary active:scale-[0.98]",
+            "group flex h-11 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-all hover:bg-white/6 hover:text-text-primary active:scale-[0.98]",
             !showLabels && "justify-center px-0 lg:justify-center",
           )}
           onClick={() => {
@@ -237,7 +237,7 @@ export function NavigationSidebar({
                 transition={{ duration: 0.15 }}
               >
                 <button
-                  className="flex-1 rounded-lg border border-white/[0.08] px-2.5 py-1.5 text-[12px] text-text-secondary transition-colors hover:bg-white/[0.06]"
+                  className="flex-1 rounded-lg border border-white/8 px-2.5 py-1.5 text-[12px] text-text-secondary transition-colors hover:bg-white/6"
                   onClick={selectAll}
                   type="button"
                 >
@@ -248,7 +248,7 @@ export function NavigationSidebar({
                     "flex-1 rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-all",
                     selected.size > 0
                       ? "bg-danger/15 text-danger hover:bg-danger/25"
-                      : "border border-white/[0.08] text-text-quaternary",
+                      : "border border-white/8 text-text-quaternary",
                   )}
                   disabled={selected.size === 0}
                   onClick={handleBulkDelete}
@@ -266,7 +266,7 @@ export function NavigationSidebar({
               {conversations.map((conv) => (
                 <div className="group relative" key={conv.id}>
                   {editId === conv.id ? (
-                    <div className="flex h-10 items-center gap-2 rounded-xl bg-white/[0.06] px-3">
+                    <div className="flex h-10 items-center gap-2 rounded-xl bg-white/6 px-3">
                       <RiChat3Line className="shrink-0 text-text-quaternary" size={16} />
                       <input
                         className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none"
@@ -286,8 +286,8 @@ export function NavigationSidebar({
                   ) : (
                     <div
                       className={cn(
-                        "flex h-10 w-full shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-3 text-left text-sm text-text-secondary transition-colors hover:bg-white/[0.06] hover:text-text-primary",
-                        selectMode && selected.has(conv.id) && "bg-accent/[0.08] text-accent-soft",
+                        "flex h-10 w-full shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-3 text-left text-sm text-text-secondary transition-colors hover:bg-white/6 hover:text-text-primary",
+                        selectMode && selected.has(conv.id) && "bg-accent/8 text-accent-soft",
                       )}
                       onClick={() => {
                         if (selectMode) {
@@ -316,7 +316,7 @@ export function NavigationSidebar({
                       {/* Three-dot menu — visible always on mobile, hover on desktop */}
                       {!selectMode ? (
                         <span
-                          className="grid size-6 shrink-0 place-items-center rounded-lg text-text-quaternary opacity-100 transition-all hover:bg-white/[0.08] hover:text-text-secondary lg:opacity-0 lg:group-hover:opacity-100"
+                          className="grid size-6 shrink-0 place-items-center rounded-lg text-text-quaternary opacity-100 transition-all hover:bg-white/8 hover:text-text-secondary lg:opacity-0 lg:group-hover:opacity-100"
                           onClick={(e) => {
                             e.stopPropagation();
                             setMenuId(menuId === conv.id ? null : conv.id);
@@ -335,14 +335,14 @@ export function NavigationSidebar({
                     {menuId === conv.id ? (
                       <motion.div
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className="absolute right-0 top-full z-50 mt-1 min-w-[140px] overflow-hidden rounded-xl border border-white/[0.08] bg-surface-2 py-1 shadow-xl shadow-black/40 backdrop-blur-xl"
+                        className="absolute right-0 top-full z-50 mt-1 min-w-35 overflow-hidden rounded-xl border border-white/8 bg-surface-2 py-1 shadow-xl shadow-black/40 backdrop-blur-xl"
                         exit={{ opacity: 0, scale: 0.95, y: -4 }}
                         initial={{ opacity: 0, scale: 0.95, y: -4 }}
                         ref={menuRef}
                         transition={{ duration: 0.12 }}
                       >
                         <button
-                          className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-white/[0.06] hover:text-text-primary"
+                          className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-white/6 hover:text-text-primary"
                           onClick={() => handleRename(conv.id, conv.title)}
                           type="button"
                         >
@@ -362,7 +362,7 @@ export function NavigationSidebar({
               ))}
             </nav>
           ) : (
-            <div className="rounded-xl border border-dashed border-white/[0.08] px-3 py-4 text-center text-sm text-text-quaternary">
+            <div className="rounded-xl border border-dashed border-white/8 px-3 py-4 text-center text-sm text-text-quaternary">
               No conversations yet
             </div>
           )}
@@ -370,11 +370,11 @@ export function NavigationSidebar({
       </div>
 
       {/* ── Bottom: Settings, GitHub, Version ── */}
-      <div className="mt-3 flex shrink-0 flex-col gap-1 border-t border-white/[0.06] pt-3">
+      <div className="mt-3 flex shrink-0 flex-col gap-1 border-t border-white/6 pt-3">
         <button
           aria-label="Settings"
           className={cn(
-            "flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-colors hover:bg-white/[0.06] hover:text-text-primary active:scale-[0.98]",
+            "flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-colors hover:bg-white/6 hover:text-text-primary active:scale-[0.98]",
             !showLabels && "justify-center px-0 lg:justify-center",
           )}
           onClick={() => {
@@ -390,7 +390,7 @@ export function NavigationSidebar({
         <a
           aria-label="GitHub"
           className={cn(
-            "flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-colors hover:bg-white/[0.06] hover:text-text-primary",
+            "flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-text-secondary transition-colors hover:bg-white/6 hover:text-text-primary",
             !showLabels && "justify-center px-0 lg:justify-center",
           )}
           href={GITHUB_URL}
@@ -418,7 +418,7 @@ export function NavigationSidebar({
       {/* Desktop sidebar */}
       <motion.aside
         animate={{ width: expanded ? 280 : 68 }}
-        className="hidden shrink-0 overflow-hidden border-r border-white/[0.06] bg-surface-0 lg:flex"
+        className="hidden shrink-0 overflow-hidden border-r border-white/6 bg-surface-0 lg:flex"
         initial={false}
         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       >
@@ -439,7 +439,7 @@ export function NavigationSidebar({
             />
             <motion.aside
               animate={{ x: 0 }}
-              className="safe-left fixed inset-y-0 left-0 z-50 w-[min(280px,85vw)] touch-pan-y border-r border-white/[0.06] bg-surface-0 lg:hidden"
+              className="safe-left fixed inset-y-0 left-0 z-50 w-[min(280px,85vw)] touch-pan-y border-r border-white/6 bg-surface-0 lg:hidden"
               drag="x"
               dragConstraints={{ left: -280, right: 0 }}
               dragElastic={0.1}

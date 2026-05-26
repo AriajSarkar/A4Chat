@@ -94,7 +94,7 @@ export function ConversationView({
 
   return (
     <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
-      <header className="safe-top flex min-h-[3.5rem] shrink-0 items-center px-3 py-1 lg:min-h-[4rem] lg:px-6">
+      <header className="safe-top flex min-h-14 shrink-0 items-center px-3 py-1 lg:min-h-16 lg:px-6">
         <button
           aria-label="Open sidebar"
           className="grid size-10 cursor-pointer place-items-center rounded-xl text-text-secondary active:bg-white/10 lg:hidden"
@@ -130,7 +130,7 @@ export function ConversationView({
               status={status}
             />
           </div>
-          <div className="flex-[1.5] md:flex-[2]" /> {/* Bottom flex spacer (pushes content up) */}
+          <div className="flex-[1.5] md:flex-2" /> {/* Bottom flex spacer (pushes content up) */}
         </section>
       )}
 

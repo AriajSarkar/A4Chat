@@ -19,8 +19,8 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 
 import type { ConversationMessage } from "@/components/conversation/utils/conversation";
-import { ImageGenIndicator } from "@/components/conversation/msg/image-gen-indicator";
-import { PendingIndicator } from "@/components/conversation/msg/pending-indicator";
+import { ImageGenIndicator } from "@/components/conversation/msg/indicator/image-gen-indicator";
+import { PendingIndicator } from "@/components/conversation/msg/indicator/pending-indicator";
 import { cn } from "@/lib/cn";
 
 type MessageRowProps = {
@@ -105,13 +105,13 @@ export const MessageRow = memo(function MessageRow({
                     key={idx}
                     src={img}
                     alt="attachment"
-                    className="max-w-[240px] max-h-[240px] object-cover rounded-2xl border border-white/10 shadow-md shadow-black/20"
+                    className="max-w-60 max-h-60 object-cover rounded-2xl border border-white/10 shadow-md shadow-black/20"
                   />
                 ))}
               </div>
             )}
             {message.content && (
-              <div className="rounded-2xl rounded-br-md bg-accent/[0.12] px-4 py-3 text-[15px] leading-7 text-text-primary self-end text-right whitespace-pre-wrap">
+              <div className="rounded-2xl rounded-br-md bg-accent/12 px-4 py-3 text-[15px] leading-7 text-text-primary self-end text-right whitespace-pre-wrap">
                 {message.content}
               </div>
             )}
@@ -136,7 +136,7 @@ export const MessageRow = memo(function MessageRow({
 
             {/* Reasoning — compact, scrollable, latest content visible */}
             {hasReasoning ? (
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02]">
+              <div className="rounded-xl border border-white/6 bg-white/2">
                 <button
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-text-tertiary transition-colors hover:text-text-secondary"
                   onClick={() => setReasoningOpen((v) => !v)}
@@ -206,7 +206,7 @@ export const MessageRow = memo(function MessageRow({
             {!isStreaming && message.content ? (
               <div className="flex items-center gap-3">
                 {typeof message.outputTokens === "number" ? (
-                  <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-xs text-text-quaternary">
+                  <span className="rounded-md bg-white/4 px-2 py-0.5 text-xs text-text-quaternary">
                     {message.outputTokens.toLocaleString()} tokens
                   </span>
                 ) : null}
@@ -251,7 +251,7 @@ function CodeBlock({ children, ...props }: React.ComponentPropsWithoutRef<"pre">
     <div className="group/code relative">
       <button
         aria-label="Copy code"
-        className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-white/[0.08] px-2 py-1 text-xs text-text-tertiary opacity-0 backdrop-blur-sm transition-all hover:bg-white/[0.14] hover:text-text-primary group-hover/code:opacity-100"
+        className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-white/8 px-2 py-1 text-xs text-text-tertiary opacity-0 backdrop-blur-sm transition-all hover:bg-white/[0.14] hover:text-text-primary group-hover/code:opacity-100"
         onClick={handleCopy}
         type="button"
       >
@@ -284,7 +284,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       aria-label="Copy message"
-      className="grid size-7 place-items-center rounded-lg text-text-quaternary transition-colors hover:bg-white/[0.08] hover:text-text-secondary"
+      className="grid size-7 place-items-center rounded-lg text-text-quaternary transition-colors hover:bg-white/8 hover:text-text-secondary"
       onClick={handleCopy}
       type="button"
     >
@@ -297,7 +297,7 @@ function ActionButton({ icon: Icon, label }: { icon: typeof RiThumbUpLine; label
   return (
     <button
       aria-label={label}
-      className="grid size-7 place-items-center rounded-lg text-text-quaternary transition-colors hover:bg-white/[0.08] hover:text-text-secondary"
+      className="grid size-7 place-items-center rounded-lg text-text-quaternary transition-colors hover:bg-white/8 hover:text-text-secondary"
       type="button"
     >
       <Icon size={15} />
@@ -405,7 +405,7 @@ function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img"
         <img
           src={src}
           alt={alt}
-          className="max-h-[320px] w-auto max-w-full object-contain"
+          className="max-h-80 w-auto max-w-full object-contain"
           {...props}
         />
       </motion.span>
@@ -417,7 +417,7 @@ function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 p-4 backdrop-blur-md"
+                className="fixed inset-0 z-100 flex flex-col items-center justify-center bg-black/90 p-4 backdrop-blur-md"
                 onClick={() => setOpen(false)}
               >
                 <button
@@ -439,7 +439,7 @@ function ImageBlock({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img"
                     onClick={handleDownload}
                     disabled={downloadStatus === "downloading"}
                     className={cn(
-                      "flex min-w-[160px] items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform",
+                      "flex min-w-40 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform",
                       downloadStatus === "success" &&
                         "bg-green-600 hover:scale-105 active:scale-95",
                       downloadStatus === "error" && "bg-red-600 hover:scale-105 active:scale-95",

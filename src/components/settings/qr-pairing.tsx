@@ -395,7 +395,7 @@ function QrScanPanel({
         <div className="relative overflow-hidden rounded-2xl border border-white/8">
           <video
             autoPlay
-            className="aspect-[4/3] w-full rounded-2xl bg-black object-cover"
+            className="aspect-4/3 w-full rounded-2xl bg-black object-cover"
             muted
             playsInline
             ref={videoRef}
@@ -412,7 +412,7 @@ function QrScanPanel({
                 <motion.div
                   animate={{ top: ["0%", "100%", "0%"] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-                  className="absolute left-0 right-0 h-[2px] bg-accent shadow-[0_0_12px_3px_rgba(61,139,255,0.6)]"
+                  className="absolute left-0 right-0 h-0.5 bg-accent shadow-[0_0_12px_3px_rgba(61,139,255,0.6)]"
                 />
               )}
             </div>
