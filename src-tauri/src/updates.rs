@@ -354,7 +354,11 @@ async fn check_app_update_inner(app: AppHandle) -> Result<AppUpdateCheck, String
         date: release.published_at,
         body: clean_release_body(release.body),
         target: Some(format!("android-{arch}")),
-        download_url: if available { download_url } else { None },
+        download_url: if available {
+            download_url
+        } else {
+            None
+        },
         channel: UpdateChannel::GithubRelease,
         platform_strategy: UpdatePlatformStrategy::GithubApk,
     })
