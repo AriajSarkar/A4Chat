@@ -309,6 +309,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Debug signing key presence
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "✅ TAURI_SIGNING_PRIVATE_KEY is set (${#TAURI_SIGNING_PRIVATE_KEY} chars)"
+          else
+            echo "❌ TAURI_SIGNING_PRIVATE_KEY is EMPTY"
+          fi
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" ]; then
+            echo "✅ TAURI_SIGNING_PRIVATE_KEY_PASSWORD is set (${#TAURI_SIGNING_PRIVATE_KEY_PASSWORD} chars)"
+          else
+            echo "❌ TAURI_SIGNING_PRIVATE_KEY_PASSWORD is EMPTY"
+          fi
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
       - name: Build Linux bundle (${{ matrix.bundle }})
         run: bash scripts/build-linux.sh "${{ matrix.bundle }}"
         env:
