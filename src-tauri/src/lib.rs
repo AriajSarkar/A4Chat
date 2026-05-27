@@ -1,5 +1,6 @@
 pub mod commands;
 pub mod storage;
+pub mod updates;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -11,6 +12,11 @@ pub fn run() {
     #[cfg(not(target_os = "android"))]
     {
         builder = builder.plugin(tauri_plugin_dialog::init());
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
+    {
+        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
     }
 
     builder
@@ -29,7 +35,10 @@ pub fn run() {
             commands::list_provider_models,
             commands::toggle_model_favorite,
             commands::get_default_save_dir,
-            commands::save_file_to_disk
+            commands::save_file_to_disk,
+            updates::check_app_update,
+            updates::install_app_update,
+            updates::restart_app
         ])
         .run(tauri::generate_context!())
         .expect("failed to run A4Chat");

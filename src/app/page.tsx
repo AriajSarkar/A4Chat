@@ -1,4 +1,4 @@
-import { ConversationWorkspace } from "@/components/conversation/workspace";
+import { ConversationWorkspace } from "@/components/Conversation/Workspace";
 
 export default function Home() {
   return <ConversationWorkspace />;

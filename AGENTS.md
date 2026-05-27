@@ -31,24 +31,28 @@ Follow the code-quality skill (`~/.claude/skills/code-quality/SKILL.md`) for all
 - Target: ≤300 lines per file. Files >500 lines must be split.
 - Components render UI. Hooks manage state/effects. Utils are pure functions.
 
-### Feature Module Pattern
+### Folder and filename pattern
 
 ```
 src/lib/          → shared utilities (pure functions, no React)
 src/hooks/        → shared React hooks
-src/components/   → shared React components
+src/components/   → the only React component tree
 src/types/        → shared TypeScript types
-src/<feature>/    → feature-specific (can import from shared, never cross-feature)
-src/app/          → routes (thin shells, import from features)
+src/app/          → routes (thin shells that import from components/hooks/lib)
 ```
 
-- Features NEVER import from other features. Cross-feature needs go to shared.
+- Keep React components under the single `src/components/` tree. Do not create feature-local `components/` folders.
+- Use PascalCase for component folders and component filenames: `FooBar.tsx`, not `foo-bar.tsx`.
+- Keep Next.js reserved route files unchanged (`page.tsx`, `layout.tsx`, `route.ts`, `loading.tsx`, etc.).
+- Do not repeat the parent folder name in child filenames. In `src/components/Settings/Provider/`, use `Card.tsx`, `Icon.tsx`, and `List.tsx`, not `ProviderCard.tsx`.
+- If a component grows large, promote it to a PascalCase folder and put its focused parts inside that folder. For example, `Hello.tsx` can become `Hello/Root.tsx`, with `Hello/Card/View.tsx` and `Hello/Card/Look.tsx` for card-specific parts.
+- Pure helpers, schemas, constants, and data transforms do not live inside `src/components/`; move them to `src/lib/` or `src/types/`.
 - When splitting a file, keep the original filename as a barrel re-export.
 
 ### Import Hierarchy
 
-- `src/lib/` → `src/hooks/` → `src/components/` → `src/<feature>/` → `src/app/`
-- No circular imports. No cross-feature imports.
+- `src/lib/` → `src/hooks/` → `src/components/` → `src/app/`
+- No circular imports. Components may import shared hooks and lib utilities; lib utilities must not import React components.
 
 ## Testing
 

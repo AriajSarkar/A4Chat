@@ -14,6 +14,7 @@ TARGET="${1:-}"
 cd "$ROOT_DIR"
 
 bash scripts/sync-version.sh
+source scripts/updater-signing-env.sh
 
 echo "==> Building macOS DMG (unsigned)..."
 if [ -n "$TARGET" ]; then
@@ -25,6 +26,8 @@ fi
 
 mkdir -p "$RELEASE_DIR"
 find "$ROOT_DIR/src-tauri/target/release/bundle" -type f -name "*.dmg" -exec cp {} "$RELEASE_DIR/" \;
+find "$ROOT_DIR/src-tauri/target/release/bundle" -type f -name "*.app.tar.gz" -exec cp {} "$RELEASE_DIR/" \;
+find "$ROOT_DIR/src-tauri/target/release/bundle" -type f -name "*.sig" -exec cp {} "$RELEASE_DIR/" \;
 
 if ! compgen -G "$RELEASE_DIR/*.dmg" > /dev/null; then
   echo "❌ No macOS DMG found"

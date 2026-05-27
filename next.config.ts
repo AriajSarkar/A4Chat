@@ -2,9 +2,13 @@ import type { NextConfig } from "next";
 
 const internalHost = process.env.TAURI_DEV_HOST || "localhost";
 
+const isDev = process.env.NODE_ENV === "development";
+const isTauriBuild = Boolean(process.env.TAURI_ENV_PLATFORM);
+
 const nextConfig: NextConfig = {
-  // Static export required for Tauri (desktop + mobile).
-  output: "export",
+  // Static export is required for Tauri production builds.
+  // Plain `pnpm build` keeps a server bundle so dev-only API routes can compile.
+  ...(!isDev && isTauriBuild ? { output: "export" } : {}),
   images: {
     unoptimized: true,
   },
@@ -25,18 +29,22 @@ const nextConfig: NextConfig = {
     "better-sqlite3",
   ],
   // CORS headers for desktop Tauri dev (tauri.localhost → dev server cross-origin)
-  async headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: [
-          { key: "Access-Control-Allow-Origin", value: "*" },
-          { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "*" },
-        ],
-      },
-    ];
-  },
+  ...(isDev
+    ? {
+        async headers() {
+          return [
+            {
+              source: "/(.*)",
+              headers: [
+                { key: "Access-Control-Allow-Origin", value: "*" },
+                { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
+                { key: "Access-Control-Allow-Headers", value: "*" },
+              ],
+            },
+          ];
+        },
+      }
+    : {}),
 };
 
 export default nextConfig;

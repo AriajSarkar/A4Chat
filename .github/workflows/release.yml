@@ -241,6 +241,9 @@ jobs:
       - name: Build Windows NSIS (${{ matrix.label }})
         run: bash scripts/build-windows.sh "${{ matrix.target }}"
         shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: sccache stats
         run: sccache --show-stats || true
@@ -250,7 +253,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-nsis-${{ matrix.label }}
-          path: release/**/*.exe
+          path: |
+            release/**/*.exe
+            release/**/*.sig
 
   # ============================================
   # Build Linux bundles (parallel matrix)
@@ -308,6 +313,8 @@ jobs:
         run: bash scripts/build-linux.sh "${{ matrix.bundle }}"
         env:
           RUSTFLAGS: "-C link-arg=-fuse-ld=mold"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: sccache stats
         run: sccache --show-stats || true
@@ -316,7 +323,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_path }}
+          path: |
+            ${{ matrix.artifact_path }}
+            release/**/*.sig
 
   # ============================================
   # Build macOS DMG (unsigned)
@@ -357,6 +366,9 @@ jobs:
 
       - name: Build macOS DMG (unsigned)
         run: bash scripts/build-macos.sh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: sccache stats
         run: sccache --show-stats || true
@@ -365,7 +377,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-dmg
-          path: release/**/*.dmg
+          path: |
+            release/**/*.dmg
+            release/**/*.app.tar.gz
+            release/**/*.sig
 
   # ============================================
   # Create GitHub Release
@@ -458,11 +473,20 @@ jobs:
           echo "=== Android ==="
           find artifacts/android-flat -type f -name "*.apk" || true
           echo "=== Windows ==="
-          find artifacts/windows -type f -name "*.exe" || true
+          find artifacts/windows -type f \( -name "*.exe" -o -name "*.sig" \) || true
           echo "=== Linux ==="
-          find artifacts/linux -type f \( -name "*.AppImage" -o -name "*.deb" \) || true
+          find artifacts/linux -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.sig" \) || true
           echo "=== macOS ==="
-          find artifacts/macos -type f -name "*.dmg" || true
+          find artifacts/macos -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.sig" \) || true
+
+      - name: Generate updater manifest
+        run: |
+          node scripts/generate-updater-manifest.mjs \
+            --artifacts artifacts \
+            --output artifacts/latest.json \
+            --repo "${{ github.repository }}" \
+            --tag "${{ steps.version.outputs.VERSION }}" \
+            --version "${{ steps.version.outputs.VERSION }}"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -502,8 +526,13 @@ jobs:
           files: |
             artifacts/android-flat/*.apk
             artifacts/windows/**/*.exe
+            artifacts/windows/**/*.sig
             artifacts/linux/**/*.AppImage
             artifacts/linux/**/*.deb
+            artifacts/linux/**/*.sig
             artifacts/macos/**/*.dmg
+            artifacts/macos/**/*.app.tar.gz
+            artifacts/macos/**/*.sig
+            artifacts/latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

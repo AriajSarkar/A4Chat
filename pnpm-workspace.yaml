@@ -8,5 +8,8 @@ allowBuilds:
   protobufjs: true
   sharp: false
   tauri: true
+  tree-sitter: set this to true or false
+  tree-sitter-javascript: set this to true or false
+  tree-sitter-typescript: set this to true or false
   unrs-resolver: false
   zopflipng-bin: true
