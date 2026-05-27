@@ -178,6 +178,7 @@ src/generated
 .npmrc_temp
 log.txt
 *.log
+next-env.d.ts
 
 # Android signing
 _signing
