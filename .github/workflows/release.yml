@@ -98,6 +98,10 @@ jobs:
       - name: sccache stats
         run: sccache --show-stats || true
 
+      - name: Stop sccache
+        if: always()
+        run: sccache --stop-server || true
+
       - name: Upload Android APK (${{ matrix.arch }})
         uses: actions/upload-artifact@v4
         with:
@@ -181,6 +185,10 @@ jobs:
       - name: sccache stats
         run: sccache --show-stats || true
 
+      - name: Stop sccache
+        if: always()
+        run: sccache --stop-server || true
+
       - name: Upload Android universal APK
         uses: actions/upload-artifact@v4
         with:
@@ -247,6 +255,11 @@ jobs:
 
       - name: sccache stats
         run: sccache --show-stats || true
+        shell: bash
+
+      - name: Stop sccache
+        if: always()
+        run: sccache --stop-server || true
         shell: bash
 
       - name: Upload Windows installer (${{ matrix.label }})
@@ -319,6 +332,10 @@ jobs:
       - name: sccache stats
         run: sccache --show-stats || true
 
+      - name: Stop sccache
+        if: always()
+        run: sccache --stop-server || true
+
       - name: Upload Linux artifact (${{ matrix.bundle }})
         uses: actions/upload-artifact@v4
         with:
@@ -372,6 +389,10 @@ jobs:
 
       - name: sccache stats
         run: sccache --show-stats || true
+
+      - name: Stop sccache
+        if: always()
+        run: sccache --stop-server || true
 
       - name: Upload macOS DMG
         uses: actions/upload-artifact@v4
