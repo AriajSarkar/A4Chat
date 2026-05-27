@@ -1,6 +1,6 @@
 {
   "name": "a4chat",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "private": true,
   "scripts": {
     "postinstall": "node scripts/prisma-sync.mjs",
@@ -12,7 +12,7 @@
     "comfy:start": "node scripts/comfy-start.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
-    "format": "oxfmt src tests && cd src-tauri && cargo fmt --all",
+    "fmt": "oxfmt src tests && cd src-tauri && cargo fmt --all",
     "check": "pnpm lint:rust && pnpm test",
     "test": "pnpm test:ts && pnpm test:rust",
     "test:ts": "vitest run",
@@ -35,7 +35,7 @@
     "release:and": "node scripts/build-android.mjs aarch64",
     "release:android": "node scripts/build-android.mjs aarch64",
     "release:android:universal": "node scripts/build-android.mjs all",
-    "CC": "npx @tailwindcss/upgrade --force"
+    "CC": "npx tailwind-lint --auto --fix"
   },
   "dependencies": {
     "@google/genai": "^2.6.0",
@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@prisma/client": "7.8.0",
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.3.0",
     "@tauri-apps/cli": "^2.11.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
@@ -72,7 +72,7 @@
     "oxfmt": "0.51.0",
     "oxlint": "1.66.0",
     "prisma": "7.8.0",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.3.0",
     "typescript": "^5",
     "vitest": "^4.1.7"
   },

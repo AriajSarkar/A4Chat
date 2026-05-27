@@ -215,18 +215,11 @@ fn delete_conversation_cascades_to_messages() {
     storage::save_conversation_snapshot(&mut conn, &sample_snapshot("cascade", "lmstudio"))
         .unwrap();
 
-    assert_eq!(
-        storage::load_conversation_messages(&conn, "cascade")
-            .unwrap()
-            .len(),
-        2
-    );
+    assert_eq!(storage::load_conversation_messages(&conn, "cascade").unwrap().len(), 2);
 
     storage::delete_conversation(&conn, "cascade").unwrap();
 
-    assert!(storage::load_conversation_messages(&conn, "cascade")
-        .unwrap()
-        .is_empty());
+    assert!(storage::load_conversation_messages(&conn, "cascade").unwrap().is_empty());
 }
 
 #[test]
