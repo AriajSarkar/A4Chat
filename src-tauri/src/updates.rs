@@ -260,8 +260,9 @@ fn is_newer(current: &str, latest: &str) -> bool {
 fn device_arch() -> &'static str {
     match std::env::consts::ARCH {
         "aarch64" => "aarch64",
+        "arm" | "armv7" => "armv7",
+        "x86" | "i686" => "i686",
         "x86_64" => "x86_64",
-        "arm" => "aarch64",
         _ => "universal",
     }
 }
@@ -338,9 +339,9 @@ async fn check_app_update_inner(app: AppHandle) -> Result<AppUpdateCheck, String
     let current_version = app.package_info().version.to_string();
     let release = fetch_latest_release().await?;
     let release_version = release.tag_name.trim_start_matches('v').to_string();
-    let available = is_newer(&current_version, &release_version);
     let arch = device_arch();
     let download_url = find_apk_url(&release.assets, arch, &release.tag_name);
+    let available = is_newer(&current_version, &release_version) && download_url.is_some();
 
     Ok(AppUpdateCheck {
         available,
@@ -353,7 +354,7 @@ async fn check_app_update_inner(app: AppHandle) -> Result<AppUpdateCheck, String
         date: release.published_at,
         body: clean_release_body(release.body),
         target: Some(format!("android-{arch}")),
-        download_url,
+        download_url: if available { download_url } else { None },
         channel: UpdateChannel::GithubRelease,
         platform_strategy: UpdatePlatformStrategy::GithubApk,
     })
