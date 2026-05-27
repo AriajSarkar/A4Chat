@@ -43,6 +43,7 @@ pub enum UpdateChannel {
 #[serde(rename_all = "kebab-case")]
 pub enum UpdatePlatformStrategy {
     TauriUpdater,
+    GithubApk,
     Store,
 }
 
@@ -228,28 +229,183 @@ async fn install_app_update_inner(
 }
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+const GITHUB_RELEASES_API: &str =
+    "https://api.github.com/repos/AriajSarkar/A4Chat/releases/latest";
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+#[derive(serde::Deserialize)]
+struct GithubRelease {
+    tag_name: String,
+    body: Option<String>,
+    published_at: Option<String>,
+    assets: Vec<GithubAsset>,
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+#[derive(serde::Deserialize)]
+struct GithubAsset {
+    name: String,
+    browser_download_url: String,
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+fn parse_semver(version: &str) -> Option<(u32, u32, u32)> {
+    let v = version.trim_start_matches('v');
+    let mut parts = v.splitn(3, '.');
+    Some((
+        parts.next()?.parse().ok()?,
+        parts.next()?.parse().ok()?,
+        parts.next()?.split(&['-', '+'][..]).next()?.parse().ok()?,
+    ))
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+fn is_newer(current: &str, latest: &str) -> bool {
+    match (parse_semver(current), parse_semver(latest)) {
+        (Some(c), Some(l)) => l > c,
+        _ => false,
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+fn device_arch() -> &'static str {
+    match std::env::consts::ARCH {
+        "aarch64" => "aarch64",
+        "x86_64" => "x86_64",
+        "arm" => "aarch64",
+        _ => "universal",
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+fn find_apk_url(assets: &[GithubAsset], arch: &str, tag: &str) -> Option<String> {
+    let version = tag.trim_start_matches('v');
+    let patterns = [
+        format!("A4Chat_{version}_{arch}.apk"),
+        format!("A4Chat_v{version}_{arch}.apk"),
+        format!("A4Chat_{version}_universal.apk"),
+        format!("A4Chat_v{version}_universal.apk"),
+    ];
+    for pattern in &patterns {
+        if let Some(asset) = assets.iter().find(|a| a.name == *pattern) {
+            return Some(asset.browser_download_url.clone());
+        }
+    }
+    assets
+        .iter()
+        .find(|a| a.name.ends_with(".apk"))
+        .map(|a| a.browser_download_url.clone())
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+async fn fetch_latest_release() -> Result<GithubRelease, String> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .get(GITHUB_RELEASES_API)
+        .header("User-Agent", "A4Chat-Updater")
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await
+        .map_err(|e| format!("Failed to check for updates: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("GitHub API returned status {}", resp.status()));
+    }
+    resp.json::<GithubRelease>()
+        .await
+        .map_err(|e| format!("Failed to parse release data: {e}"))
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+fn clean_release_body(body: Option<String>) -> Option<String> {
+    let raw = body?;
+    let lower = raw.to_lowercase();
+    let start = lower.find("## what's changed")
+        .or_else(|| lower.find("## what's changed"))
+        .or_else(|| lower.find("### what's changed"))?;
+    let section = &raw[start..];
+    let end = section.to_lowercase().find("full changelog").unwrap_or(section.len());
+    let trimmed = section[..end].trim();
+    if trimmed.is_empty() { None } else { Some(trimmed.to_string()) }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 async fn check_app_update_inner(app: AppHandle) -> Result<AppUpdateCheck, String> {
+    use tauri::Emitter;
+
+    let _ = app.emit(
+        UPDATE_PROGRESS_EVENT,
+        AppUpdateProgress {
+            phase: UpdateProgressPhase::Checking,
+            downloaded_bytes: 0,
+            content_length: None,
+        },
+    );
+
+    let current_version = app.package_info().version.to_string();
+    let release = fetch_latest_release().await?;
+    let release_version = release.tag_name.trim_start_matches('v').to_string();
+    let available = is_newer(&current_version, &release_version);
+    let arch = device_arch();
+    let download_url = find_apk_url(&release.assets, arch, &release.tag_name);
+
     Ok(AppUpdateCheck {
-        available: false,
-        current_version: app.package_info().version.to_string(),
-        version: None,
-        date: None,
-        body: None,
-        target: None,
-        download_url: None,
-        channel: UpdateChannel::StoreManaged,
-        platform_strategy: UpdatePlatformStrategy::Store,
+        available,
+        current_version,
+        version: if available {
+            Some(release_version)
+        } else {
+            None
+        },
+        date: release.published_at,
+        body: clean_release_body(release.body),
+        target: Some(format!("android-{arch}")),
+        download_url,
+        channel: UpdateChannel::GithubRelease,
+        platform_strategy: UpdatePlatformStrategy::GithubApk,
     })
 }
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 async fn install_app_update_inner(app: AppHandle) -> Result<AppUpdateInstallResult, String> {
-    let _ = app;
+    use tauri_plugin_opener::OpenerExt;
+
+    let release = fetch_latest_release().await?;
+    let current_version = app.package_info().version.to_string();
+    let release_version = release.tag_name.trim_start_matches('v').to_string();
+
+    if !is_newer(&current_version, &release_version) {
+        return Ok(AppUpdateInstallResult {
+            installed: false,
+            version: None,
+            restart_required: false,
+            platform_strategy: UpdatePlatformStrategy::GithubApk,
+        });
+    }
+
+    let arch = device_arch();
+    let download_url = find_apk_url(&release.assets, arch, &release.tag_name)
+        .ok_or("No compatible APK found in the latest release")?;
+
+    // Resolve GitHub's redirect chain to get the final CDN URL.
+    // Android's download manager can stall on multi-hop redirects.
+    let client = reqwest::Client::new();
+    let resolved = client
+        .head(&download_url)
+        .header("User-Agent", "A4Chat-Updater")
+        .send()
+        .await
+        .map_err(|e| format!("Failed to resolve download URL: {e}"))?;
+    let final_url = resolved.url().to_string();
+
+    app.opener()
+        .open_url(&final_url, None::<&str>)
+        .map_err(|e| format!("Failed to open download URL: {e}"))?;
+
     Ok(AppUpdateInstallResult {
         installed: false,
-        version: None,
+        version: Some(release_version),
         restart_required: false,
-        platform_strategy: UpdatePlatformStrategy::Store,
+        platform_strategy: UpdatePlatformStrategy::GithubApk,
     })
 }
 

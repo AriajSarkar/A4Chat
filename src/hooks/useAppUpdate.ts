@@ -20,6 +20,7 @@ export type AppUpdateStatus =
   | "downloading"
   | "installing"
   | "ready"
+  | "download-started"
   | "unsupported"
   | "error";
 
@@ -94,6 +95,10 @@ export function useAppUpdate() {
       const result = await installAppUpdate();
       if (result?.platformStrategy === "store") {
         setStatus("unsupported");
+        return;
+      }
+      if (result?.platformStrategy === "github-apk") {
+        setStatus("download-started");
         return;
       }
       setStatus(result?.installed ? "ready" : "current");

@@ -1,5 +1,5 @@
 export type UpdateChannel = "github-release" | "store-managed";
-export type UpdatePlatformStrategy = "tauri-updater" | "store";
+export type UpdatePlatformStrategy = "tauri-updater" | "github-apk" | "store";
 export type UpdateProgressPhase =
   | "checking"
   | "downloading"

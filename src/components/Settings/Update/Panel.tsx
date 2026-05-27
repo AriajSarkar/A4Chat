@@ -26,6 +26,7 @@ export function UpdatePanel() {
   }, [checkNow, status]);
 
   const busy = status === "checking" || status === "downloading" || status === "installing";
+  const isApkUpdate = check?.platformStrategy === "github-apk";
   const progressLabel =
     status === "downloading"
       ? `${percent ?? 0}% of ${formatBytes(progress?.contentLength)}`
@@ -34,7 +35,7 @@ export function UpdatePanel() {
         : null;
 
   return (
-    <div className="rounded-2xl border border-white/6 bg-surface-0 px-4 py-4 sm:px-5 sm:py-5">
+    <div className="overflow-hidden rounded-2xl border border-white/6 bg-surface-0 px-4 py-4 sm:px-5 sm:py-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="mb-2 flex items-center gap-3 text-text-primary">
@@ -67,7 +68,7 @@ export function UpdatePanel() {
               type="button"
             >
               <RiDownloadCloud2Line size={18} />
-              Install
+              {isApkUpdate ? "Download" : "Install"}
             </button>
           ) : null}
 
@@ -94,7 +95,7 @@ export function UpdatePanel() {
       </div>
 
       {check?.available ? (
-        <div className="mt-4 rounded-xl border border-accent/20 bg-accent/8 p-4">
+        <div className="mt-4 min-w-0 overflow-hidden rounded-xl border border-accent/20 bg-accent/8 p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-text-primary">
@@ -110,7 +111,7 @@ export function UpdatePanel() {
             ) : null}
           </div>
           {check.body ? (
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-text-secondary">
+            <p className="mt-3 break-words whitespace-pre-wrap text-sm leading-6 text-text-secondary">
               {check.body}
             </p>
           ) : null}
@@ -138,12 +139,19 @@ export function UpdatePanel() {
           <span>{error}</span>
         </div>
       ) : null}
+
+      {status === "download-started" ? (
+        <div className="mt-4 flex gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-sm leading-6 text-emerald-200">
+          <RiCheckboxCircleLine className="mt-0.5 shrink-0" size={18} />
+          <span>APK download opened in your browser. Install it from your notifications once complete.</span>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 function StatusPill({ status }: { status: AppUpdateStatus }) {
-  const positive = status === "current" || status === "ready";
+  const positive = status === "current" || status === "ready" || status === "download-started";
   const attention = status === "available";
   const label = statusLabel(status);
 
@@ -176,6 +184,8 @@ function statusLabel(status: AppUpdateStatus) {
       return "Installing";
     case "ready":
       return "Ready";
+    case "download-started":
+      return "Opened";
     case "unsupported":
       return "Desktop";
     case "error":
@@ -192,6 +202,10 @@ function statusText(status: AppUpdateStatus, currentVersion?: string, nextVersio
 
   if (status === "available") {
     return `v${nextVersion} is ready for this device.`;
+  }
+
+  if (status === "download-started") {
+    return "APK download opened. Install it from your browser downloads.";
   }
 
   if (status === "ready") {
