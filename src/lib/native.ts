@@ -211,7 +211,7 @@ export function extractContentText(content: unknown): string {
         return content
             .filter(
                 (block): block is { type: string; text: string } =>
-                    typeof ==="object" &&
+                    typeof block === "object" &&
                     block !== null &&
                     block.type === "text" &&
                     typeof block.text === "string",
