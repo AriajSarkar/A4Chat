@@ -90,12 +90,7 @@ async fn check_app_update_inner(app: AppHandle) -> tauri_plugin_updater::Result<
     );
 
     let current_version = app.package_info().version.to_string();
-    let update = app
-        .updater_builder()
-        .timeout(Duration::from_secs(30))
-        .build()?
-        .check()
-        .await?;
+    let update = app.updater_builder().timeout(Duration::from_secs(30)).build()?.check().await?;
 
     Ok(match update {
         Some(update) => AppUpdateCheck {
@@ -146,12 +141,7 @@ async fn install_app_update_inner(
         },
     );
 
-    let update = app
-        .updater_builder()
-        .timeout(Duration::from_secs(30))
-        .build()?
-        .check()
-        .await?;
+    let update = app.updater_builder().timeout(Duration::from_secs(30)).build()?.check().await?;
 
     let Some(update) = update else {
         return Ok(AppUpdateInstallResult {
@@ -229,8 +219,7 @@ async fn install_app_update_inner(
 }
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-const GITHUB_RELEASES_API: &str =
-    "https://api.github.com/repos/AriajSarkar/A4Chat/releases/latest";
+const GITHUB_RELEASES_API: &str = "https://api.github.com/repos/AriajSarkar/A4Chat/releases/latest";
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 #[derive(serde::Deserialize)]
@@ -319,13 +308,18 @@ async fn fetch_latest_release() -> Result<GithubRelease, String> {
 fn clean_release_body(body: Option<String>) -> Option<String> {
     let raw = body?;
     let lower = raw.to_lowercase();
-    let start = lower.find("## what's changed")
+    let start = lower
+        .find("## what's changed")
         .or_else(|| lower.find("## what's changed"))
         .or_else(|| lower.find("### what's changed"))?;
     let section = &raw[start..];
     let end = section.to_lowercase().find("full changelog").unwrap_or(section.len());
     let trimmed = section[..end].trim();
-    if trimmed.is_empty() { None } else { Some(trimmed.to_string()) }
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
 }
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]

@@ -15,10 +15,7 @@ use crate::commands::{
 const DATABASE_FILE: &str = "a4chat.sqlite3";
 
 pub fn database_path(app: &AppHandle) -> Result<PathBuf> {
-    let data_dir = app
-        .path()
-        .app_data_dir()
-        .context("unable to resolve app data directory")?;
+    let data_dir = app.path().app_data_dir().context("unable to resolve app data directory")?;
 
     fs::create_dir_all(&data_dir).context("unable to create app data directory")?;
 
@@ -110,9 +107,7 @@ pub fn save_provider_settings(
         }
     }
 
-    transaction
-        .commit()
-        .context("unable to commit provider settings")
+    transaction.commit().context("unable to commit provider settings")
 }
 
 pub fn save_conversation_snapshot(
@@ -120,9 +115,8 @@ pub fn save_conversation_snapshot(
     snapshot: &ConversationSnapshot,
 ) -> Result<()> {
     let now = unix_timestamp();
-    let transaction = connection
-        .transaction()
-        .context("unable to start conversation transaction")?;
+    let transaction =
+        connection.transaction().context("unable to start conversation transaction")?;
 
     transaction
         .execute(
@@ -133,13 +127,7 @@ pub fn save_conversation_snapshot(
                provider_id = excluded.provider_id,
                model = excluded.model,
                updated_at = excluded.updated_at",
-            params![
-                snapshot.id,
-                snapshot.title,
-                snapshot.provider_id,
-                snapshot.model,
-                now
-            ],
+            params![snapshot.id, snapshot.title, snapshot.provider_id, snapshot.model, now],
         )
         .context("unable to persist conversation")?;
 
@@ -168,9 +156,7 @@ pub fn save_conversation_snapshot(
             .with_context(|| format!("unable to persist message {}", message.id))?;
     }
 
-    transaction
-        .commit()
-        .context("unable to commit conversation")
+    transaction.commit().context("unable to commit conversation")
 }
 
 // ── CRUD additions ─────────────────────────────────────────
@@ -225,17 +211,13 @@ pub fn load_conversation_messages(
         })
         .context("unable to read messages")?;
 
-    rows.collect::<rusqlite::Result<Vec<_>>>()
-        .context("unable to collect messages")
+    rows.collect::<rusqlite::Result<Vec<_>>>().context("unable to collect messages")
 }
 
 pub fn delete_conversation(connection: &Connection, conversation_id: &str) -> Result<()> {
     // Foreign key cascade will delete messages automatically
     connection
-        .execute(
-            "DELETE FROM conversations WHERE id = ?1",
-            params![conversation_id],
-        )
+        .execute("DELETE FROM conversations WHERE id = ?1", params![conversation_id])
         .context("unable to delete conversation")?;
     Ok(())
 }
@@ -284,9 +266,7 @@ pub fn save_provider_models(
             })?;
     }
 
-    transaction
-        .commit()
-        .context("unable to commit provider models")
+    transaction.commit().context("unable to commit provider models")
 }
 
 pub fn list_provider_models(
@@ -328,7 +308,11 @@ pub fn toggle_model_favorite(
         .execute(
             "UPDATE provider_models SET is_favorite = ?1 WHERE provider_id = ?2 AND model_id = ?3",
             params![
-                if is_favorite { 1_i64 } else { 0_i64 },
+                if is_favorite {
+                    1_i64
+                } else {
+                    0_i64
+                },
                 provider_id,
                 model_id
             ],

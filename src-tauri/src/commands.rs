@@ -153,12 +153,7 @@ pub async fn send_chat_completion(
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
     headers.insert("x-title", HeaderValue::from_static("A4Chat"));
 
-    if let Some(api_key) = request
-        .provider
-        .api_key
-        .as_deref()
-        .filter(|key| !key.is_empty())
-    {
+    if let Some(api_key) = request.provider.api_key.as_deref().filter(|key| !key.is_empty()) {
         let value = HeaderValue::from_str(&format!("Bearer {api_key}"))
             .context("provider API key contains invalid header characters")
             .map_err(to_command_error)?;
@@ -297,10 +292,8 @@ pub async fn detect_provider_models(
 
     let mut headers = HeaderMap::new();
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-    headers.insert(
-        "HTTP-Referer",
-        HeaderValue::from_static("https://github.com/AriajSarkar/A4Chat"),
-    );
+    headers
+        .insert("HTTP-Referer", HeaderValue::from_static("https://github.com/AriajSarkar/A4Chat"));
     headers.insert("X-Title", HeaderValue::from_static("A4Chat"));
 
     if provider_id != "google-gemini" {
@@ -368,10 +361,8 @@ pub async fn detect_provider_models(
                     .filter_map(|entry| {
                         let name = entry.get("name").and_then(Value::as_str)?;
                         let id = name.trim_start_matches("models/");
-                        let display_name = entry
-                            .get("displayName")
-                            .and_then(Value::as_str)
-                            .unwrap_or(id);
+                        let display_name =
+                            entry.get("displayName").and_then(Value::as_str).unwrap_or(id);
                         Some(ProviderModelRow {
                             provider_id: provider_id.clone(),
                             model_id: id.to_owned(),
@@ -418,10 +409,8 @@ pub async fn detect_provider_models(
                 }]
             })
     } else {
-        let data_array = payload
-            .get("data")
-            .and_then(Value::as_array)
-            .or_else(|| payload.as_array());
+        let data_array =
+            payload.get("data").and_then(Value::as_array).or_else(|| payload.as_array());
 
         data_array
             .map(|arr| {
@@ -504,16 +493,8 @@ fn provider_error_message(
                 .and_then(|value| value.get("retry_after_seconds"))
                 .and_then(parse_retry_after_seconds_value)
         })
-        .or_else(|| {
-            error
-                .get("retry_after_seconds")
-                .and_then(parse_retry_after_seconds_value)
-        })
-        .or_else(|| {
-            payload
-                .get("retry_after_seconds")
-                .and_then(parse_retry_after_seconds_value)
-        })
+        .or_else(|| error.get("retry_after_seconds").and_then(parse_retry_after_seconds_value))
+        .or_else(|| payload.get("retry_after_seconds").and_then(parse_retry_after_seconds_value))
         .or_else(|| {
             headers
                 .get(RETRY_AFTER)
@@ -523,10 +504,7 @@ fn provider_error_message(
 
     let mut output = String::new();
     if let Some(provider_name) = provider_name {
-        if !message
-            .to_lowercase()
-            .contains(&provider_name.to_lowercase())
-        {
+        if !message.to_lowercase().contains(&provider_name.to_lowercase()) {
             output.push_str(provider_name);
             output.push_str(": ");
         }
@@ -546,11 +524,7 @@ fn provider_error_message(
 fn parse_retry_after_seconds_value(value: &Value) -> Option<u64> {
     value
         .as_u64()
-        .or_else(|| {
-            value
-                .as_str()
-                .and_then(|raw| raw.trim().parse::<u64>().ok())
-        })
+        .or_else(|| value.as_str().and_then(|raw| raw.trim().parse::<u64>().ok()))
         .map(|seconds| seconds.max(1))
 }
 
@@ -603,10 +577,8 @@ pub fn chat_completions_endpoint(base_url: &str) -> String {
     if trimmed.ends_with("/chat/completions") {
         trimmed.to_owned()
     } else {
-        let has_path = trimmed
-            .split_once("://")
-            .and_then(|(_, rest)| rest.split_once('/'))
-            .is_some();
+        let has_path =
+            trimmed.split_once("://").and_then(|(_, rest)| rest.split_once('/')).is_some();
 
         if has_path {
             format!("{trimmed}/chat/completions")
@@ -670,15 +642,9 @@ pub fn parse_completion_response(payload: Value) -> anyhow::Result<CompletionRes
         .and_then(|choices| choices.first())
         .context("provider response did not include choices")?;
 
-    let message = choice
-        .get("message")
-        .context("provider response did not include a message")?;
+    let message = choice.get("message").context("provider response did not include a message")?;
 
-    let content = message
-        .get("content")
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_owned();
+    let content = message.get("content").and_then(Value::as_str).unwrap_or_default().to_owned();
 
     let reasoning = message
         .get("reasoning")
@@ -691,10 +657,7 @@ pub fn parse_completion_response(payload: Value) -> anyhow::Result<CompletionRes
     Ok(CompletionResponse {
         content,
         reasoning,
-        model: payload
-            .get("model")
-            .and_then(Value::as_str)
-            .map(ToOwned::to_owned),
+        model: payload.get("model").and_then(Value::as_str).map(ToOwned::to_owned),
         input_tokens: usage
             .get("prompt_tokens")
             .and_then(Value::as_i64)

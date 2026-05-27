@@ -1,4 +1,40 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["src-tauri/gen/**", ".vscode/**"]
+
+  // ── Line & indentation (match rustfmt: max_width=100, tab_spaces=4→2 for JS) ──
+  "printWidth": 100,
+  "tabWidth": 4,
+  "useTabs": false,
+  "endOfLine": "lf",
+
+  // ── Syntax style ──
+  "semi": true,
+  "singleQuote": false,
+  "jsxSingleQuote": false,
+  "quoteProps": "as-needed",
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "proseWrap": "preserve",
+  "insertFinalNewline": true,
+
+  // ── Import sorting (mirrors rustfmt reorder_imports) ──
+  "sortImports": {
+    "newlinesBetween": true,
+    "groups": [
+      "builtin",
+      "external",
+      ["internal", "subpath"],
+      ["parent", "sibling", "index"],
+      "style",
+      "unknown"
+    ]
+  },
+
+  // ── Tailwind class sorting ──
+  "sortTailwindcss": true,
+
+  // ── Ignore generated code ──
+  "ignorePatterns": ["src-tauri/gen/**", ".vscode/**", "out/**", ".next/**"]
 }
