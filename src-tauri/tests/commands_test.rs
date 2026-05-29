@@ -238,3 +238,137 @@ fn fails_on_empty_choices_array() {
     let payload = json!({ "choices": [] });
     assert!(parse_completion_response(payload).is_err());
 }
+
+// ── provider_error_message ───────────────────────────────────────
+
+use a4chat_lib::commands::{
+    parse_retry_after_seconds_str, parse_retry_after_seconds_value, provider_error_message,
+};
+use reqwest::{header::HeaderMap, StatusCode};
+
+#[test]
+fn provider_error_message_extracts_metadata_raw() {
+    let payload = json!({
+        "error": {
+            "message": "Generic error",
+            "metadata": {
+                "raw": "Specific upstream error"
+            }
+        }
+    });
+    let headers = HeaderMap::new();
+    let msg = provider_error_message(&payload, StatusCode::BAD_REQUEST, &headers, "Fallback");
+    assert_eq!(msg, "Specific upstream error");
+}
+
+#[test]
+fn provider_error_message_falls_back_to_message() {
+    let payload = json!({
+        "error": {
+            "message": "Generic error"
+        }
+    });
+    let headers = HeaderMap::new();
+    let msg = provider_error_message(&payload, StatusCode::BAD_REQUEST, &headers, "Fallback");
+    assert_eq!(msg, "Generic error");
+}
+
+#[test]
+fn provider_error_message_adds_provider_prefix() {
+    let payload = json!({
+        "error": {
+            "message": "Busy",
+            "metadata": {
+                "provider_name": "OpenRouter"
+            }
+        }
+    });
+    let headers = HeaderMap::new();
+    let msg = provider_error_message(&payload, StatusCode::BAD_REQUEST, &headers, "Fallback");
+    assert_eq!(msg, "OpenRouter: Busy");
+}
+
+#[test]
+fn provider_error_message_avoids_duplicate_prefix() {
+    let payload = json!({
+        "error": {
+            "message": "OpenRouter is busy",
+            "metadata": {
+                "provider_name": "OpenRouter"
+            }
+        }
+    });
+    let headers = HeaderMap::new();
+    let msg = provider_error_message(&payload, StatusCode::BAD_REQUEST, &headers, "Fallback");
+    assert_eq!(msg, "OpenRouter is busy");
+}
+
+#[test]
+fn provider_error_message_adds_retry_after() {
+    let payload = json!({
+        "error": {
+            "message": "Rate limited",
+            "metadata": {
+                "retry_after_seconds": 15
+            }
+        }
+    });
+    let headers = HeaderMap::new();
+    let msg = provider_error_message(&payload, StatusCode::TOO_MANY_REQUESTS, &headers, "Fallback");
+    assert_eq!(msg, "Rate limited (retry after 15s)");
+}
+
+#[test]
+fn provider_error_message_adds_rate_limited_suffix_for_429() {
+    let payload = json!({
+        "error": {
+            "message": "Too many requests"
+        }
+    });
+    let headers = HeaderMap::new();
+    let msg = provider_error_message(&payload, StatusCode::TOO_MANY_REQUESTS, &headers, "Fallback");
+    assert_eq!(msg, "Too many requests (rate limited)");
+}
+
+#[test]
+fn provider_error_message_avoids_duplicate_rate_limited() {
+    let payload = json!({
+        "error": {
+            "message": "Rate limited"
+        }
+    });
+    let headers = HeaderMap::new();
+    let msg = provider_error_message(&payload, StatusCode::TOO_MANY_REQUESTS, &headers, "Fallback");
+    assert_eq!(msg, "Rate limited");
+}
+
+#[test]
+fn provider_error_message_uses_header_retry_after() {
+    let payload = json!({ "error": { "message": "Busy" } });
+    let mut headers = HeaderMap::new();
+    headers.insert(reqwest::header::RETRY_AFTER, "30".parse().unwrap());
+    let msg = provider_error_message(&payload, StatusCode::TOO_MANY_REQUESTS, &headers, "Fallback");
+    assert_eq!(msg, "Busy (retry after 30s)");
+}
+
+// ── parse_retry_after_seconds ───────────────────────────────────
+
+#[test]
+fn parse_retry_after_seconds_value_number() {
+    assert_eq!(parse_retry_after_seconds_value(&json!(42)), Some(42));
+    assert_eq!(parse_retry_after_seconds_value(&json!(0)), Some(1)); // clamped
+}
+
+#[test]
+fn parse_retry_after_seconds_value_string() {
+    assert_eq!(parse_retry_after_seconds_value(&json!("42")), Some(42));
+    assert_eq!(parse_retry_after_seconds_value(&json!("  42  ")), Some(42));
+    assert_eq!(parse_retry_after_seconds_value(&json!("invalid")), None);
+}
+
+#[test]
+fn parse_retry_after_seconds_str_tests() {
+    assert_eq!(parse_retry_after_seconds_str("42"), Some(42));
+    assert_eq!(parse_retry_after_seconds_str("0"), Some(1)); // clamped
+    assert_eq!(parse_retry_after_seconds_str("invalid"), None);
+}

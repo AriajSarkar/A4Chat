@@ -60,6 +60,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@fast-check/vitest": "^0.4.1",
     "@prisma/client": "7.8.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@tauri-apps/cli": "^2.11.2",
@@ -67,8 +68,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.7",
     "babel-plugin-react-compiler": "1.0.0",
     "baseline-browser-mapping": "^2.10.32",
+    "fast-check": "^4.8.0",
     "oxfmt": "0.51.0",
     "oxlint": "1.66.0",
     "prisma": "7.8.0",

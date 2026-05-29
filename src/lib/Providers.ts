@@ -145,7 +145,7 @@ export function generateProviderId(label: string): string {
 /** Create a blank provider template for "Add Provider" */
 export function createBlankProvider(label = "New Provider"): ProviderSettings {
     return {
-        id: generateProviderId(label) + `-${Date.now()}`,
+        id: generateProviderId(label) + `-${crypto.randomUUID()}`,
         label,
         baseUrl: "http://localhost:1234/v1",
         apiKey: "",

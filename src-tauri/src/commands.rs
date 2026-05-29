@@ -463,7 +463,7 @@ fn to_command_error(error: anyhow::Error) -> String {
     error.to_string()
 }
 
-fn provider_error_message(
+pub fn provider_error_message(
     payload: &Value,
     status: reqwest::StatusCode,
     headers: &HeaderMap,
@@ -514,21 +514,21 @@ fn provider_error_message(
 
     if let Some(retry_after_seconds) = retry_after_seconds {
         output.push_str(&format!(" (retry after {retry_after_seconds}s)"));
-    } else if status.as_u16() == 429 {
+    } else if status.as_u16() == 429 && !output.to_lowercase().contains("rate limited") {
         output.push_str(" (rate limited)");
     }
 
     output
 }
 
-fn parse_retry_after_seconds_value(value: &Value) -> Option<u64> {
+pub fn parse_retry_after_seconds_value(value: &Value) -> Option<u64> {
     value
         .as_u64()
         .or_else(|| value.as_str().and_then(|raw| raw.trim().parse::<u64>().ok()))
         .map(|seconds| seconds.max(1))
 }
 
-fn parse_retry_after_seconds_str(raw: &str) -> Option<u64> {
+pub fn parse_retry_after_seconds_str(raw: &str) -> Option<u64> {
     raw.trim().parse::<u64>().ok().map(|seconds| seconds.max(1))
 }
 
