@@ -428,10 +428,10 @@ function buildPayload(
     // OpenRouter context-compression plugin natively drops middle messages if context limit is exceeded
     if (provider.baseUrl.includes("openrouter.ai")) {
         payload.plugins = [{ id: "context-compression" }];
-        
+
         // OpenRouter reserves maximum context window tokens if max_tokens is missing.
-        // We set a sensible default of 4096 tokens. This is large enough for most 
-        // text generation tasks, avoids crippling multimodal models, and prevents 
+        // We set a sensible default of 4096 tokens. This is large enough for most
+        // text generation tasks, avoids crippling multimodal models, and prevents
         // credit limit errors from massive unused context windows.
         payload.max_tokens = 4096;
     }
