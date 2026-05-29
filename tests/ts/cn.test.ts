@@ -88,7 +88,7 @@ describe("cn", () => {
     });
 
     it("handles complex conditional composition", () => {
-        const variant = "primary";
+        const variant: string = "primary";
         const disabled = false;
         const size = "lg";
         expect(

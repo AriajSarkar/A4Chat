@@ -26,8 +26,6 @@ function makeMsg(
 ): ConversationMessage {
     return {
         id: overrides.id ?? crypto.randomUUID(),
-        role: overrides.role,
-        content: overrides.content,
         createdAt: overrides.createdAt ?? Date.now(),
         ...overrides,
     };
