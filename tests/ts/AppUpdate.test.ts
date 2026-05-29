@@ -3,11 +3,11 @@ import { describe, it, expect } from "vitest";
 
 import {
     parseSemver,
-    classifyUpdateScale,
-    formatUpdateScale,
+    classifyUpdateSize,
+    formatUpdateSize,
     progressPercent,
     formatBytes,
-    type UpdateScale,
+    type UpdateSize,
     type AppUpdateProgress,
 } from "@/lib/AppUpdate";
 
@@ -165,66 +165,66 @@ describe("parseSemver", () => {
 });
 
 // ---------------------------------------------------------------------------
-// classifyUpdateScale
+// classifyUpdateSize
 // ---------------------------------------------------------------------------
-describe("classifyUpdateScale", () => {
+describe("classifyUpdateSize", () => {
     describe("deterministic cases", () => {
         it('returns "major" for major bump', () => {
-            expect(classifyUpdateScale("1.2.3", "2.0.0")).toBe("major");
+            expect(classifyUpdateSize("1.2.3", "2.0.0")).toBe("major");
         });
 
         it('returns "minor" for minor bump', () => {
-            expect(classifyUpdateScale("1.2.3", "1.3.0")).toBe("minor");
+            expect(classifyUpdateSize("1.2.3", "1.3.0")).toBe("minor");
         });
 
         it('returns "patch" for patch bump', () => {
-            expect(classifyUpdateScale("1.2.3", "1.2.4")).toBe("patch");
+            expect(classifyUpdateSize("1.2.3", "1.2.4")).toBe("patch");
         });
 
         it('returns "same" for identical versions', () => {
-            expect(classifyUpdateScale("1.2.3", "1.2.3")).toBe("same");
+            expect(classifyUpdateSize("1.2.3", "1.2.3")).toBe("same");
         });
 
         it('returns "unknown" when current is invalid', () => {
-            expect(classifyUpdateScale("invalid", "1.0.0")).toBe("unknown");
+            expect(classifyUpdateSize("invalid", "1.0.0")).toBe("unknown");
         });
 
         it('returns "unknown" when next is invalid', () => {
-            expect(classifyUpdateScale("1.0.0", "invalid")).toBe("unknown");
+            expect(classifyUpdateSize("1.0.0", "invalid")).toBe("unknown");
         });
 
         it('returns "unknown" when next is null', () => {
-            expect(classifyUpdateScale("1.0.0", null)).toBe("unknown");
+            expect(classifyUpdateSize("1.0.0", null)).toBe("unknown");
         });
 
         it('returns "unknown" when both are invalid', () => {
-            expect(classifyUpdateScale("nope", "nah")).toBe("unknown");
+            expect(classifyUpdateSize("nope", "nah")).toBe("unknown");
         });
 
         it('returns "major" for major downgrade', () => {
-            expect(classifyUpdateScale("2.0.0", "1.0.0")).toBe("major");
+            expect(classifyUpdateSize("2.0.0", "1.0.0")).toBe("major");
         });
 
         it('returns "minor" for minor downgrade', () => {
-            expect(classifyUpdateScale("1.3.0", "1.2.0")).toBe("minor");
+            expect(classifyUpdateSize("1.3.0", "1.2.0")).toBe("minor");
         });
 
         it("handles v-prefix cross comparison", () => {
-            expect(classifyUpdateScale("v1.2.3", "1.3.0")).toBe("minor");
+            expect(classifyUpdateSize("v1.2.3", "1.3.0")).toBe("minor");
         });
 
         it("handles both v-prefixed", () => {
-            expect(classifyUpdateScale("v1.0.0", "v2.0.0")).toBe("major");
+            expect(classifyUpdateSize("v1.0.0", "v2.0.0")).toBe("major");
         });
     });
 
     describe("property-based", () => {
-        const validScales: UpdateScale[] = ["major", "minor", "patch", "same", "unknown"];
+        const validScales: UpdateSize[] = ["major", "minor", "patch", "same", "unknown"];
 
-        it("result is always a valid UpdateScale", () => {
+        it("result is always a valid UpdateSize", () => {
             fc.assert(
                 fc.property(fc.string(), fc.string(), (a, b) => {
-                    const result = classifyUpdateScale(a, b);
+                    const result = classifyUpdateSize(a, b);
                     expect(validScales).toContain(result);
                 }),
             );
@@ -240,7 +240,7 @@ describe("classifyUpdateScale", () => {
                     fc.nat(),
                     fc.nat(),
                     (a, b, c, d, e, f) => {
-                        const result = classifyUpdateScale(`${a}.${b}.${c}`, `${d}.${e}.${f}`);
+                        const result = classifyUpdateSize(`${a}.${b}.${c}`, `${d}.${e}.${f}`);
                         expect(result).not.toBe("unknown");
                     },
                 ),
@@ -251,7 +251,7 @@ describe("classifyUpdateScale", () => {
             fc.assert(
                 fc.property(fc.nat(), fc.nat(), fc.nat(), (a, b, c) => {
                     const v = `${a}.${b}.${c}`;
-                    expect(classifyUpdateScale(v, v)).toBe("same");
+                    expect(classifyUpdateSize(v, v)).toBe("same");
                 }),
             );
         });
@@ -259,32 +259,32 @@ describe("classifyUpdateScale", () => {
 });
 
 // ---------------------------------------------------------------------------
-// formatUpdateScale
+// formatUpdateSize
 // ---------------------------------------------------------------------------
-describe("formatUpdateScale", () => {
+describe("formatUpdateSize", () => {
     it('formats "major" → "Major update"', () => {
-        expect(formatUpdateScale("major")).toBe("Major update");
+        expect(formatUpdateSize("major")).toBe("Major update");
     });
 
     it('formats "minor" → "Feature update"', () => {
-        expect(formatUpdateScale("minor")).toBe("Feature update");
+        expect(formatUpdateSize("minor")).toBe("Feature update");
     });
 
     it('formats "patch" → "Patch update"', () => {
-        expect(formatUpdateScale("patch")).toBe("Patch update");
+        expect(formatUpdateSize("patch")).toBe("Patch update");
     });
 
     it('formats "same" → "Current version"', () => {
-        expect(formatUpdateScale("same")).toBe("Current version");
+        expect(formatUpdateSize("same")).toBe("Current version");
     });
 
     it('formats "unknown" → "Update" (default branch)', () => {
-        expect(formatUpdateScale("unknown")).toBe("Update");
+        expect(formatUpdateSize("unknown")).toBe("Update");
     });
 
     it('formats unexpected string → "Update" (default)', () => {
         // Force an unexpected value through the type system to test the default branch
-        expect(formatUpdateScale("bogus" as UpdateScale)).toBe("Update");
+        expect(formatUpdateSize("bogus" as UpdateSize)).toBe("Update");
     });
 });
 

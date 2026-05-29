@@ -1,6 +1,6 @@
 //! Integration/unit tests for updates.rs logic
 //!
-//! Uses proptest for DSA-level string parsing edge case verification.
+//! Uses proptest for robust string parsing edge case verification.
 //! Run: `cd src-tauri && cargo test`
 
 use a4chat_lib::updates::{
