@@ -95,13 +95,6 @@ jobs:
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
 
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          cache-targets: false
-          key: windows-nsis-check-${{ matrix.label }}
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -149,13 +142,6 @@ jobs:
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
-
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          cache-targets: false
-          key: linux-check
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -222,13 +208,6 @@ jobs:
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
-
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          cache-targets: false
-          key: android-arm64-check
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

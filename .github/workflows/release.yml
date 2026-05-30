@@ -13,6 +13,7 @@ env:
   CARGO_INCREMENTAL: 0
   RUSTC_WRAPPER: sccache
   SCCACHE_GHA_ENABLED: "true"
+  SCCACHE_IDLE_TIMEOUT: "0"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
@@ -75,13 +76,6 @@ jobs:
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
-
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          cache-targets: false
-          key: release-android-${{ matrix.arch }}
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -159,13 +153,6 @@ jobs:
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
 
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          cache-targets: false
-          key: release-android-universal
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -231,13 +218,6 @@ jobs:
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
 
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          cache-targets: false
-          key: release-windows-${{ matrix.label }}
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -302,13 +282,6 @@ jobs:
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
 
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          cache-targets: false
-          key: release-linux-${{ matrix.bundle }}
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -356,13 +329,6 @@ jobs:
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
-
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          cache-targets: false
-          key: release-macos
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
