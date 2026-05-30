@@ -99,8 +99,7 @@ export function UpdatePanel() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-text-primary text-sm font-semibold">
-                                {formatUpdateSize(size)}{" "}
-                                {check.version ? `v${check.version}` : ""}
+                                {formatUpdateSize(size)} {check.version ? `v${check.version}` : ""}
                             </p>
                             <p className="text-text-tertiary mt-1 text-xs">
                                 Current v{check.currentVersion}

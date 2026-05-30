@@ -68,7 +68,9 @@ export function ConversationWorkspace() {
     const [selectedProviderId, setSelectedProviderId] = useState(DEFAULT_PROVIDERS[0].id);
     const [selectedModelId, setSelectedModelId] = useState(DEFAULT_PROVIDERS[0].model);
     const [providerModels, setProviderModels] = useState<Map<string, ProviderModel[]>>(new Map());
-    const [providerModelCheckedAt, setProviderModelCheckedAt] = useState<Record<string, number>>({});
+    const [providerModelCheckedAt, setProviderModelCheckedAt] = useState<Record<string, number>>(
+        {},
+    );
     const [messages, setMessages] = useState<ConversationMessage[]>([]);
     const [conversationId, setConversationId] = useState(createConversationId);
     const [sidebarExpanded, setSidebarExpanded] = useState(false);
