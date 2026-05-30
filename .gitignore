@@ -185,3 +185,9 @@ _signing
 **/android/key.properties
 *.keystore
 *.jks
+
+temp*
+temp
+tmp
+
+*.diff
