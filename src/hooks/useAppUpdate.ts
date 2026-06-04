@@ -4,7 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-    classifyUpdateScale,
+    classifyUpdateSize,
     progressPercent,
     type AppUpdateCheck,
     type AppUpdateProgress,
@@ -112,8 +112,8 @@ export function useAppUpdate() {
         await restartApp();
     }, []);
 
-    const scale = useMemo(
-        () => classifyUpdateScale(check?.currentVersion ?? "", check?.version ?? null),
+    const size = useMemo(
+        () => classifyUpdateSize(check?.currentVersion ?? "", check?.version ?? null),
         [check?.currentVersion, check?.version],
     );
 
@@ -125,7 +125,7 @@ export function useAppUpdate() {
         percent: progressPercent(progress),
         progress,
         restartNow,
-        scale,
+        size,
         status,
     };
 }

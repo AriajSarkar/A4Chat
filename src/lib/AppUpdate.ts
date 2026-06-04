@@ -6,7 +6,7 @@ export type UpdateProgressPhase =
     | "downloaded"
     | "installing"
     | "installed";
-export type UpdateScale = "major" | "minor" | "patch" | "same" | "unknown";
+export type UpdateSize = "major" | "minor" | "patch" | "same" | "unknown";
 
 export type AppUpdateCheck = {
     available: boolean;
@@ -51,22 +51,19 @@ export function parseSemver(value: string | null | undefined): SemverParts | nul
     };
 }
 
-export function classifyUpdateScale(
-    currentVersion: string,
-    nextVersion: string | null,
-): UpdateScale {
+export function classifyUpdateSize(currentVersion: string, nextVersion: string | null): UpdateSize {
     const current = parseSemver(currentVersion);
     const next = parseSemver(nextVersion);
-    if (!current || !next) return "unknown" satisfies UpdateScale;
+    if (!current || !next) return "unknown" satisfies UpdateSize;
 
-    if (next.major !== current.major) return "major" satisfies UpdateScale;
-    if (next.minor !== current.minor) return "minor" satisfies UpdateScale;
-    if (next.patch !== current.patch) return "patch" satisfies UpdateScale;
-    return "same" satisfies UpdateScale;
+    if (next.major !== current.major) return "major" satisfies UpdateSize;
+    if (next.minor !== current.minor) return "minor" satisfies UpdateSize;
+    if (next.patch !== current.patch) return "patch" satisfies UpdateSize;
+    return "same" satisfies UpdateSize;
 }
 
-export function formatUpdateScale(scale: UpdateScale) {
-    switch (scale) {
+export function formatUpdateSize(size: UpdateSize) {
+    switch (size) {
         case "major":
             return "Major update";
         case "minor":

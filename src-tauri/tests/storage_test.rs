@@ -279,3 +279,87 @@ fn conversations_listed_newest_first() {
     let new_pos = ids.iter().position(|&id| id == "new").unwrap();
     assert!(new_pos < old_pos, "newer conversation should come first");
 }
+
+// ── Provider Models ─────────────────────────────────────────────
+
+use a4chat_lib::commands::ProviderModelRow;
+
+#[test]
+fn save_and_list_provider_models() {
+    let mut conn = test_db();
+    let models = vec![ProviderModelRow {
+        provider_id: "lmstudio".to_string(),
+        model_id: "model-a".to_string(),
+        display_name: "Model A".to_string(),
+        is_favorite: false,
+        last_seen_at: 1234,
+    }];
+    storage::save_provider_models(&mut conn, "lmstudio", &models).unwrap();
+
+    let listed = storage::list_provider_models(&conn, "lmstudio").unwrap();
+    assert_eq!(listed.len(), 1);
+    assert_eq!(listed[0].model_id, "model-a");
+}
+
+#[test]
+fn toggle_model_favorite_persists() {
+    let mut conn = test_db();
+    let models = vec![ProviderModelRow {
+        provider_id: "lmstudio".to_string(),
+        model_id: "model-fav".to_string(),
+        display_name: "Fav".to_string(),
+        is_favorite: false,
+        last_seen_at: 1234,
+    }];
+    storage::save_provider_models(&mut conn, "lmstudio", &models).unwrap();
+
+    storage::toggle_model_favorite(&conn, "lmstudio", "model-fav", true).unwrap();
+
+    let listed = storage::list_provider_models(&conn, "lmstudio").unwrap();
+    assert!(listed[0].is_favorite);
+
+    storage::toggle_model_favorite(&conn, "lmstudio", "model-fav", false).unwrap();
+    let listed = storage::list_provider_models(&conn, "lmstudio").unwrap();
+    assert!(!listed[0].is_favorite);
+}
+
+#[test]
+fn provider_models_deleted_on_provider_delete() {
+    let mut conn = test_db();
+    let custom = sample_provider("custom-provider");
+    storage::save_provider_settings(&mut conn, &[custom.clone()]).unwrap();
+
+    let models = vec![ProviderModelRow {
+        provider_id: "custom-provider".to_string(),
+        model_id: "m1".to_string(),
+        display_name: "M1".to_string(),
+        is_favorite: false,
+        last_seen_at: 1234,
+    }];
+    storage::save_provider_models(&mut conn, "custom-provider", &models).unwrap();
+
+    // Delete provider by passing empty array (since it lacks conversations)
+    storage::save_provider_settings(&mut conn, &[]).unwrap();
+
+    let listed = storage::list_provider_models(&conn, "custom-provider").unwrap();
+    assert!(listed.is_empty(), "models should cascade delete when provider is deleted");
+}
+
+// ── Edge Cases ──────────────────────────────────────────────────
+
+#[test]
+fn provider_cannot_be_deleted_if_has_conversations() {
+    let mut conn = test_db();
+    let custom = sample_provider("protected-provider");
+    storage::save_provider_settings(&mut conn, &[custom]).unwrap();
+
+    storage::save_conversation_snapshot(&mut conn, &sample_snapshot("conv1", "protected-provider"))
+        .unwrap();
+
+    // Try to delete by not including it in the new sync list
+    let result = storage::save_provider_settings(&mut conn, &[]);
+
+    // Should fail due to foreign key RESTRICT
+    assert!(result.is_err());
+    assert!(result.unwrap_err().to_string().contains("unable to delete removed provider"));
+}

@@ -133,7 +133,7 @@ const SEED_MAP: Record<string, ProviderModel[]> = {
  * Used as initial display before the API is queried.
  */
 export function getSeedModels(providerId: string): ProviderModel[] {
-    return SEED_MAP[providerId] ?? [];
+    return Object.hasOwn(SEED_MAP, providerId) ? SEED_MAP[providerId] : [];
 }
 
 /**

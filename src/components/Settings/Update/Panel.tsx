@@ -12,11 +12,11 @@ import { useEffect } from "react";
 
 import { useAppUpdate, type AppUpdateStatus } from "@/hooks/useAppUpdate";
 import { GITHUB_RELEASES_URL } from "@/lib/AppMeta";
-import { formatBytes, formatUpdateScale } from "@/lib/AppUpdate";
+import { formatBytes, formatUpdateSize } from "@/lib/AppUpdate";
 import { cn } from "@/lib/cn";
 
 export function UpdatePanel() {
-    const { check, checkNow, error, installNow, percent, progress, restartNow, scale, status } =
+    const { check, checkNow, error, installNow, percent, progress, restartNow, size, status } =
         useAppUpdate();
 
     useEffect(() => {
@@ -99,8 +99,7 @@ export function UpdatePanel() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-text-primary text-sm font-semibold">
-                                {formatUpdateScale(scale)}{" "}
-                                {check.version ? `v${check.version}` : ""}
+                                {formatUpdateSize(size)} {check.version ? `v${check.version}` : ""}
                             </p>
                             <p className="text-text-tertiary mt-1 text-xs">
                                 Current v{check.currentVersion}

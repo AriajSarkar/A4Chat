@@ -43,7 +43,7 @@ export const MessageRow = memo(function MessageRow({
     const isReasoningStreaming = isStreaming && !message.content && hasReasoning;
 
     // Extract base64 images before passing to ReactMarkdown.
-    // This is a massive "DSA level" optimization to prevent the O(N^2) markdown
+    // This is a massive performance optimization to prevent the O(N^2) markdown
     // parser from choking on 10-50MB base64 strings and freezing the UI!
     const { textContent, embeddedImages } = useMemo(() => {
         if (!message.content) return { textContent: "", embeddedImages: [] };

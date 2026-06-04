@@ -218,27 +218,24 @@ async fn install_app_update_inner(
     })
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-const GITHUB_RELEASES_API: &str = "https://api.github.com/repos/AriajSarkar/A4Chat/releases/latest";
+pub const GITHUB_RELEASES_API: &str =
+    "https://api.github.com/repos/AriajSarkar/A4Chat/releases/latest";
 
-#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 #[derive(serde::Deserialize)]
-struct GithubRelease {
-    tag_name: String,
-    body: Option<String>,
-    published_at: Option<String>,
-    assets: Vec<GithubAsset>,
+pub struct GithubRelease {
+    pub tag_name: String,
+    pub body: Option<String>,
+    pub published_at: Option<String>,
+    pub assets: Vec<GithubAsset>,
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 #[derive(serde::Deserialize)]
-struct GithubAsset {
-    name: String,
-    browser_download_url: String,
+pub struct GithubAsset {
+    pub name: String,
+    pub browser_download_url: String,
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-fn parse_semver(version: &str) -> Option<(u32, u32, u32)> {
+pub fn parse_semver(version: &str) -> Option<(u32, u32, u32)> {
     let v = version.trim_start_matches('v');
     let mut parts = v.splitn(3, '.');
     Some((
@@ -248,16 +245,14 @@ fn parse_semver(version: &str) -> Option<(u32, u32, u32)> {
     ))
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-fn is_newer(current: &str, latest: &str) -> bool {
+pub fn is_newer(current: &str, latest: &str) -> bool {
     match (parse_semver(current), parse_semver(latest)) {
         (Some(c), Some(l)) => l > c,
         _ => false,
     }
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-fn device_arch() -> &'static str {
+pub fn device_arch() -> &'static str {
     match std::env::consts::ARCH {
         "aarch64" => "aarch64",
         "arm" | "armv7" => "armv7",
@@ -267,8 +262,7 @@ fn device_arch() -> &'static str {
     }
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-fn find_apk_url(assets: &[GithubAsset], arch: &str, tag: &str) -> Option<String> {
+pub fn find_apk_url(assets: &[GithubAsset], arch: &str, tag: &str) -> Option<String> {
     let version = tag.trim_start_matches('v');
     let patterns = [
         format!("A4Chat_{version}_{arch}.apk"),
@@ -305,14 +299,17 @@ async fn fetch_latest_release() -> Result<GithubRelease, String> {
         .map_err(|e| format!("Failed to parse release data: {e}"))
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-fn clean_release_body(body: Option<String>) -> Option<String> {
+pub fn clean_release_body(body: Option<String>) -> Option<String> {
     let raw = body?;
     let lower = raw.to_lowercase();
-    let start = lower
-        .find("## what's changed")
-        .or_else(|| lower.find("## what's changed"))
-        .or_else(|| lower.find("### what's changed"))?;
+    let h2 = lower.find("## what's changed");
+    let h3 = lower.find("### what's changed");
+    let start = match (h2, h3) {
+        (Some(a), Some(b)) => a.min(b),
+        (Some(a), None) => a,
+        (None, Some(b)) => b,
+        (None, None) => return None,
+    };
     let section = &raw[start..];
     let end = section.to_lowercase().find("full changelog").unwrap_or(section.len());
     let trimmed = section[..end].trim();
