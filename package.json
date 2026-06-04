@@ -38,7 +38,7 @@
     "CC": "npx tailwind-lint --auto --fix"
   },
   "dependencies": {
-    "@google/genai": "^2.6.0",
+    "@google/genai": "^2.8.0",
     "@lobehub/icons": "^5.8.0",
     "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/client-runtime-utils": "^7.8.0",
