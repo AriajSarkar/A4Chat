@@ -100,7 +100,7 @@ jobs:
         run: sccache --stop-server || true
 
       - name: Upload Android APK (${{ matrix.arch }})
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: android-apk-${{ matrix.arch }}
           path: release/A4Chat_*.apk
@@ -180,7 +180,7 @@ jobs:
         run: sccache --stop-server || true
 
       - name: Upload Android universal APK
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: android-apk-universal
           path: release/A4Chat_*.apk
@@ -246,7 +246,7 @@ jobs:
         shell: bash
 
       - name: Upload Windows installer (${{ matrix.label }})
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: windows-nsis-${{ matrix.label }}
           path: |
@@ -313,7 +313,7 @@ jobs:
         run: sccache --stop-server || true
 
       - name: Upload Linux artifact (${{ matrix.bundle }})
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: |
@@ -364,7 +364,7 @@ jobs:
         run: sccache --stop-server || true
 
       - name: Upload macOS DMG
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: macos-dmg
           path: |
