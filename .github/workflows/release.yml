@@ -390,31 +390,31 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download all Android APKs
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           pattern: android-apk-*
           path: artifacts/android
 
       - name: Download all Windows installers
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           pattern: windows-nsis-*
           path: artifacts/windows
 
       - name: Download Linux AppImage
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: linux-appimage
           path: artifacts/linux
 
       - name: Download Linux deb
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: linux-deb
           path: artifacts/linux
 
       - name: Download macOS DMG
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: macos-dmg
           path: artifacts/macos
